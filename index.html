@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="VELUM">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <title>VELUM Entregador</title>
 <style>
 :root{--n:#0F3665;--o:#FF7A00;--bg:#F4F7FB;--m:#718096;--l:#E2E8F0;--g:#179B63;--r:#B83E3E}
@@ -26,7 +26,7 @@ button{width:100%;min-height:50px;border:0;border-radius:14px;font-weight:900;fo
 </head>
 <body>
 <div class="app">
-  <div class="brand"><div class="logo"><img src="./icon.svg" alt=""></div><div><b>VELUM Entregador</b><span>Comprou. Chamou. Chegou.</span></div></div>
+  <div class="brand"><div class="logo"><img src="./icon-192.png" alt=""></div><div><b>VELUM Entregador</b><span>Comprou. Chamou. Chegou.</span></div></div>
   <section class="hero"><small>WEB APP DO ENTREGADOR</small><h1>Corridas na tela bloqueada.</h1><p>Instale a VELUM na tela inicial e ative os alertas. Quando surgir uma corrida, você recebe uma notificação mesmo com o painel fechado.</p></section>
 
   <section class="card">
@@ -40,7 +40,7 @@ button{width:100%;min-height:50px;border:0;border-radius:14px;font-weight:900;fo
     <div class="status" id="status"></div>
   </section>
 
-  <section class="card">
+  <section class="card" id="installHelp">
     <div class="copy"><b>Como funciona no iPhone</b><span>Depois de instalado, o Web App pode receber alertas de corrida em segundo plano.</span></div>
     <div class="steps">
       <div class="step"><i>1</i><div><b>Adicione à Tela de Início</b><span>No Safari: Compartilhar → Adicionar à Tela de Início.</span></div></div>
@@ -58,8 +58,15 @@ const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const incomingPair=params.get('pair')||'';
 if(incomingPair){try{localStorage.setItem('velum_push_pair',incomingPair)}catch(_){}}
-const pair=()=>{try{return localStorage.getItem('velum_push_pair')||''}catch(_){return incomingPair}};
+let pairToken=incomingPair;
+function pair(){if(pairToken)return pairToken;try{return localStorage.getItem('velum_push_pair')||''}catch(_){return ''}}
+async function restorePair(){if(pair())return pair();try{const reg=await registerSW();const worker=reg.active||reg.waiting||reg.installing;if(!worker)return '';return await new Promise(resolve=>{const t=setTimeout(()=>resolve(''),1500);function h(e){if(e.data?.type==='PAIR_VALUE'){clearTimeout(t);navigator.serviceWorker.removeEventListener('message',h);const p=String(e.data.pair||'');if(p){pairToken=p;try{localStorage.setItem('velum_push_pair',p)}catch(_){}}resolve(p)}}navigator.serviceWorker.addEventListener('message',h);worker.postMessage({type:'GET_PAIR'})})}catch(_){return ''}}
+async function persistPair(p){if(!p)return;pairToken=p;try{localStorage.setItem('velum_push_pair',p)}catch(_){}try{const reg=await registerSW(),worker=reg.active||reg.waiting||reg.installing;worker?.postMessage({type:'SAVE_PAIR',pair:p})}catch(_){}}
 const standalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
+let audioCtx=null;
+function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!audioCtx)audioCtx=new AC();if(audioCtx.state==='suspended')audioCtx.resume()}catch(_){}}
+function longRing(){unlockAudio();if(!audioCtx||audioCtx.state!=='running')return;const seq=[[0,880,.42],[470,1047,.42],[940,880,.42],[1410,1047,.55],[2180,880,.42],[2650,1047,.42],[3120,880,.42],[3590,1319,.72]];seq.forEach(([delay,freq,dur])=>setTimeout(()=>{try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.62,audioCtx.currentTime+.02);g.gain.setValueAtTime(.62,audioCtx.currentTime+Math.max(.03,dur-.08));g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur+.03)}catch(_){}},delay))}
+function syncInstallUI(){const installed=standalone();$('installBtn').style.display=installed?'none':'';$('installHelp').style.display=installed?'none':'';return installed}
 const isIOS=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
 function setStatus(kind,msg){const el=$('status');el.className='status show '+kind;el.textContent=msg}
 function setPair(ok,name,msg){$('pairPill').className='pill '+(ok?'ok':'err');$('pairPill').textContent=ok?'CONECTADO':'AÇÃO NECESSÁRIA';$('pairTitle').textContent=ok?(name?'Olá, '+name:'Cadastro conectado'):'Conexão pendente';$('pairText').textContent=msg}
@@ -67,6 +74,7 @@ function setPush(on,msg){$('pushPill').className='pill '+(on?'ok':'warn');$('pus
 function urlBase64ToUint8Array(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function registerSW(){if(!('serviceWorker'in navigator))throw new Error('Este navegador não oferece Service Worker.');await navigator.serviceWorker.register('./sw.js');return navigator.serviceWorker.ready}
 async function validatePair(){
+  await restorePair();
   const token=pair();
   if(!token){setPair(false,'','Abra esta tela pelo sino de notificações no Painel Entregador.');$('activateBtn').disabled=true;return}
   try{
@@ -77,12 +85,13 @@ async function validatePair(){
     $('activateBtn').disabled=false;
     const reg=await registerSW().catch(()=>null);
     const sub=reg?await reg.pushManager.getSubscription().catch(()=>null):null;
-    if(sub)setPush(true,'Este aparelho já está pronto para receber novas corridas.');
+    if(sub){setPush(true,'Este aparelho já está pronto para receber novas corridas.');$('activateBtn').style.display='none';}
     else if(isIOS()&&!standalone())setPush(false,'No iPhone, instale primeiro na Tela de Início e abra pelo ícone.');
     else setPush(false,'Toque em ativar para receber corridas na tela bloqueada.');
   }catch(e){setPair(false,'',e.message||'Não foi possível validar o cadastro.');$('activateBtn').disabled=true}
 }
 $('activateBtn').onclick=async()=>{
+  unlockAudio();
   try{
     if(isIOS()&&!standalone())return setStatus('info','No iPhone: use Safari → Compartilhar → Adicionar à Tela de Início. Depois abra a VELUM pelo ícone e toque novamente em Ativar notificações.');
     if(!('Notification'in window)||!('PushManager'in window))throw new Error('Este aparelho não oferece Web Push neste navegador.');
@@ -96,14 +105,22 @@ $('activateBtn').onclick=async()=>{
     const d=await r.json();
     if(!d.ok)throw new Error(d.mensagem||'Não foi possível salvar este aparelho.');
     setPush(true,'Notificações ativadas. Você pode fechar o painel e continuar recebendo corridas.');
-    setStatus('ok','Tudo certo. Este aparelho está conectado à VELUM.');
-    await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./icon.svg',badge:'./icon.svg',tag:'velum-test'});
+    $('activateBtn').style.display='none';
+    setStatus('ok',d.testeEnviado?'Tudo certo. Enviamos uma notificação de teste para este aparelho.':'Tudo certo. Este aparelho está conectado à VELUM.');
+    await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./icon-192.png',badge:'./icon-192.png',tag:'velum-test',silent:false});
+    longRing();
   }catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.')}
   finally{$('activateBtn').disabled=false;$('activateBtn').textContent='ATIVAR NOTIFICAÇÕES'}
 };
-$('installBtn').onclick=()=>setStatus('info',isIOS()?'No Safari, toque no botão Compartilhar (quadrado com seta para cima), depois “Adicionar à Tela de Início” e confirme em “Adicionar”.':'Abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.');
+$('installBtn').onclick=()=>{if(syncInstallUI())return;setStatus('info',isIOS()?'No Safari, toque no botão Compartilhar (quadrado com seta para cima), depois “Adicionar à Tela de Início” e confirme em “Adicionar”.':'Abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.');};
 $('panelBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador';
 if(params.get('open')==='available')setTimeout(()=>location.href='https://www.vaidevelum.com/painel-entregador?tab=available',900);
+if(incomingPair)persistPair(incomingPair);
+syncInstallUI();
+window.addEventListener('pageshow',syncInstallUI);
+window.matchMedia?.('(display-mode: standalone)').addEventListener?.('change',syncInstallUI);
+if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.type==='VELUM_PUSH_FOREGROUND')longRing()})}
+document.addEventListener('pointerdown',unlockAudio,{once:true,capture:true});
 validatePair();
 </script>
 </body>
