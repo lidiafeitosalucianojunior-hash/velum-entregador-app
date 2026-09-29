@@ -16,15 +16,13 @@ self.addEventListener('push',event=>{
     renotify:true,
     requireInteraction:true,
     silent:false,
-    data:{url:data.url||'./?open=available'}
+    data:{url:data.url||'https://www.vaidevelum.com/painel-entregador?tab=available&frompush=1'}
   };
   event.waitUntil(self.registration.showNotification(title,options).then(()=>clients.matchAll({type:'window',includeUncontrolled:true})).then(list=>Promise.all(list.map(c=>c.postMessage({type:'VELUM_PUSH_FOREGROUND',data})))))
 });
 self.addEventListener('notificationclick',event=>{
   event.notification.close();
-  const target=new URL(event.notification.data?.url||'./?open=available',self.registration.scope).href;
-  event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
-    for(const c of list){if(c.url.startsWith(self.registration.scope)){c.navigate(target);return c.focus()}}
-    return clients.openWindow(target);
-  }));
+  const raw=event.notification.data?.url||'https://www.vaidevelum.com/painel-entregador?tab=available&frompush=1';
+  const target=new URL(raw,self.registration.scope).href;
+  event.waitUntil(clients.openWindow(target));
 });

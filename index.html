@@ -59,6 +59,7 @@ const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const incomingPair=params.get('pair')||'';
 const autoStart=params.get('auto')==='1';
+if(params.get('open')==='available'){const q=new URLSearchParams({tab:'available',frompush:'1'});if(params.get('delivery'))q.set('delivery',params.get('delivery'));location.replace('https://www.vaidevelum.com/painel-entregador?'+q.toString());}
 if(incomingPair){try{localStorage.setItem('velum_push_pair',incomingPair)}catch(_){}}
 let pairToken=incomingPair;
 function pair(){if(pairToken)return pairToken;try{return localStorage.getItem('velum_push_pair')||''}catch(_){return ''}}
@@ -177,7 +178,6 @@ $('activateBtn').onclick=async()=>{
 };
 $('permissionGateBtn').onclick=async()=>{unlockAudio();$('permissionGateBtn').disabled=true;$('permissionGateBtn').textContent='ATIVANDO...';try{const ok=await subscribeNow({allowPrompt:true});if(ok)$('permissionGate').classList.remove('show')}catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.');$('permissionGate').classList.remove('show')}finally{$('permissionGateBtn').disabled=false;$('permissionGateBtn').textContent='PERMITIR NOTIFICAÇÕES'}};
 $('panelBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?fromapp=1';
-if(params.get('open')==='available')setTimeout(()=>location.href='https://www.vaidevelum.com/painel-entregador?tab=available',900);
 if(incomingPair)persistPair(incomingPair);
 syncInstallUI();
 window.addEventListener('pageshow',syncInstallUI);
