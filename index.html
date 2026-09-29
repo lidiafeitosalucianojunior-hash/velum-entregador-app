@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="VELUM">
-<link rel="manifest" href="./manifest.webmanifest?v=20260929-1246">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png?v=20260929-1246">
+<link rel="manifest" href="./manifest.webmanifest?v=20260929-1815">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png?v=20260929-1815">
 <title>VELUM Entregador</title>
 <style>
 :root{--n:#0F3665;--o:#FF7A00;--bg:#F4F7FB;--m:#718096;--l:#E2E8F0;--g:#179B63;--r:#B83E3E}
@@ -26,7 +26,7 @@ button{width:100%;min-height:50px;border:0;border-radius:14px;font-weight:900;fo
 </head>
 <body>
 <div class="app">
-  <div class="brand"><div class="logo"><img src="./icon-192.png?v=20260929-1246" alt=""></div><div><b>VELUM Entregador</b><span>Comprou. Chamou. Chegou.</span></div></div>
+  <div class="brand"><div class="logo"><img src="./icon-192.png?v=20260929-1815" alt=""></div><div><b>VELUM Entregador</b><span>Comprou. Chamou. Chegou.</span></div></div>
   <button class="ghost" id="panelBtn" style="margin:0 0 14px">← VOLTAR AO PAINEL ENTREGADOR</button>
   <section class="hero"><small>WEB APP DO ENTREGADOR</small><h1>Corridas na tela bloqueada.</h1><p>Instale a VELUM na tela inicial e ative os alertas. Quando surgir uma corrida, você recebe uma notificação mesmo com o painel fechado.</p></section>
 
@@ -73,7 +73,8 @@ function setStatus(kind,msg){const el=$('status');el.className='status show '+ki
 function setPair(ok,name,msg){$('pairPill').className='pill '+(ok?'ok':'err');$('pairPill').textContent=ok?'CONECTADO':'AÇÃO NECESSÁRIA';$('pairTitle').textContent=ok?(name?'Olá, '+name:'Cadastro conectado'):'Conexão pendente';$('pairText').textContent=msg}
 function setPush(on,msg){$('pushPill').className='pill '+(on?'ok':'warn');$('pushPill').textContent=on?'ATIVADO':'DESATIVADO';$('pushText').textContent=msg}
 function urlBase64ToUint8Array(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
-async function registerSW(){if(!('serviceWorker'in navigator))throw new Error('Este navegador não oferece Service Worker.');await navigator.serviceWorker.register('./sw.js');return navigator.serviceWorker.ready}
+async function registerSW(){if(!('serviceWorker'in navigator))throw new Error('Este navegador não oferece Service Worker.');await navigator.serviceWorker.register('./sw.js?v=20260929-1815');return navigator.serviceWorker.ready}
+function pushSupported(reg){return !!(reg&&reg.pushManager&&typeof reg.pushManager.getSubscription==='function'&&typeof reg.pushManager.subscribe==='function')}
 async function subscribeNow({allowPrompt=true}={}){
   unlockAudio();
   if(isIOS()&&!standalone()){
@@ -93,6 +94,7 @@ async function subscribeNow({allowPrompt=true}={}){
     return false;
   }
   const reg=await registerSW();
+  if(!pushSupported(reg))throw new Error('O Web Push ainda não está disponível neste modo. No iPhone, abra a VELUM pelo ícone adicionado à Tela de Início e tente novamente.');
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID)});
   const r=await fetch(API+'/driverPushSubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pair:pair(),subscription:sub.toJSON()})});
@@ -101,7 +103,7 @@ async function subscribeNow({allowPrompt=true}={}){
   setPush(true,'Notificações ativadas. Você pode fechar o painel e continuar recebendo corridas.');
   $('activateBtn').style.display='none';
   setStatus('ok',d.testeEnviado?'Tudo certo. Enviamos uma notificação de teste para este aparelho. Voltando ao painel...':'Tudo certo. Este aparelho está conectado à VELUM. Voltando ao painel...');
-  try{await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./icon-192.png?v=20260929-1308',badge:'./icon-192.png?v=20260929-1308',tag:'velum-test',silent:false})}catch(_){}
+  try{await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./icon-192.png?v=20260929-1815',badge:'./icon-192.png?v=20260929-1815',tag:'velum-test',silent:false})}catch(_){}
   longRing();
   setTimeout(()=>{location.href='https://www.vaidevelum.com/painel-entregador'},1600);
   return true;
@@ -117,7 +119,7 @@ async function validatePair(){
     setPair(true,d.driverName,'Seu cadastro VELUM foi localizado.');
     $('activateBtn').disabled=false;
     const reg=await registerSW().catch(()=>null);
-    const sub=reg?await reg.pushManager.getSubscription().catch(()=>null):null;
+    const sub=pushSupported(reg)?await reg.pushManager.getSubscription().catch(()=>null):null;
     if(sub){
       setPush(true,'Este aparelho já está pronto para receber novas corridas.');
       $('activateBtn').style.display='none';
@@ -125,7 +127,10 @@ async function validatePair(){
       return;
     }
     if(isIOS()&&!standalone()){
-      setPush(false,'Instale a VELUM na Tela de Início para receber corridas com a tela bloqueada.');
+      setPush(false,'No iPhone, as notificações só aparecem após instalar a VELUM na Tela de Início e abrir pelo ícone.');
+      $('activateBtn').textContent='COMO INSTALAR';
+      $('activateBtn').disabled=false;
+      setStatus('info','Você está no Safari. Toque em Compartilhar → Adicionar à Tela de Início. Depois feche esta aba, abra a VELUM pelo ícone e toque em Ativar notificações.');
       return;
     }
     if('Notification'in window&&Notification.permission==='denied'){
@@ -142,6 +147,10 @@ async function validatePair(){
 }
 $('activateBtn').onclick=async()=>{
   unlockAudio();
+  if(isIOS()&&!standalone()){
+    setStatus('info','No Safari: Compartilhar → Adicionar à Tela de Início. Depois abra pelo ícone VELUM e toque novamente em Ativar notificações.');
+    return;
+  }
   if('Notification'in window&&Notification.permission==='denied'){
     setStatus('err','As notificações estão bloqueadas. Se a VELUM não aparece em Ajustes → Notificações, remova o ícone da Tela de Início, volte ao Painel Entregador, toque no sino e instale a VELUM novamente. Depois toque em Ativar notificações e escolha Permitir.');
     return;
