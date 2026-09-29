@@ -57,6 +57,7 @@ const VAPID='BPUlaJMPnR2u3NoosfnIRa3gerseTeBot9B5Gr0btvibNQtQv7M__TywdH_lpG74JRL
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const incomingPair=params.get('pair')||'';
+const autoStart=params.get('auto')==='1';
 if(incomingPair){try{localStorage.setItem('velum_push_pair',incomingPair)}catch(_){}}
 let pairToken=incomingPair;
 function pair(){if(pairToken)return pairToken;try{return localStorage.getItem('velum_push_pair')||''}catch(_){return ''}}
@@ -73,6 +74,37 @@ function setPair(ok,name,msg){$('pairPill').className='pill '+(ok?'ok':'err');$(
 function setPush(on,msg){$('pushPill').className='pill '+(on?'ok':'warn');$('pushPill').textContent=on?'ATIVADO':'DESATIVADO';$('pushText').textContent=msg}
 function urlBase64ToUint8Array(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function registerSW(){if(!('serviceWorker'in navigator))throw new Error('Este navegador não oferece Service Worker.');await navigator.serviceWorker.register('./sw.js');return navigator.serviceWorker.ready}
+async function subscribeNow({allowPrompt=true}={}){
+  unlockAudio();
+  if(isIOS()&&!standalone()){
+    setStatus('info','No iPhone, adicione primeiro a VELUM à Tela de Início. Depois abra pelo ícone VELUM para ativar os alertas.');
+    return false;
+  }
+  if(!('Notification'in window)||!('PushManager'in window))throw new Error('Este aparelho não oferece Web Push neste navegador.');
+  if(Notification.permission==='denied'){
+    setStatus('err','As notificações estão bloqueadas no iPhone. Vá em Ajustes → Notificações → VELUM e ative “Permitir Notificações”. Depois volte aqui.');
+    $('activateBtn').textContent='VER COMO LIBERAR';
+    return false;
+  }
+  let permission=Notification.permission;
+  if(permission!=='granted'&&allowPrompt)permission=await Notification.requestPermission();
+  if(permission!=='granted'){
+    setStatus('info','Para receber corridas com a tela bloqueada, toque em “Ativar notificações” e confirme Permitir quando o iPhone perguntar.');
+    return false;
+  }
+  const reg=await registerSW();
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID)});
+  const r=await fetch(API+'/driverPushSubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pair:pair(),subscription:sub.toJSON()})});
+  const d=await r.json();
+  if(!d.ok)throw new Error(d.mensagem||'Não foi possível salvar este aparelho.');
+  setPush(true,'Notificações ativadas. Você pode fechar o painel e continuar recebendo corridas.');
+  $('activateBtn').style.display='none';
+  setStatus('ok',d.testeEnviado?'Tudo certo. Enviamos uma notificação de teste para este aparelho.':'Tudo certo. Este aparelho está conectado à VELUM.');
+  try{await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./icon-192.png?v=20260929-1308',badge:'./icon-192.png?v=20260929-1308',tag:'velum-test',silent:false})}catch(_){}
+  longRing();
+  return true;
+}
 async function validatePair(){
   await restorePair();
   const token=pair();
@@ -85,32 +117,40 @@ async function validatePair(){
     $('activateBtn').disabled=false;
     const reg=await registerSW().catch(()=>null);
     const sub=reg?await reg.pushManager.getSubscription().catch(()=>null):null;
-    if(sub){setPush(true,'Este aparelho já está pronto para receber novas corridas.');$('activateBtn').style.display='none';}
-    else if(isIOS()&&!standalone())setPush(false,'No iPhone, instale primeiro na Tela de Início e abra pelo ícone.');
-    else setPush(false,'Toque em ativar para receber corridas na tela bloqueada.');
+    if(sub){
+      setPush(true,'Este aparelho já está pronto para receber novas corridas.');
+      $('activateBtn').style.display='none';
+      if(autoStart&&standalone())setTimeout(longRing,250);
+      return;
+    }
+    if(isIOS()&&!standalone()){
+      setPush(false,'Instale a VELUM na Tela de Início para receber corridas com a tela bloqueada.');
+      return;
+    }
+    if('Notification'in window&&Notification.permission==='denied'){
+      setPush(false,'As notificações estão bloqueadas nos Ajustes do iPhone.');
+      $('activateBtn').textContent='VER COMO LIBERAR';
+      setStatus('err','Vá em Ajustes → Notificações → VELUM e ative “Permitir Notificações”. Depois volte para a VELUM.');
+      return;
+    }
+    setPush(false,'Ative para receber corridas na tela bloqueada.');
+    if(autoStart){
+      setStatus('info','Você ficou online. Confirme Permitir quando o iPhone solicitar as notificações.');
+      try{await subscribeNow({allowPrompt:true})}catch(_){}
+    }
   }catch(e){setPair(false,'',e.message||'Não foi possível validar o cadastro.');$('activateBtn').disabled=true}
 }
 $('activateBtn').onclick=async()=>{
   unlockAudio();
+  if('Notification'in window&&Notification.permission==='denied'){
+    setStatus('err','As notificações já foram bloqueadas neste iPhone. Abra Ajustes → Notificações → VELUM e habilite “Permitir Notificações”.');
+    return;
+  }
   try{
-    if(isIOS()&&!standalone())return setStatus('info','No iPhone: use Safari → Compartilhar → Adicionar à Tela de Início. Depois abra a VELUM pelo ícone e toque novamente em Ativar notificações.');
-    if(!('Notification'in window)||!('PushManager'in window))throw new Error('Este aparelho não oferece Web Push neste navegador.');
     $('activateBtn').disabled=true;$('activateBtn').textContent='ATIVANDO...';
-    const permission=await Notification.requestPermission();
-    if(permission!=='granted')throw new Error(permission==='denied'?'As notificações foram bloqueadas. Libere a VELUM nos Ajustes do iPhone.':'A permissão não foi concedida.');
-    const reg=await registerSW();
-    let sub=await reg.pushManager.getSubscription();
-    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID)});
-    const r=await fetch(API+'/driverPushSubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pair:pair(),subscription:sub.toJSON()})});
-    const d=await r.json();
-    if(!d.ok)throw new Error(d.mensagem||'Não foi possível salvar este aparelho.');
-    setPush(true,'Notificações ativadas. Você pode fechar o painel e continuar recebendo corridas.');
-    $('activateBtn').style.display='none';
-    setStatus('ok',d.testeEnviado?'Tudo certo. Enviamos uma notificação de teste para este aparelho.':'Tudo certo. Este aparelho está conectado à VELUM.');
-    await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./icon-192.png',badge:'./icon-192.png',tag:'velum-test',silent:false});
-    longRing();
+    await subscribeNow({allowPrompt:true});
   }catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.')}
-  finally{$('activateBtn').disabled=false;$('activateBtn').textContent='ATIVAR NOTIFICAÇÕES'}
+  finally{if($('activateBtn').style.display!=='none'){$('activateBtn').disabled=false;$('activateBtn').textContent='ATIVAR NOTIFICAÇÕES'}}
 };
 $('installBtn').onclick=()=>{if(syncInstallUI())return;setStatus('info',isIOS()?'No Safari, toque no botão Compartilhar (quadrado com seta para cima), depois “Adicionar à Tela de Início” e confirme em “Adicionar”.':'Abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.');};
 $('panelBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador';
