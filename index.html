@@ -27,6 +27,7 @@ button{width:100%;min-height:50px;border:0;border-radius:14px;font-weight:900;fo
 <body>
 <div class="app">
   <div class="brand"><div class="logo"><img src="./icon-192.png?v=20260929-1246" alt=""></div><div><b>VELUM Entregador</b><span>Comprou. Chamou. Chegou.</span></div></div>
+  <button class="ghost" id="panelBtn" style="margin:0 0 14px">← VOLTAR AO PAINEL ENTREGADOR</button>
   <section class="hero"><small>WEB APP DO ENTREGADOR</small><h1>Corridas na tela bloqueada.</h1><p>Instale a VELUM na tela inicial e ative os alertas. Quando surgir uma corrida, você recebe uma notificação mesmo com o painel fechado.</p></section>
 
   <section class="card">
@@ -47,7 +48,6 @@ button{width:100%;min-height:50px;border:0;border-radius:14px;font-weight:900;fo
       <div class="step"><i>2</i><div><b>Abra pelo ícone VELUM</b><span>O iPhone libera Web Push para o app instalado.</span></div></div>
       <div class="step"><i>3</i><div><b>Ative os alertas</b><span>Toque em “Ativar notificações” e permita o acesso.</span></div></div>
     </div>
-    <button class="secondary" id="panelBtn">ABRIR PAINEL ENTREGADOR</button>
   </section>
   <div class="footer">VELUM • notificações de novas corridas<br>O som exibido na tela bloqueada segue as regras e configurações do iPhone.</div>
 </div>
@@ -82,8 +82,8 @@ async function subscribeNow({allowPrompt=true}={}){
   }
   if(!('Notification'in window)||!('PushManager'in window))throw new Error('Este aparelho não oferece Web Push neste navegador.');
   if(Notification.permission==='denied'){
-    setStatus('err','As notificações estão bloqueadas no iPhone. Vá em Ajustes → Notificações → VELUM e ative “Permitir Notificações”. Depois volte aqui.');
-    $('activateBtn').textContent='VER COMO LIBERAR';
+    setStatus('err','As notificações estão bloqueadas neste Web App. Se a VELUM não aparecer em Ajustes → Notificações, remova o ícone VELUM da Tela de Início, abra novamente a ativação pelo sino do Painel Entregador e adicione a VELUM de novo à Tela de Início.');
+    $('activateBtn').textContent='COMO REATIVAR';
     return false;
   }
   let permission=Notification.permission;
@@ -100,9 +100,10 @@ async function subscribeNow({allowPrompt=true}={}){
   if(!d.ok)throw new Error(d.mensagem||'Não foi possível salvar este aparelho.');
   setPush(true,'Notificações ativadas. Você pode fechar o painel e continuar recebendo corridas.');
   $('activateBtn').style.display='none';
-  setStatus('ok',d.testeEnviado?'Tudo certo. Enviamos uma notificação de teste para este aparelho.':'Tudo certo. Este aparelho está conectado à VELUM.');
+  setStatus('ok',d.testeEnviado?'Tudo certo. Enviamos uma notificação de teste para este aparelho. Voltando ao painel...':'Tudo certo. Este aparelho está conectado à VELUM. Voltando ao painel...');
   try{await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./icon-192.png?v=20260929-1308',badge:'./icon-192.png?v=20260929-1308',tag:'velum-test',silent:false})}catch(_){}
   longRing();
+  setTimeout(()=>{location.href='https://www.vaidevelum.com/painel-entregador'},1600);
   return true;
 }
 async function validatePair(){
@@ -128,22 +129,21 @@ async function validatePair(){
       return;
     }
     if('Notification'in window&&Notification.permission==='denied'){
-      setPush(false,'As notificações estão bloqueadas nos Ajustes do iPhone.');
-      $('activateBtn').textContent='VER COMO LIBERAR';
-      setStatus('err','Vá em Ajustes → Notificações → VELUM e ative “Permitir Notificações”. Depois volte para a VELUM.');
+      setPush(false,'As notificações estão bloqueadas neste Web App.');
+      $('activateBtn').textContent='COMO REATIVAR';
+      setStatus('err','Se a VELUM não aparece em Ajustes → Notificações, remova o ícone VELUM da Tela de Início, abra a ativação novamente pelo sino do Painel Entregador e adicione o app de novo.');
       return;
     }
     setPush(false,'Ative para receber corridas na tela bloqueada.');
-    if(autoStart){
-      setStatus('info','Você ficou online. Confirme Permitir quando o iPhone solicitar as notificações.');
-      try{await subscribeNow({allowPrompt:true})}catch(_){}
+    if('Notification'in window&&Notification.permission==='granted'){
+      try{await subscribeNow({allowPrompt:false})}catch(_){}
     }
   }catch(e){setPair(false,'',e.message||'Não foi possível validar o cadastro.');$('activateBtn').disabled=true}
 }
 $('activateBtn').onclick=async()=>{
   unlockAudio();
   if('Notification'in window&&Notification.permission==='denied'){
-    setStatus('err','As notificações já foram bloqueadas neste iPhone. Abra Ajustes → Notificações → VELUM e habilite “Permitir Notificações”.');
+    setStatus('err','As notificações estão bloqueadas. Se a VELUM não aparece em Ajustes → Notificações, remova o ícone da Tela de Início, volte ao Painel Entregador, toque no sino e instale a VELUM novamente. Depois toque em Ativar notificações e escolha Permitir.');
     return;
   }
   try{
