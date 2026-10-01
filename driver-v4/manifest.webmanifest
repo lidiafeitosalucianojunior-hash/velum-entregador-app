@@ -1,9 +1,9 @@
 {
   "name": "VELUM Entregador",
   "short_name": "VELUM",
-  "id": "/velum-entregador-v4",
-  "start_url": "/?app=1&velum=4",
-  "scope": "/",
+  "id": "/driver-v4/",
+  "start_url": "/driver-v4/?app=1&velum=4",
+  "scope": "/driver-v4/",
   "display": "standalone",
   "background_color": "#0F3665",
   "theme_color": "#0F3665",
