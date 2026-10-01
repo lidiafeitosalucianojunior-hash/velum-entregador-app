@@ -10,8 +10,8 @@ self.addEventListener('push',event=>{
   const title=data.title||'VELUM • Nova corrida disponível';
   const options={
     body:data.body||'Uma nova corrida está disponível.',
-    icon:'./icon-192.png?v=20260929-1246',
-    badge:'./icon-192.png?v=20260929-1246',
+    icon:'./velum-icon-192-v3.png?v=20261001-1516',
+    badge:'./velum-icon-192-v3.png?v=20261001-1516',
     tag:data.tag||'velum-new-ride',
     renotify:true,
     requireInteraction:true,
