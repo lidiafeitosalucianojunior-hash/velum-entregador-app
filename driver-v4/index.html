@@ -78,6 +78,7 @@ const isIOS=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
 function setStatus(kind,msg){const el=$('status');el.className='status show '+kind;el.textContent=msg}
 function setPair(ok,name,msg){$('pairPill').className='pill '+(ok?'ok':'err');$('pairPill').textContent=ok?'CONECTADO':'AÇÃO NECESSÁRIA';$('pairTitle').textContent=ok?(name?'Olá, '+name:'Cadastro conectado'):'Conexão pendente';$('pairText').textContent=msg}
 function setPush(on,msg){$('pushPill').className='pill '+(on?'ok':'warn');$('pushPill').textContent=on?'ATIVADO':'DESATIVADO';$('pushText').textContent=msg}
+function showBlockedGate(){const gate=$('permissionGate'),box=gate.querySelector('.permission-box');box.querySelector('h2').textContent='Notificações bloqueadas neste iPhone';box.querySelector('p').textContent='Esta instalação antiga já foi bloqueada pelo iPhone e o sistema não pode abrir a caixa nativa novamente. Remova o ícone VELUM da Tela de Início, abra a ativação pelo sino no Painel Entregador e adicione a VELUM novamente à Tela de Início. A nova instalação pedirá Permitir.';$('permissionGateBtn').textContent='ENTENDI';$('permissionGateBtn').dataset.mode='blocked';$('permissionGateBackBtn').textContent='VOLTAR AO PAINEL';gate.classList.add('show')}
 function urlBase64ToUint8Array(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function registerSW(){if(!('serviceWorker'in navigator))throw new Error('Este navegador não oferece Service Worker.');await navigator.serviceWorker.register('./sw.js?v=20261001-1615',{updateViaCache:'none'});return navigator.serviceWorker.ready}
 function pushSupported(reg){return !!(reg&&reg.pushManager&&typeof reg.pushManager.getSubscription==='function'&&typeof reg.pushManager.subscribe==='function')}
@@ -143,9 +144,9 @@ async function validatePair(){
       setPush(true,'Este aparelho já está pronto para receber novas corridas.');
       $('activateBtn').style.display='none';
       if(autoStart&&appInstalledHere())setTimeout(longRing,250);
-      if(appInstalledHere()&&params.get('setup')!=='1'){
+      if(appInstalledHere()){
         setStatus('ok','VELUM pronta. Abrindo seu painel...');
-        setTimeout(()=>location.replace('https://www.vaidevelum.com/painel-entregador?fromapp=1'),350);
+        setTimeout(()=>location.replace('https://www.vaidevelum.com/painel-entregador?pushreturn=1'),500);
       }
       return;
     }
@@ -165,9 +166,10 @@ async function validatePair(){
       return;
     }
     if('Notification'in window&&Notification.permission==='denied'){
-      setPush(false,'As notificações estão bloqueadas neste Web App.');
-      $('activateBtn').textContent='COMO REATIVAR';
-      setStatus('err','Se a VELUM não aparece em Ajustes → Notificações, remova o ícone VELUM da Tela de Início, abra a ativação novamente pelo sino do Painel Entregador e adicione o app de novo.');
+      setPush(false,'As notificações estão bloqueadas nesta instalação do iPhone.');
+      $('activateBtn').style.display='none';
+      setStatus('err','Esta instalação precisa ser refeita para o iPhone voltar a oferecer a opção Permitir.');
+      showBlockedGate();
       return;
     }
     setPush(false,'Ative para receber corridas na tela bloqueada.');
@@ -185,7 +187,8 @@ $('activateBtn').onclick=async()=>{
     }
   }
   if('Notification'in window&&Notification.permission==='denied'){
-    setStatus('err','Esta instalação antiga ficou marcada como bloqueada pelo iPhone. Remova o ícone VELUM da Tela de Início, abra novamente pelo sino do Painel Entregador e adicione a nova VELUM à Tela de Início. A nova instalação pedirá Permitir novamente.');
+    setStatus('err','Esta instalação antiga ficou marcada como bloqueada pelo iPhone.');
+    showBlockedGate();
     return;
   }
   try{
@@ -194,7 +197,7 @@ $('activateBtn').onclick=async()=>{
   }catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.')}
   finally{if($('activateBtn').style.display!=='none'){$('activateBtn').disabled=false;$('activateBtn').textContent='ATIVAR NOTIFICAÇÕES'}}
 };
-$('permissionGateBtn').onclick=async()=>{unlockAudio();$('permissionGateBtn').disabled=true;$('permissionGateBtn').textContent='ATIVANDO...';try{const ok=await subscribeNow({allowPrompt:true});if(ok)$('permissionGate').classList.remove('show')}catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.');$('permissionGate').classList.remove('show')}finally{$('permissionGateBtn').disabled=false;$('permissionGateBtn').textContent='PERMITIR NOTIFICAÇÕES'}};
+$('permissionGateBtn').onclick=async()=>{if($('permissionGateBtn').dataset.mode==='blocked'){location.href='https://www.vaidevelum.com/painel-entregador?pushblocked=1';return}unlockAudio();$('permissionGateBtn').disabled=true;$('permissionGateBtn').textContent='ATIVANDO...';try{const ok=await subscribeNow({allowPrompt:true});if(ok){$('permissionGate').classList.remove('show')}else if('Notification'in window&&Notification.permission==='denied'){showBlockedGate()}else{$('permissionGate').classList.remove('show')}}catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.');$('permissionGate').classList.remove('show')}finally{$('permissionGateBtn').disabled=false;if($('permissionGateBtn').dataset.mode!=='blocked')$('permissionGateBtn').textContent='PERMITIR NOTIFICAÇÕES'}};
 $('permissionGateBackBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?fromapp=1';
 $('panelBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?fromapp=1';
 if(incomingPair)persistPair(incomingPair);
