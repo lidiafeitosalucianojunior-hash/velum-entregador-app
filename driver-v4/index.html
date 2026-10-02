@@ -120,7 +120,7 @@ async function subscribeNow({allowPrompt=true}={}){
   setStatus('ok',d.testeEnviado?'Tudo certo. Enviamos uma notificação de teste para este aparelho. Voltando ao painel...':'Tudo certo. Este aparelho está conectado à VELUM. Voltando ao painel...');
   try{await reg.showNotification('VELUM • Alertas ativados',{body:'Você receberá novas corridas por aqui.',icon:'./velum-icon-192-v4.png?v=20261001-1615',badge:'./velum-icon-192-v4.png?v=20261001-1615',tag:'velum-test',silent:false})}catch(_){}
   longRing();
-  setTimeout(()=>{location.href='https://www.vaidevelum.com/painel-entregador'},1600);
+  setTimeout(()=>{location.href='https://www.vaidevelum.com/painel-entregador?pushreturn=1'},1600);
   return true;
 }
 async function validatePair(){
