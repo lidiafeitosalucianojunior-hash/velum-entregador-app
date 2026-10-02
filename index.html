@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#0F3665">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="VELUM Entregador">
+<meta name="apple-mobile-web-app-title" content="VELUM">
 <link rel="manifest" href="./manifest.webmanifest?v=20261001-1615">
 <link rel="preload" as="image" href="./velum-icon-180-v4.png?v=20261001-1641">
 <link rel="apple-touch-icon" sizes="180x180" href="./velum-icon-180-v4.png?v=20261001-1641">
 <link rel="apple-touch-icon-precomposed" href="./velum-icon-180-v4.png?v=20261001-1615">
 <link rel="icon" type="image/png" sizes="192x192" href="./velum-icon-192-v4.png?v=20261001-1615">
-<title>VELUM Entregador</title>
+<title>VELUM</title>
 <style>
 :root{--n:#0F3665;--o:#FF7A00;--bg:#F4F7FB;--m:#718096;--l:#E2E8F0;--g:#179B63;--r:#B83E3E}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:#18324b}
@@ -54,7 +54,7 @@ button{width:100%;min-height:50px;border:0;border-radius:14px;font-weight:900;fo
   </section>
   <div class="footer">VELUM • notificações de novas corridas<br>O som exibido na tela bloqueada segue as regras e configurações do iPhone.</div>
 </div>
-<div class="permission-gate" id="permissionGate"><div class="permission-box"><h2>Ativar alertas de corrida</h2><p>Para avisar sobre novas corridas com a tela bloqueada, a VELUM precisa da permissão de notificações do iPhone.</p><button class="primary" id="permissionGateBtn">PERMITIR NOTIFICAÇÕES</button></div></div>
+<div class="permission-gate" id="permissionGate"><div class="permission-box"><h2>Ativar alertas de corrida</h2><p>Para avisar sobre novas corridas com a tela bloqueada, a VELUM precisa da permissão de notificações do iPhone.</p><button class="primary" id="permissionGateBtn">PERMITIR NOTIFICAÇÕES</button><button class="ghost" id="permissionGateBackBtn">VOLTAR AO PAINEL</button></div></div>
 <script>
 const API='https://www.vaidevelum.com/_functions';
 const VAPID='BPUlaJMPnR2u3NoosfnIRa3gerseTeBot9B5Gr0btvibNQtQv7M__TywdH_lpG74JRLacHpNHtLjEiMtqyzvQeo';
@@ -80,6 +80,14 @@ function setPush(on,msg){$('pushPill').className='pill '+(on?'ok':'warn');$('pus
 function urlBase64ToUint8Array(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function registerSW(){if(!('serviceWorker'in navigator))throw new Error('Este navegador não oferece Service Worker.');await navigator.serviceWorker.register('./sw.js?v=20261001-1615',{updateViaCache:'none'});return navigator.serviceWorker.ready}
 function pushSupported(reg){return !!(reg&&reg.pushManager&&typeof reg.pushManager.getSubscription==='function'&&typeof reg.pushManager.subscribe==='function')}
+async function requestNotificationPermission(){
+  const result=await Promise.race([
+    Notification.requestPermission(),
+    new Promise(resolve=>setTimeout(()=>resolve('__timeout__'),45000))
+  ]);
+  if(result==='__timeout__')throw new Error('O iPhone não abriu a solicitação de permissão. Feche esta tela, abra novamente pelo ícone VELUM e toque em “Permitir notificações”.');
+  return result;
+}
 async function subscribeNow({allowPrompt=true}={}){
   unlockAudio();
   if(isIOS()&&!standalone()){
@@ -93,7 +101,7 @@ async function subscribeNow({allowPrompt=true}={}){
     return false;
   }
   let permission=Notification.permission;
-  if(permission!=='granted'&&allowPrompt)permission=await Notification.requestPermission();
+  if(permission!=='granted'&&allowPrompt)permission=await requestNotificationPermission();
   if(permission!=='granted'){
     setStatus('info','Para receber corridas com a tela bloqueada, toque em “Ativar notificações” e confirme Permitir quando o iPhone perguntar.');
     return false;
@@ -134,6 +142,10 @@ async function validatePair(){
       setPush(true,'Este aparelho já está pronto para receber novas corridas.');
       $('activateBtn').style.display='none';
       if(autoStart&&standalone())setTimeout(longRing,250);
+      if(standalone()&&params.get('setup')!=='1'){
+        setStatus('ok','VELUM pronta. Abrindo seu painel...');
+        setTimeout(()=>location.replace('https://www.vaidevelum.com/painel-entregador?fromapp=1'),350);
+      }
       return;
     }
     if(isIOS()&&!standalone()){
@@ -182,6 +194,7 @@ $('activateBtn').onclick=async()=>{
   finally{if($('activateBtn').style.display!=='none'){$('activateBtn').disabled=false;$('activateBtn').textContent='ATIVAR NOTIFICAÇÕES'}}
 };
 $('permissionGateBtn').onclick=async()=>{unlockAudio();$('permissionGateBtn').disabled=true;$('permissionGateBtn').textContent='ATIVANDO...';try{const ok=await subscribeNow({allowPrompt:true});if(ok)$('permissionGate').classList.remove('show')}catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.');$('permissionGate').classList.remove('show')}finally{$('permissionGateBtn').disabled=false;$('permissionGateBtn').textContent='PERMITIR NOTIFICAÇÕES'}};
+$('permissionGateBackBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?fromapp=1';
 $('panelBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?fromapp=1';
 if(incomingPair)persistPair(incomingPair);
 syncInstallUI();
