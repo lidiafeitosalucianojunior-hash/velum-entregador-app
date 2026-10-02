@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="VELUM">
-<link rel="manifest" href="./manifest.webmanifest?v=20261001-1615">
+<link rel="manifest" href="./manifest.webmanifest?v=20261002-1218">
 <link rel="preload" as="image" href="./velum-icon-180-v4.png?v=20261001-1641">
 <link rel="apple-touch-icon" sizes="180x180" href="./velum-icon-180-v4.png?v=20261001-1641">
 <link rel="apple-touch-icon-precomposed" href="./velum-icon-180-v4.png?v=20261001-1615">
@@ -69,13 +69,7 @@ function pair(){if(pairToken)return pairToken;try{return localStorage.getItem('v
 async function restorePair(){if(pair())return pair();return ''}
 async function persistPair(p){if(!p)return;pairToken=p;try{localStorage.setItem('velum_push_pair',p)}catch(_){}}
 const standalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
-function appInstalledHere(){
-  let marked=false;
-  try{marked=localStorage.getItem('velum_driver_app_installed')==='1'}catch(_){}
-  const launchedByManifest=params.get('app')==='1';
-  if(standalone()&&launchedByManifest){try{localStorage.setItem('velum_driver_app_installed','1')}catch(_){}}
-  return standalone()&&(launchedByManifest||marked);
-}
+function appInstalledHere(){return standalone()}
 let audioCtx=null;
 function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!audioCtx)audioCtx=new AC();if(audioCtx.state==='suspended')audioCtx.resume()}catch(_){}}
 function longRing(){unlockAudio();if(!audioCtx||audioCtx.state!=='running')return;const seq=[[0,880,.42],[470,1047,.42],[940,880,.42],[1410,1047,.55],[2180,880,.42],[2650,1047,.42],[3120,880,.42],[3590,1319,.72]];seq.forEach(([delay,freq,dur])=>setTimeout(()=>{try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.62,audioCtx.currentTime+.02);g.gain.setValueAtTime(.62,audioCtx.currentTime+Math.max(.03,dur-.08));g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur+.03)}catch(_){}},delay))}
