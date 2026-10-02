@@ -69,10 +69,17 @@ function pair(){if(pairToken)return pairToken;try{return localStorage.getItem('v
 async function restorePair(){if(pair())return pair();return ''}
 async function persistPair(p){if(!p)return;pairToken=p;try{localStorage.setItem('velum_push_pair',p)}catch(_){}}
 const standalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
+function appInstalledHere(){
+  let marked=false;
+  try{marked=localStorage.getItem('velum_driver_app_installed')==='1'}catch(_){}
+  const launchedByManifest=params.get('app')==='1';
+  if(standalone()&&launchedByManifest){try{localStorage.setItem('velum_driver_app_installed','1')}catch(_){}}
+  return standalone()&&(launchedByManifest||marked);
+}
 let audioCtx=null;
 function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!audioCtx)audioCtx=new AC();if(audioCtx.state==='suspended')audioCtx.resume()}catch(_){}}
 function longRing(){unlockAudio();if(!audioCtx||audioCtx.state!=='running')return;const seq=[[0,880,.42],[470,1047,.42],[940,880,.42],[1410,1047,.55],[2180,880,.42],[2650,1047,.42],[3120,880,.42],[3590,1319,.72]];seq.forEach(([delay,freq,dur])=>setTimeout(()=>{try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.62,audioCtx.currentTime+.02);g.gain.setValueAtTime(.62,audioCtx.currentTime+Math.max(.03,dur-.08));g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur+.03)}catch(_){}},delay))}
-function syncInstallUI(){const installed=standalone();$('installHelp').style.display=installed?'none':'';if($('activateBtn'))$('activateBtn').textContent=installed?'ATIVAR NOTIFICAÇÕES':'INSTALAR APLICATIVO';$('permissionGate').classList.remove('show');return installed}
+function syncInstallUI(){const installed=appInstalledHere();$('installHelp').style.display=installed?'none':'';if($('activateBtn'))$('activateBtn').textContent=installed?'ATIVAR NOTIFICAÇÕES':'INSTALAR APLICATIVO';$('permissionGate').classList.remove('show');return installed}
 const isIOS=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
 function setStatus(kind,msg){const el=$('status');el.className='status show '+kind;el.textContent=msg}
 function setPair(ok,name,msg){$('pairPill').className='pill '+(ok?'ok':'err');$('pairPill').textContent=ok?'CONECTADO':'AÇÃO NECESSÁRIA';$('pairTitle').textContent=ok?(name?'Olá, '+name:'Cadastro conectado'):'Conexão pendente';$('pairText').textContent=msg}
@@ -90,7 +97,7 @@ async function requestNotificationPermission(){
 }
 async function subscribeNow({allowPrompt=true}={}){
   unlockAudio();
-  if(isIOS()&&!standalone()){
+  if(isIOS()&&!appInstalledHere()){
     setStatus('info','No iPhone, adicione primeiro a VELUM à Tela de Início. Depois abra pelo ícone VELUM para ativar os alertas.');
     return false;
   }
@@ -141,21 +148,21 @@ async function validatePair(){
     if(sub){
       setPush(true,'Este aparelho já está pronto para receber novas corridas.');
       $('activateBtn').style.display='none';
-      if(autoStart&&standalone())setTimeout(longRing,250);
-      if(standalone()&&params.get('setup')!=='1'){
+      if(autoStart&&appInstalledHere())setTimeout(longRing,250);
+      if(appInstalledHere()&&params.get('setup')!=='1'){
         setStatus('ok','VELUM pronta. Abrindo seu painel...');
         setTimeout(()=>location.replace('https://www.vaidevelum.com/painel-entregador?fromapp=1'),350);
       }
       return;
     }
-    if(isIOS()&&!standalone()){
+    if(isIOS()&&!appInstalledHere()){
       setPush(false,'Instale a VELUM Entregador na Tela de Início para liberar os alertas.');
       $('activateBtn').textContent='INSTALAR APLICATIVO';
       $('activateBtn').disabled=false;
       setStatus('info','No iPhone: toque em Compartilhar → Adicionar à Tela de Início. Depois abra a VELUM pelo novo ícone.');
       return;
     }
-    if(standalone()&&'Notification'in window&&Notification.permission==='default'){
+    if(appInstalledHere()&&'Notification'in window&&Notification.permission==='default'){
       setPush(false,'Falta apenas permitir as notificações do iPhone.');
       $('activateBtn').textContent='ATIVAR NOTIFICAÇÕES';
       $('activateBtn').style.display='none';
@@ -177,7 +184,7 @@ async function validatePair(){
 }
 $('activateBtn').onclick=async()=>{
   unlockAudio();
-  if(!standalone()){
+  if(!appInstalledHere()){
     if(isIOS()){
       setStatus('info','No Safari: toque em Compartilhar → Adicionar à Tela de Início. Depois abra pelo ícone VELUM Entregador.');
       return;
