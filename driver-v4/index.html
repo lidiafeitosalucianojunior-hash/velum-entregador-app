@@ -55,6 +55,7 @@ button{width:100%;min-height:50px;border:0;border-radius:14px;font-weight:900;fo
   <div class="footer">VELUM • notificações de novas corridas<br>O som exibido na tela bloqueada segue as regras e configurações do iPhone.</div>
 </div>
 <div class="permission-gate" id="permissionGate"><div class="permission-box"><h2>Ativar alertas de corrida</h2><p>Para avisar sobre novas corridas com a tela bloqueada, a VELUM precisa da permissão de notificações do iPhone.</p><button class="primary" id="permissionGateBtn">PERMITIR NOTIFICAÇÕES</button><button class="ghost" id="permissionGateBackBtn">VOLTAR AO PAINEL</button></div></div>
+<div class="permission-gate" id="installGate"><div class="permission-box"><h2>Adicionar VELUM à Tela de Início</h2><p>Permissão confirmada. Agora instale a VELUM no iPhone: toque no botão abaixo e, no menu do iPhone, escolha “Adicionar à Tela de Início”. Depois abra o novo ícone VELUM.</p><button class="primary" id="shareInstallBtn">COMPARTILHAR / ADICIONAR À TELA DE INÍCIO</button><button class="ghost" id="installGateBackBtn">VOLTAR AO PAINEL</button></div></div>
 <script>
 const API='https://www.vaidevelum.com/_functions';
 const VAPID='BPUlaJMPnR2u3NoosfnIRa3gerseTeBot9B5Gr0btvibNQtQv7M__TywdH_lpG74JRLacHpNHtLjEiMtqyzvQeo';
@@ -78,7 +79,11 @@ const isIOS=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
 function setStatus(kind,msg){const el=$('status');el.className='status show '+kind;el.textContent=msg}
 function setPair(ok,name,msg){$('pairPill').className='pill '+(ok?'ok':'err');$('pairPill').textContent=ok?'CONECTADO':'AÇÃO NECESSÁRIA';$('pairTitle').textContent=ok?(name?'Olá, '+name:'Cadastro conectado'):'Conexão pendente';$('pairText').textContent=msg}
 function setPush(on,msg){$('pushPill').className='pill '+(on?'ok':'warn');$('pushPill').textContent=on?'ATIVADO':'DESATIVADO';$('pushText').textContent=msg}
-function showBlockedGate(){const gate=$('permissionGate'),box=gate.querySelector('.permission-box');box.querySelector('h2').textContent='Notificações bloqueadas neste iPhone';box.querySelector('p').textContent='Esta instalação antiga já foi bloqueada pelo iPhone e o sistema não pode abrir a caixa nativa novamente. Remova o ícone VELUM da Tela de Início, abra a ativação pelo sino no Painel Entregador e adicione a VELUM novamente à Tela de Início. A nova instalação pedirá Permitir.';$('permissionGateBtn').textContent='ENTENDI';$('permissionGateBtn').dataset.mode='blocked';$('permissionGateBackBtn').textContent='VOLTAR AO PAINEL';gate.classList.add('show')}
+function resetPermissionGate(){const gate=$('permissionGate'),box=gate.querySelector('.permission-box');box.querySelector('h2').textContent='Ativar alertas de corrida';box.querySelector('p').textContent='Para avisar sobre novas corridas com a tela bloqueada, a VELUM precisa da permissão de notificações do iPhone.';$('permissionGateBtn').textContent='PERMITIR NOTIFICAÇÕES';$('permissionGateBtn').dataset.mode='';$('permissionGateBackBtn').textContent='VOLTAR AO PAINEL'}
+function showBrowserPermissionGate(){resetPermissionGate();const gate=$('permissionGate'),box=gate.querySelector('.permission-box');box.querySelector('h2').textContent='Primeiro, permita as notificações';box.querySelector('p').textContent='Toque em “Permitir notificações”. Depois vamos abrir a etapa para adicionar a VELUM à Tela de Início.';$('permissionGateBtn').dataset.mode='browser';gate.classList.add('show')}
+function showInstalledPermissionGate(){resetPermissionGate();const gate=$('permissionGate'),box=gate.querySelector('.permission-box');box.querySelector('h2').textContent='Confirmar notificações no aplicativo';box.querySelector('p').textContent='Agora confirme os alertas para esta instalação da VELUM. Se o iPhone precisar de uma nova autorização, a caixa Permitir aparecerá em seguida.';$('permissionGateBtn').textContent='CONFIRMAR NOTIFICAÇÕES';$('permissionGateBtn').dataset.mode='installed-confirm';gate.classList.add('show')}
+function showInstallGate(){resetPermissionGate();$('permissionGate').classList.remove('show');$('installGate').classList.add('show')}
+function showBlockedGate(){const gate=$('permissionGate'),box=gate.querySelector('.permission-box');box.querySelector('h2').textContent='Notificações bloqueadas neste iPhone';box.querySelector('p').textContent='Esta instalação antiga já foi bloqueada pelo iPhone e o sistema não pode abrir a caixa nativa novamente. Remova o ícone VELUM da Tela de Início e instale novamente.';$('permissionGateBtn').textContent='ENTENDI';$('permissionGateBtn').dataset.mode='blocked';$('permissionGateBackBtn').textContent='VOLTAR AO PAINEL';gate.classList.add('show')}
 function urlBase64ToUint8Array(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function registerSW(){if(!('serviceWorker'in navigator))throw new Error('Este navegador não oferece Service Worker.');await navigator.serviceWorker.register('./sw.js?v=20261001-1615',{updateViaCache:'none'});return navigator.serviceWorker.ready}
 function pushSupported(reg){return !!(reg&&reg.pushManager&&typeof reg.pushManager.getSubscription==='function'&&typeof reg.pushManager.subscribe==='function')}
@@ -92,9 +97,12 @@ async function requestNotificationPermission(){
 }
 async function subscribeNow({allowPrompt=true}={}){
   unlockAudio();
-  if(isIOS()&&!appInstalledHere()){
-    setStatus('info','No iPhone, adicione primeiro a VELUM à Tela de Início. Depois abra pelo ícone VELUM para ativar os alertas.');
-    return false;
+  if(isIOS()&&!appInstalledHere()&&allowPrompt){
+    let permission=Notification.permission;
+    if(permission==='default') permission=await requestNotificationPermission();
+    if(permission==='denied'){showBlockedGate();return false}
+    showInstallGate();
+    return true;
   }
   if(!('Notification'in window)||!('PushManager'in window))throw new Error('Este aparelho não oferece Web Push neste navegador.');
   if(Notification.permission==='denied'){
@@ -140,6 +148,13 @@ async function validatePair(){
       const reg=await registerSW().catch(()=>null);
       sub=pushSupported(reg)?await reg.pushManager.getSubscription().catch(()=>null):null;
     }
+    if(appInstalledHere()&&params.get('setup')==='1'&&'Notification'in window&&Notification.permission!=='denied'){
+      setPush(!!sub,sub?'Notificações encontradas. Confirme esta instalação para continuar.':'Confirme as notificações para concluir a instalação.');
+      $('activateBtn').style.display='none';
+      setStatus('info','Etapa final: confirme os alertas desta instalação da VELUM.');
+      showInstalledPermissionGate();
+      return;
+    }
     if(sub){
       setPush(true,'Este aparelho já está pronto para receber novas corridas.');
       $('activateBtn').style.display='none';
@@ -151,10 +166,10 @@ async function validatePair(){
       return;
     }
     if(isIOS()&&!appInstalledHere()){
-      setPush(false,'Instale a VELUM Entregador na Tela de Início para liberar os alertas.');
-      $('activateBtn').textContent='INSTALAR APLICATIVO';
-      $('activateBtn').disabled=false;
-      setStatus('info','No iPhone: toque em Compartilhar → Adicionar à Tela de Início. Depois abra a VELUM pelo novo ícone.');
+      setPush(false,'Primeiro permita as notificações. Depois instale a VELUM na Tela de Início.');
+      $('activateBtn').style.display='none';
+      setStatus('info','Etapa 1 de 2: permitir notificações. A etapa de instalação aparecerá logo em seguida.');
+      showBrowserPermissionGate();
       return;
     }
     if(appInstalledHere()&&'Notification'in window&&Notification.permission==='default'){
@@ -197,9 +212,47 @@ $('activateBtn').onclick=async()=>{
   }catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.')}
   finally{if($('activateBtn').style.display!=='none'){$('activateBtn').disabled=false;$('activateBtn').textContent='ATIVAR NOTIFICAÇÕES'}}
 };
-$('permissionGateBtn').onclick=async()=>{if($('permissionGateBtn').dataset.mode==='blocked'){location.href='https://www.vaidevelum.com/painel-entregador?pushblocked=1';return}unlockAudio();$('permissionGateBtn').disabled=true;$('permissionGateBtn').textContent='ATIVANDO...';try{const ok=await subscribeNow({allowPrompt:true});if(ok){$('permissionGate').classList.remove('show')}else if('Notification'in window&&Notification.permission==='denied'){showBlockedGate()}else{$('permissionGate').classList.remove('show')}}catch(e){setStatus('err',e.message||'Não foi possível ativar as notificações.');$('permissionGate').classList.remove('show')}finally{$('permissionGateBtn').disabled=false;if($('permissionGateBtn').dataset.mode!=='blocked')$('permissionGateBtn').textContent='PERMITIR NOTIFICAÇÕES'}};
-$('permissionGateBackBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?fromapp=1';
-$('panelBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?fromapp=1';
+$('permissionGateBtn').onclick=async()=>{
+  const mode=$('permissionGateBtn').dataset.mode||'';
+  if(mode==='blocked'){location.href='https://www.vaidevelum.com/painel-entregador?pushblocked=1';return}
+  unlockAudio();$('permissionGateBtn').disabled=true;$('permissionGateBtn').textContent='ATIVANDO...';
+  try{
+    if(mode==='browser'){
+      if(!('Notification'in window)){showInstallGate();return}
+      let permission=Notification.permission;
+      if(permission==='default')permission=await requestNotificationPermission();
+      if(permission==='denied'){showBlockedGate();return}
+      showInstallGate();
+      return;
+    }
+    const ok=await subscribeNow({allowPrompt:true});
+    if(ok){$('permissionGate').classList.remove('show')}
+    else if('Notification'in window&&Notification.permission==='denied'){showBlockedGate()}
+    else{$('permissionGate').classList.remove('show')}
+  }catch(e){
+    setStatus('err',e.message||'Não foi possível ativar as notificações.');
+    $('permissionGate').classList.remove('show')
+  }finally{
+    $('permissionGateBtn').disabled=false;
+    if($('permissionGateBtn').dataset.mode!=='blocked')$('permissionGateBtn').textContent='PERMITIR NOTIFICAÇÕES'
+  }
+};
+$('shareInstallBtn').onclick=async()=>{
+  const installUrl=location.href;
+  try{
+    if(navigator.share){
+      await navigator.share({title:'VELUM',text:'Adicionar VELUM à Tela de Início',url:installUrl});
+      setStatus('info','No menu do iPhone, escolha “Adicionar à Tela de Início”. Depois abra o novo ícone VELUM.');
+    }else{
+      setStatus('info','No Safari, toque no botão Compartilhar e escolha “Adicionar à Tela de Início”.');
+    }
+  }catch(_){
+    setStatus('info','No Safari, toque em Compartilhar → Adicionar à Tela de Início. Depois abra o novo ícone VELUM.');
+  }
+};
+$('installGateBackBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?pushreturn=1';
+$('permissionGateBackBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?pushreturn=1';
+$('panelBtn').onclick=()=>location.href='https://www.vaidevelum.com/painel-entregador?pushreturn=1';
 if(incomingPair)persistPair(incomingPair);
 syncInstallUI();
 window.addEventListener('pageshow',syncInstallUI);
