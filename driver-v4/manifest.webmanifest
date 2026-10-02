@@ -1,8 +1,7 @@
 {
-  "id": "/velum-entregador-v2",
+  "id": "/velum-entregador-v5",
   "name": "VELUM",
   "short_name": "VELUM",
-  "id": "/driver-v4/",
   "scope": "/driver-v4/",
   "display": "standalone",
   "background_color": "#0F3665",

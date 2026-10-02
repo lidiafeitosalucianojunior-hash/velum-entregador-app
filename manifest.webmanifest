@@ -1,9 +1,8 @@
 {
-  "id": "/velum-entregador-v2",
+  "id": "/velum-entregador-root-v5",
   "name": "VELUM",
   "short_name": "VELUM",
-  "id": "/velum-entregador-v4",
-  "start_url": "/?app=1&velum=4",
+  "start_url": "/?app=1&velum=5",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0F3665",
