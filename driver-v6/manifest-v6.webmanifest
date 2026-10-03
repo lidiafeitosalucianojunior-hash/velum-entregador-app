@@ -1,0 +1,24 @@
+{
+  "id": "/velum-entregador-v6",
+  "name": "VELUM",
+  "short_name": "VELUM",
+  "scope": "/driver-v6/",
+  "display": "standalone",
+  "background_color": "#0F3665",
+  "theme_color": "#0F3665",
+  "description": "Aplicativo VELUM para entregadores credenciados.",
+  "icons": [
+    {
+      "src": "./velum-icon-192-v4.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./velum-icon-512-v4.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
