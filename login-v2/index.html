@@ -10,7 +10,15 @@
 </div></div>
 <div class="form-wrap"><div class="form-caption" id="formCaption">Crie sua conta para continuar</div><div class="field"><label>E-mail</label><input id="email" type="email" autocomplete="email" placeholder="seuemail@exemplo.com"></div><div class="field"><label>Senha</label><input id="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha"></div><button class="primary" id="submit">Entrar</button><div class="status" id="status"></div><div class="note">Se você já possui cadastro, basta entrar: seu painel será aberto automaticamente.</div></div></section></div>
 <script>
-const $=id=>document.getElementById(id);let mode='login',selectedRole='';
+const $=id=>document.getElementById(id);let mode='login',selectedRole='',actionWatchdog=null;
+function stopWatchdog(){clearTimeout(actionWatchdog);actionWatchdog=null}
+function startWatchdog(){
+ stopWatchdog();
+ actionWatchdog=setTimeout(()=>{
+   busy(false);
+   status('A operação demorou demais. Verifique sua conexão e tente novamente.');
+ },16000);
+}
 function send(type,payload={}){parent.postMessage({source:'VELUM_LOGIN',type,payload},'*')}
 function status(msg,ok=false){$('status').textContent=msg||'';$('status').className='status'+(ok?' ok':'')}
 function busy(on,label){
@@ -68,11 +76,13 @@ $('submit').onclick=()=>{
    if(!selectedRole)return status('Escolha como você quer usar a VELUM.');
    busy(true,'Criando...');
    status('Criando sua conta...',true);
+   startWatchdog();
    send('REGISTER',{email,senha,tipo:selectedRole});
    return;
  }
  busy(true,'Entrando...');
  status('Entrando...',true);
+ startWatchdog();
  send('LOGIN',{email,senha});
 };
 window.addEventListener('message',e=>{
@@ -81,6 +91,7 @@ window.addEventListener('message',e=>{
  if(m.type==='STATUS'){
    status(m.payload?.message||'',m.payload?.ok===true);
    busy(m.payload?.busy===true,m.payload?.label);
+   if(m.payload?.busy!==true)stopWatchdog();
  }
  if(m.type==='INIT'){
    const tipo=String(m.payload?.tipo||'').trim();
