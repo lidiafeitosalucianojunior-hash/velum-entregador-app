@@ -2,6 +2,7 @@
   "id": "/velum-entregador-v6",
   "name": "VELUM",
   "short_name": "VELUM",
+  "start_url": "/driver-v6/?home=1",
   "scope": "/driver-v6/",
   "display": "standalone",
   "background_color": "#0F3665",

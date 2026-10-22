@@ -54,7 +54,11 @@ const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const incomingPair=params.get('pair')||'';
 const autoStart=params.get('auto')==='1';
+const launchedStandalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
 if(params.get('open')==='available'){const q=new URLSearchParams({tab:'available',frompush:'1'});if(params.get('delivery'))q.set('delivery',params.get('delivery'));location.replace('https://www.vaidevelum.com/painel-entregador?'+q.toString());}
+if(launchedStandalone()&&params.get('setup')!=='1'&&params.get('open')!=='available'){
+  location.replace('https://www.vaidevelum.com/painel-entregador?fromapp=1');
+}
 if(incomingPair){try{localStorage.setItem('velum_push_pair',incomingPair)}catch(_){}}
 let pairToken=incomingPair;
 function pair(){if(pairToken)return pairToken;try{return localStorage.getItem('velum_push_pair')||''}catch(_){return ''}}
