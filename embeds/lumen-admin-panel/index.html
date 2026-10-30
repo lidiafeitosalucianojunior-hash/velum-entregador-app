@@ -189,7 +189,19 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
    if(d.action==='UPDATE'){resetEditMode();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('callBox').classList.remove('on')}
  }
 });
+let firstDashboardData=false;
+window.addEventListener('message',event=>{
+  const m=event.data||{};
+  if(event.source===window.parent&&m.source==='LUMEN_ADMIN_PANEL_PAGE'&&(m.type==='DATA'||m.type==='ERROR')){
+    firstDashboardData=true;
+  }
+});
 renderStops();send('READY');
+let readyAttempts=0;
+const readyRetry=setInterval(()=>{
+  if(firstDashboardData||readyAttempts++>=8){clearInterval(readyRetry);return}
+  send('READY');
+},1400);
 
 </script>
 <script>/* VELUM_HOME_LINK */
