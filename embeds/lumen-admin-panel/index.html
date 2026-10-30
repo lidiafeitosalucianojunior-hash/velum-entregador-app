@@ -32,6 +32,26 @@
  .ride-sheet details[open] .sheet-actions{position:fixed;left:18px;right:18px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:999;max-height:62vh;overflow-y:auto;background:#fff;border:1px solid #dbe3ee;padding:12px;border-radius:14px;box-shadow:0 12px 35px #152c4555}
  .ride-sheet .sheet-actions button{width:100%;min-height:42px;white-space:normal;text-align:left}
 }
+
+/* Search in Bling, individual bulk-print selectors and store pickup */
+.bling-search-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin:10px 0}
+.bling-search-row input{min-width:0;border:1px solid #d8e1eb;border-radius:11px;padding:11px;background:#fff;color:var(--text);font:inherit}
+.bling-search-results{display:grid;gap:7px;margin-top:8px}
+.bling-result{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px;text-align:left;color:var(--navy);cursor:pointer;min-height:44px}
+.bling-result b{font-size:12px}.bling-result small{display:block;color:var(--muted);margin-top:3px;font-size:10px}
+.store-pickup-option{display:flex;gap:12px;align-items:center;cursor:pointer;background:#fff6eb;border:1px solid #f6d4ae;border-radius:12px;margin-top:12px;padding:12px;color:var(--navy)}
+.store-pickup-option input{width:20px;height:20px;flex:none;accent-color:var(--orange)}
+.store-pickup-option b{display:block;font-size:13px}.store-pickup-option small{display:block;margin-top:3px;line-height:1.5;color:#715c47;font-size:10px}
+.store-pickup-mode #deliveryAddressBlock,.store-pickup-mode #stopList,.store-pickup-mode #addStop,.store-pickup-mode #payerField,.store-pickup-mode #review{display:none!important}
+.sheet-select-label{display:flex;align-items:center;gap:5px}
+.sheet-select-label input,.sheet-order-line input{width:16px;height:16px;flex:none;accent-color:var(--orange);cursor:pointer}
+.sheet-order-line{display:flex;align-items:flex-start;gap:7px;overflow-wrap:anywhere}
+.sheet-order-line span{min-width:0}
+@media(max-width:650px){
+ .bling-search-row{grid-template-columns:1fr}.bling-search-row button{width:100%}
+ .sheet-order-line{gap:5px}.sheet-order-line input{width:15px;height:15px}
+}
+.ride-status[data-state="STORE_PICKUP_READY"]{background:#ede9fe;color:#5b36a1}
 </style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
@@ -40,23 +60,33 @@
 
 <section class="card callbox" id="callBox">
 <h3>Chamar entregador</h3><p>Monte o trajeto em etapas. O endereço da LÚMEN vem preenchido por padrão e continua editável.</p>
+<div class="address-block" id="blingLookupPanel">
+  <h4>Pesquisar cliente ou pedido no Bling</h4>
+  <p>Consulte o Bling antes de preencher a corrida. Escolha um cliente ou um pedido para carregar nome, telefone e endereço cadastrados.</p>
+  <div class="bling-search-row"><input id="blingSearch" type="search" autocomplete="off" placeholder="Nome, telefone ou número do pedido" aria-label="Pesquisar cliente ou pedido no Bling"><button type="button" id="blingSearchBtn" class="btn secondary">🔍 Pesquisar</button></div>
+  <div id="blingSearchStatus" class="meta" role="status" aria-live="polite">Digite pelo menos 2 caracteres e toque em Pesquisar.</div>
+  <div id="blingSearchResults" class="bling-search-results" role="list"></div>
+</div>
 
 <div class="address-block"><h4>1. Endereço de retirada</h4><p>Endereço padrão LÚMEN • WhatsApp 88 98861-5993</p>
 <div class="grid"><div class="field"><label>Rua</label><input id="pickupAddress"></div><div class="field"><label>Número</label><input id="pickupNumber"></div></div>
 <div class="grid three"><div class="field"><label>Bairro</label><input id="pickupNeighborhood"></div><div class="field"><label>Cidade</label><input id="pickupCity"></div><div class="field"><label>UF</label><input id="pickupState" maxlength="2"></div></div>
 <div class="grid"><div class="field"><label>CEP</label><input id="pickupZipCode"></div><div class="field"><label>WhatsApp</label><input id="pickupPhone" value="88 98861-5993"></div></div></div>
 
-<div class="address-block"><h4>2. Endereço de entrega</h4><p>Digite rua e número. A VELUM mostra sugestões de endereços existentes.</p>
+<div class="address-block" id="deliveryAddressBlock"><h4>2. Endereço de entrega</h4><p>Digite rua e número. A VELUM mostra sugestões de endereços existentes.</p>
 <div class="field" style="position:relative"><label>Rua, número e bairro</label><input id="deliveryAddress" autocomplete="off" placeholder="Ex.: Rua Santa Cecília, 515"><div id="deliverySuggestions" class="suggestions"></div></div>
 <div class="grid three"><div class="field"><label>CEP</label><input id="deliveryZipCode"></div><div class="field"><label>Cidade</label><input id="deliveryCity"></div><div class="field"><label>UF</label><input id="deliveryState" maxlength="2"></div></div></div>
 
 <div class="address-block"><h4>3. Recebedor</h4>
 <div class="grid"><div class="field"><label>Nome do recebedor</label><input id="customerName"></div><div class="field"><label>WhatsApp / telefone</label><input id="customerPhone"></div></div>
 <div class="field full"><label>Instruções / ponto de referência</label><textarea id="instructions"></textarea></div>
-<div class="field"><label>Quem paga</label><select id="payer"><option value="PAY_AT_PICKUP">LÚMEN</option><option value="PAY_AT_DELIVERY">Recebedor</option></select></div></div>
+<div class="field" id="payerField"><label>Quem paga</label><select id="payer"><option value="PAY_AT_PICKUP">LÚMEN</option><option value="PAY_AT_DELIVERY">Recebedor</option></select></div></div>
 
 <div class="address-block"><h4>4. Paradas / centros de distribuição</h4><p>Opcional. Adicione uma ou mais paradas antes de chamar o entregador. Cada parada pode ter taxa extra ou não.</p>
-<div id="stopList" class="stop-list"></div><button id="addStop" class="add-stop" type="button">+ ADICIONAR PARADA</button></div>
+<div id="stopList" class="stop-list"></div><button id="addStop" class="add-stop" type="button">+ ADICIONAR PARADA</button>
+<label class="store-pickup-option"><input id="storePickupMode" type="checkbox"><span><b>Retirada em loja</b><small>O próprio cliente busca o pedido na Lúmen. Sem entregador e sem taxa de entrega.</small></span></label>
+<label class="ready-check" id="storePickupReadyBox" style="display:none"><input id="storePickupReady" type="checkbox"><span>Confirmo que o pedido está pronto para retirada na loja.</span></label>
+</div>
 
 <div id="notice" class="notice"></div>
 <div class="form-actions"><button id="calc" class="btn primary">CALCULAR ENTREGA</button></div>
@@ -77,10 +107,11 @@
     <button class="active-subtab on" data-active-tab="logistics">CENTRO LOGÍSTICO <span id="logisticsCount">0</span></button>
     <button class="active-subtab" data-active-tab="accepted">CORRIDAS ACEITAS <span id="acceptedCount">0</span></button>
     <button class="active-subtab" data-active-tab="waiting">AGUARDANDO ENTREGADOR <span id="waitingCount">0</span></button>
+     <button class="active-subtab" data-active-tab="store">RETIRADAS NA LOJA <span id="storeCount">0</span></button>
   </div>
   <div class="print-toolbar"><span id="selectedInfo">Nenhuma etiqueta selecionada</span><div class="selection-actions"><button class="select-visible" id="selectVisible" type="button">SELECIONAR VISÍVEIS</button><button class="print-selected" id="printSelected" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg> IMPRIMIR SELECIONADAS</button></div></div>
-  <div class="field" style="margin:12px 0"><label for="rideSearch">Pesquisar cliente ou pedido</label><input id="rideSearch" type="search" autocomplete="off" placeholder="Nome, telefone ou número do pedido" aria-label="Pesquisar cliente ou pedido"></div>
-  <div class="ride-sheet-wrap"><table class="ride-sheet" aria-label="Todas as corridas em andamento"><thead><tr><th>Pedido</th><th>Cliente</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="rideSheetBody"><tr><td colspan="5">Carregando corridas...</td></tr></tbody></table></div>
+  <div class="field" style="margin:12px 0"><label for="rideSearch">Pesquisar cliente ou pedido</label><input id="rideSearch" type="search" autocomplete="off" placeholder="Nome, telefone ou número do pedido" aria-label="Pesquisar cliente ou pedido"><button id="openBlingLookup" class="select-visible" type="button" style="margin-top:8px;align-self:start">🔎 BUSCAR CLIENTE / PEDIDO NO BLING</button></div>
+  <div class="ride-sheet-wrap"><table class="ride-sheet" aria-label="Todas as corridas em andamento"><thead><tr><th><label class="sheet-select-label"><input type="checkbox" id="selectAllSheet" aria-label="Selecionar todas as corridas da tabela para impressão"> Pedido</label></th><th>Cliente</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="rideSheetBody"><tr><td colspan="5">Carregando corridas...</td></tr></tbody></table></div>
   <div id="activeList" class="loading">Carregando...</div>
 </section>
 <section class="panel" id="donePanel">
@@ -93,10 +124,11 @@
 
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])),money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 let currentFee=0,stops=[],suggestTimer=null,activeRideTab='logistics',activeRides=[],doneRides=[],selectedLabels=new Set(),editingDeliveryId='',availableDrivers=[];
+let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSearchResults=[];
 
 function send(type,payload={}){parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function dt(v){if(!v)return'—';try{return new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(_){return'—'}}
-function statusLabel(s){return({READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Entrega aceita',GOING_TO_STORE:'Indo para a retirada',AT_STORE:'Na retirada',COLLECTED:'Pedido coletado',OUT_FOR_DELIVERY:'Saiu para entrega',DELIVERED:'Concluída'})[s]||s||'Corrida'}
+function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Entrega aceita',GOING_TO_STORE:'Indo para a retirada',AT_STORE:'Na retirada',COLLECTED:'Pedido coletado',OUT_FOR_DELIVERY:'Saiu para entrega',DELIVERED:'Concluída'})[s]||s||'Corrida'}
 function notice(msg,ok=false){$('notice').textContent=msg;$('notice').className='notice on '+(ok?'ok':'err')}
 function clearNotice(){$('notice').className='notice';$('notice').textContent=''}
 
@@ -114,18 +146,19 @@ function driverPicker(x){
  return '<div class="driver-picker" data-picker="'+esc(x.deliveryId)+'"><button class="driver-picker-toggle" type="button" data-toggle-picker="'+esc(x.deliveryId)+'"><span>SELECIONAR ENTREGADORES PARA ESTA CORRIDA</span><span>'+(selected.size?selected.size+' selecionado(s)':'Todos')+'</span></button><div class="driver-picker-body">'+choices+'<div class="driver-picker-note">Sem seleção, a corrida fica disponível para todos. Um entregador que recusou esta entrega específica não será notificado novamente, mesmo se for selecionado.</div><div class="driver-picker-actions"><button class="btn secondary drivers-all" data-id="'+esc(x.deliveryId)+'" type="button">TODOS</button><button class="btn primary drivers-apply" data-id="'+esc(x.deliveryId)+'" type="button">APLICAR SELEÇÃO</button></div></div></div>';
 }
 function printerSvg(){return'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg>'}
-function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Entrega:</b> '+esc(x.deliveryAddress||'—')+'<br><b>Valor:</b> '+money(x.deliveryFee||0)+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+driverPicker(x)+waitingActions+'</article>'}
+function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Entrega:</b> '+esc(x.deliveryAddress||'—')+'<br><b>Valor:</b> '+money(x.deliveryFee||0)+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+driverPicker(x)+waitingActions+(x.status==='STORE_PICKUP_READY'?'<button type="button" class="btn primary store-complete" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:10px">CONCLUIR RETIRADA NA LOJA</button>':'')+'</article>'}
 
 function fillOrigin(loja){if(!loja)return;[['pickupAddress','pickupAddress'],['pickupNumber','pickupNumber'],['pickupNeighborhood','pickupNeighborhood'],['pickupCity','pickupCity'],['pickupState','pickupState'],['pickupZipCode','pickupZipCode'],['pickupPhone','pickupPhone']].forEach(([id,key])=>{if($(id)&&!$(id).value)$(id).value=loja[key]||''})}
 function allRideData(){return [...activeRides,...doneRides]}
 function rideById(id){return allRideData().find(x=>String(x.deliveryId)===String(id))}
-function currentVisibleRides(){if(!$('activePanel').classList.contains('on'))return doneRides;return activeRides.filter(x=>activeRideTab==='logistics'?(x.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(x.status)):activeRideTab==='accepted'?['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(x.status):['READY_TO_DISPATCH','WAITING_DRIVER'].includes(x.status))}
-function updatePrintState(){const n=selectedLabels.size;const text=n===0?'Nenhuma etiqueta selecionada':n===1?'1 etiqueta selecionada':n+' etiquetas selecionadas';if($('selectedInfo'))$('selectedInfo').textContent=text;if($('printSelected'))$('printSelected').disabled=n===0;if($('printSelectedDone'))$('printSelectedDone').disabled=n===0}
-function labelHtml(x){const address=[x.deliveryAddress,x.deliveryCity&&x.deliveryState?[x.deliveryCity,x.deliveryState].join(' - '):x.deliveryCity||x.deliveryState,x.deliveryZipCode].filter(Boolean);const qr='https://quickchart.io/qr?size=180&margin=1&text='+encodeURIComponent('https://www.lumenluxos.com');const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));const barcode='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=5&padding=2&text='+encodeURIComponent(code);return'<section class="shipping-label"><header><div class="lux">LÚMEN LUXOS</div><div class="tag">Exclusividade, Poder e Presença</div></header><main><div class="label-name">'+esc(x.customerName||'Recebedor')+'</div>'+(x.customerPhone?'<div class="label-phone">WhatsApp: '+esc(x.customerPhone)+'</div>':'')+'<div class="label-address">'+address.map(esc).join('<br>')+'</div>'+(x.deliveryInstructions?'<div class="label-ref"><b>Referência:</b> '+esc(x.deliveryInstructions)+'</div>':'')+'<div class="barcode"><img src="'+barcode+'" alt="QR Code da coleta"><div style="font-size:8pt;color:#738196;margin-top:1mm">QR de coleta • Etiqueta v'+esc(x.labelRevision||1)+'</div></div></main><footer><div class="thanks">Agradecemos pela sua compra!</div><div class="catalog"><img src="'+qr+'" alt="QR Code"><div><b>Conheça nosso catálogo</b><span>www.lumenluxos.com</span></div></div></footer></section>'}
+function currentVisibleRides(){if(!$('activePanel').classList.contains('on'))return doneRides;return activeRides.filter(x=>activeRideTab==='store'?x.status==='STORE_PICKUP_READY':activeRideTab==='logistics'?(x.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(x.status)):activeRideTab==='accepted'?['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(x.status):['READY_TO_DISPATCH','WAITING_DRIVER'].includes(x.status))}
+function updatePrintState(){const n=selectedLabels.size;const text=n===0?'Nenhuma etiqueta selecionada':n===1?'1 etiqueta selecionada':n+' etiquetas selecionadas';if($('selectedInfo'))$('selectedInfo').textContent=text;if($('printSelected'))$('printSelected').disabled=n===0;if($('printSelectedDone'))$('printSelectedDone').disabled=n===0;document.querySelectorAll('input.label-check[data-label-id]').forEach(el=>{el.checked=selectedLabels.has(el.dataset.labelId)});const visible=filteredRideSheet();if($('selectAllSheet')){$('selectAllSheet').checked=visible.length>0&&visible.every(x=>selectedLabels.has(x.deliveryId));$('selectAllSheet').indeterminate=visible.some(x=>selectedLabels.has(x.deliveryId))&&!visible.every(x=>selectedLabels.has(x.deliveryId))}}
+function labelHtml(x){const isStorePickup=x.storePickup===true||x.deliveryType==='Retirada em loja';const address=[isStorePickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):x.deliveryAddress,isStorePickup?([x.pickupCity,x.pickupState].filter(Boolean).join(' - ')):(x.deliveryCity&&x.deliveryState?[x.deliveryCity,x.deliveryState].join(' - '):x.deliveryCity||x.deliveryState),isStorePickup?x.pickupZipCode:x.deliveryZipCode].filter(Boolean);const qr='https://quickchart.io/qr?size=180&margin=1&text='+encodeURIComponent('https://www.lumenluxos.com');const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));const barcode='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=5&padding=2&text='+encodeURIComponent(code);return'<section class="shipping-label"><header><div class="lux">LÚMEN LUXOS</div><div class="tag">Exclusividade, Poder e Presença</div></header><main><div class="label-name">'+esc(x.customerName||'Recebedor')+'</div>'+(x.customerPhone?'<div class="label-phone">WhatsApp: '+esc(x.customerPhone)+'</div>':'')+'<div class="label-address">'+(isStorePickup?'<b>RETIRADA EM LOJA — NÃO ENVIAR ENTREGADOR</b><br>':'')+address.map(esc).join('<br>')+'</div>'+(x.deliveryInstructions?'<div class="label-ref"><b>Referência:</b> '+esc(x.deliveryInstructions)+'</div>':'')+'<div class="barcode"><img src="'+barcode+'" alt="QR Code da coleta"><div style="font-size:8pt;color:#738196;margin-top:1mm">QR de coleta • Etiqueta v'+esc(x.labelRevision||1)+'</div></div></main><footer><div class="thanks">Agradecemos pela sua compra!</div><div class="catalog"><img src="'+qr+'" alt="QR Code"><div><b>Conheça nosso catálogo</b><span>www.lumenluxos.com</span></div></div></footer></section>'}
 function printLabels(items){const list=(items||[]).filter(Boolean);if(!list.length)return;const w=window.open('','_blank');if(!w)return notice('Permita pop-ups para imprimir as etiquetas.',false);const doc='<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas LÚMEN LUXOS</title><style>@page{size:10cm 15cm;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Arial,sans-serif;color:#102f59}.shipping-label{width:10cm;height:15cm;padding:.65cm;display:flex;flex-direction:column;page-break-after:always;background:#fff}.shipping-label:last-child{page-break-after:auto}header{border-bottom:2px solid #102f59;padding-bottom:.35cm}.lux{font-size:24pt;font-weight:900;letter-spacing:.5px}.tag{font-size:10pt;margin-top:2mm;color:#5c6d80}main{flex:1;padding-top:.5cm}.label-name{font-size:20pt;font-weight:900;line-height:1.05}.label-phone{font-size:11pt;margin-top:2mm}.label-address{font-size:15pt;font-weight:700;line-height:1.3;margin-top:.55cm}.label-ref{font-size:10.5pt;line-height:1.35;margin-top:.5cm;padding:.3cm;border:1px solid #d7e0ea;border-radius:8px}.barcode{text-align:center;margin-top:.45cm}.barcode img{width:3.4cm;height:3.4cm;object-fit:contain}.thanks{text-align:center;font-weight:800;font-size:11pt;margin-bottom:.35cm}.catalog{display:flex;align-items:center;justify-content:center;gap:.35cm;border-top:1px solid #d7e0ea;padding-top:.35cm}.catalog img{width:2.8cm;height:2.8cm}.catalog div{display:flex;flex-direction:column;gap:1mm}.catalog b{font-size:11pt}.catalog span{font-size:9pt;color:#5c6d80}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'+list.map(labelHtml).join('')+'<script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>';w.document.open();w.document.write(doc);w.document.close()}
 function startEditRide(x){
  if(!x)return;
  editingDeliveryId=String(x.deliveryId||'');
+  $('storePickupMode').checked=false;applyStorePickupMode();
  $('callBox').classList.add('on');
  $('pickupAddress').value=x.pickupAddress||$('pickupAddress').value||'';
  $('pickupNumber').value=x.pickupNumber||$('pickupNumber').value||'';
@@ -159,6 +192,7 @@ function bindRideActions(){
  document.querySelectorAll('.log-act').forEach(b=>b.onclick=()=>{b.disabled=true;send('LOGISTICS_ACTION',{deliveryId:b.dataset.id,action:b.dataset.action})});
  document.querySelectorAll('.share-track').forEach(b=>b.onclick=()=>{let n=String(b.dataset.phone||'').replace(/\D/g,'');if(n&&!n.startsWith('55'))n='55'+n;const msg='Olá'+(b.dataset.name?', '+b.dataset.name:'')+'! Acompanhe sua entrega LÚMEN em tempo real: '+b.dataset.url;if(n)window.open('https://wa.me/'+n+'?text='+encodeURIComponent(msg),'_blank');else navigator.clipboard?.writeText(b.dataset.url)});
  document.querySelectorAll('.label-check').forEach(c=>c.onchange=()=>{if(c.checked)selectedLabels.add(c.dataset.labelId);else selectedLabels.delete(c.dataset.labelId);updatePrintState()});
+  document.querySelectorAll('.store-complete').forEach(b=>b.onclick=()=>{if(!confirm('Confirmar que o cliente retirou o pedido na loja?'))return;b.disabled=true;send('COMPLETE_STORE_PICKUP',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.print-one').forEach(b=>b.onclick=()=>printLabels([rideById(b.dataset.printId)]));
  document.querySelectorAll('.ride-call-prepared').forEach(b=>b.onclick=()=>{b.disabled=true;send('DISPATCH_PREPARED',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.ride-recall').forEach(b=>b.onclick=()=>{b.disabled=true;send('RECALL_DELIVERY',{deliveryId:b.dataset.id})});
@@ -170,26 +204,88 @@ function bindRideActions(){
  updatePrintState();
 }
 $('rideSearch').addEventListener('input',()=>renderActiveList());
-function sheetActionButtons(x){const id=esc(x.deliveryId),status=x.status;let items='<button type="button" class="print-one" data-print-id="'+id+'">Imprimir etiqueta</button>';if(x.trackingUrl)items+='<button type="button" class="share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">Compartilhar</button>';if(['READY_TO_DISPATCH','WAITING_DRIVER'].includes(status)){items+='<button type="button" class="ride-edit" data-id="'+id+'">Editar</button>'+(status==='WAITING_DRIVER'?'<button type="button" class="ride-cancel" data-id="'+id+'">Cancelar chamado</button>':'')+'<button type="button" class="'+(status==='READY_TO_DISPATCH'?'ride-call-prepared':'ride-recall')+'" data-id="'+id+'">Chamar entregador</button>'}if(x.internalLogistics){const step={PREPARING:'MARK_PACKED',LOGISTICS_PACKED:'SEND_TO_CENTER',LOGISTICS_IN_TRANSIT:'ARRIVE_CENTER',AT_LOGISTICS_CENTER:'SEND_TO_CENTER',LOGISTICS_READY_FOR_DRIVER:'CALL_DRIVER'}[status];if(step)items+='<button type="button" class="log-act" data-id="'+id+'" data-action="'+step+'">'+(step==='CALL_DRIVER'?'Chamar entregador':'Avançar etapa')+'</button>'}if(status==='DELIVERED')items+='<span>Concluída</span>';return '<details><summary aria-label="Ações da corrida '+id+'">Ações ▾</summary><div class="sheet-actions">'+items+'</div></details>'}
-function renderRideSheet(list){const body=$('rideSheetBody');if(!body)return;body.innerHTML=list.length?list.map(x=>'<tr><td>'+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'<span class="ride-mobile-meta"><b>'+esc(x.customerName||x.recipientName||'—')+'</b>'+esc(x.deliveryType||x.type||'Entrega')+'</span></td><td>'+esc(x.customerName||x.recipientName||'—')+'</td><td>'+esc(x.deliveryType||x.type||'Entrega')+'</td><td><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></td><td>'+sheetActionButtons(x)+'</td></tr>').join(''):'<tr><td colspan="5">Nenhuma corrida encontrada.</td></tr>'}
-function renderActiveList(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');const list=currentVisibleRides().filter(x=>!term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term)));renderRideSheet(activeRides.filter(x=>!term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))));$('activeList').className='';$('activeList').innerHTML=list.length?list.map(x=>ride(x,false)).join(''):'<div class="empty">'+(activeRideTab==='logistics'?'Nenhuma entrega no centro logístico.':activeRideTab==='accepted'?'Nenhuma corrida aceita em andamento.':'Nenhuma corrida aguardando entregador.')+'</div>';document.querySelectorAll('[data-active-tab]').forEach(b=>b.classList.toggle('on',b.dataset.activeTab===activeRideTab));bindRideActions()}
-function render(d){availableDrivers=Array.isArray(d?.drivers)?d.drivers:[];$('activeCount').textContent=String(d?.resumo?.emCurso||0);$('doneCount').textContent=String(d?.resumo?.concluidas||0);fillOrigin(d?.loja);activeRides=Array.isArray(d?.emCurso)?d.emCurso:[];doneRides=Array.isArray(d?.concluidas)?d.concluidas:[];const logistics=activeRides.filter(x=>x.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(x.status));const accepted=activeRides.filter(x=>['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(x.status));const waiting=activeRides.filter(x=>['READY_TO_DISPATCH','WAITING_DRIVER'].includes(x.status));$('logisticsCount').textContent=logistics.length;$('acceptedCount').textContent=accepted.length;$('waitingCount').textContent=waiting.length;$('activeSummary').textContent=activeRides.length+' '+(activeRides.length===1?'entrega':'entregas');renderActiveList();$('doneList').className='';$('doneList').innerHTML=doneRides.length?doneRides.map(x=>ride(x,true)).join(''):'<div class="empty">Nenhuma corrida concluída ainda.</div>';bindRideActions()}
+function showBlingSearchResults(items){
+  blingSearchResults=items;
+  $('blingSearchResults').innerHTML=items.map((x,i)=>'<button type="button" role="listitem" class="bling-result" data-bling-index="'+i+'"><b>'+esc(x.kind==='order'?'Pedido Bling '+(x.number||x.storeNumber||x.id):x.name||'Cliente')+'</b><small>'+esc(x.kind==='order'?x.name||'Selecione para preencher os dados da venda':(x.phone||'Cliente cadastrado no Bling'))+'</small></button>').join('');
+  $('blingSearchResults').querySelectorAll('[data-bling-index]').forEach(button=>button.onclick=()=>{
+    const item=blingSearchResults[Number(button.dataset.blingIndex)];
+    if(!item)return;
+    const requestId=String(++blingRequestId);
+    $('blingSearchStatus').textContent='Carregando dados do Bling...';
+    send('GET_BLING_RECORD',{requestId,kind:item.kind,id:item.id});
+  });
+}
+function applyBlingRecord(r){
+  if(r.customerName)$('customerName').value=r.customerName;
+  if(r.customerPhone)$('customerPhone').value=r.customerPhone;
+  if(r.deliveryAddress)$('deliveryAddress').value=r.deliveryAddress;
+  if(r.deliveryCity)$('deliveryCity').value=r.deliveryCity;
+  if(r.deliveryState)$('deliveryState').value=r.deliveryState;
+  if(r.deliveryZipCode)$('deliveryZipCode').value=r.deliveryZipCode;
+  selectedBlingOrderId=String(r.blingOrderId||'');
+  selectedBlingOrderNumber=String(r.orderNumber||'');
+  const label=selectedBlingOrderNumber?'Pedido Bling nº '+selectedBlingOrderNumber:'Cliente encontrado no Bling';
+  $('blingSearchStatus').textContent=label+' selecionado. Confira os dados preenchidos antes de continuar.';
+  $('blingSearchResults').innerHTML='';
+}
+function searchBling(){
+  const term=$('blingSearch').value.trim();
+  if(term.length<2){$('blingSearchStatus').textContent='Digite pelo menos dois caracteres para pesquisar no Bling.';return}
+  const requestId=String(++blingRequestId);
+  $('blingSearchResults').innerHTML='';
+  $('blingSearchStatus').textContent='Pesquisando no Bling...';
+  $('blingSearchBtn').disabled=true;
+  send('SEARCH_BLING',{term,requestId});
+}
+$('openBlingLookup').onclick=()=>{$('callBox').classList.add('on');$('callBox').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('blingSearch')?.focus(),180)};
+$('blingSearchBtn').onclick=searchBling;
+$('blingSearch').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();searchBling()}};
+$('blingSearch').oninput=()=>{$('blingSearchStatus').textContent='Toque em Pesquisar para consultar o Bling.'};
+function sheetActionButtons(x){const id=esc(x.deliveryId),status=x.status;let items='<button type="button" class="print-one" data-print-id="'+id+'">Imprimir etiqueta</button>';if(x.trackingUrl)items+='<button type="button" class="share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">Compartilhar</button>';if(['READY_TO_DISPATCH','WAITING_DRIVER'].includes(status)){items+='<button type="button" class="ride-edit" data-id="'+id+'">Editar</button>'+(status==='WAITING_DRIVER'?'<button type="button" class="ride-cancel" data-id="'+id+'">Cancelar chamado</button>':'')+'<button type="button" class="'+(status==='READY_TO_DISPATCH'?'ride-call-prepared':'ride-recall')+'" data-id="'+id+'">Chamar entregador</button>'}if(x.internalLogistics){const step={PREPARING:'MARK_PACKED',LOGISTICS_PACKED:'SEND_TO_CENTER',LOGISTICS_IN_TRANSIT:'ARRIVE_CENTER',AT_LOGISTICS_CENTER:'SEND_TO_CENTER',LOGISTICS_READY_FOR_DRIVER:'CALL_DRIVER'}[status];if(step)items+='<button type="button" class="log-act" data-id="'+id+'" data-action="'+step+'">'+(step==='CALL_DRIVER'?'Chamar entregador':'Avançar etapa')+'</button>'}if(status==='STORE_PICKUP_READY')items+='<button type="button" class="store-complete" data-id="'+id+'">Concluir retirada na loja</button>';if(status==='DELIVERED')items+='<span>Concluída</span>';return '<details><summary aria-label="Ações da corrida '+id+'">Ações ▾</summary><div class="sheet-actions">'+items+'</div></details>'}
+function renderRideSheet(list){const body=$('rideSheetBody');if(!body)return;body.innerHTML=list.length?list.map(x=>'<tr><td><div class="sheet-order-line"><input type="checkbox" class="label-check sheet-label-check" data-label-id="'+esc(x.deliveryId)+'" aria-label="Selecionar etiqueta da corrida '+esc(x.orderNumber||x.deliveryId)+'"'+(selectedLabels.has(x.deliveryId)?' checked':'')+'><span>'+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'</span></div><span class="ride-mobile-meta"><b>'+esc(x.customerName||x.recipientName||'—')+'</b>'+esc(x.deliveryType||x.type||'Entrega')+'</span></td><td>'+esc(x.customerName||x.recipientName||'—')+'</td><td>'+esc(x.deliveryType||x.type||'Entrega')+'</td><td><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></td><td>'+sheetActionButtons(x)+'</td></tr>').join(''):'<tr><td colspan="5">Nenhuma corrida encontrada.</td></tr>'}
+function rideMatchesTerm(x,term){return !term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))}
+function filteredRideSheet(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');return activeRides.filter(x=>rideMatchesTerm(x,term))}
+function renderActiveList(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');const list=currentVisibleRides().filter(x=>!term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term)));renderRideSheet(filteredRideSheet());$('activeList').className='';$('activeList').innerHTML=list.length?list.map(x=>ride(x,false)).join(''):'<div class="empty">'+(activeRideTab==='logistics'?'Nenhuma entrega no centro logístico.':activeRideTab==='accepted'?'Nenhuma corrida aceita em andamento.':'Nenhuma corrida aguardando entregador.')+'</div>';document.querySelectorAll('[data-active-tab]').forEach(b=>b.classList.toggle('on',b.dataset.activeTab===activeRideTab));bindRideActions()}
+function render(d){availableDrivers=Array.isArray(d?.drivers)?d.drivers:[];$('activeCount').textContent=String(d?.resumo?.emCurso||0);$('doneCount').textContent=String(d?.resumo?.concluidas||0);fillOrigin(d?.loja);activeRides=Array.isArray(d?.emCurso)?d.emCurso:[];doneRides=Array.isArray(d?.concluidas)?d.concluidas:[];const logistics=activeRides.filter(x=>x.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(x.status));const accepted=activeRides.filter(x=>['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(x.status));const waiting=activeRides.filter(x=>['READY_TO_DISPATCH','WAITING_DRIVER'].includes(x.status));const store=activeRides.filter(x=>x.status==='STORE_PICKUP_READY');$('storeCount').textContent=store.length;$('logisticsCount').textContent=logistics.length;$('acceptedCount').textContent=accepted.length;$('waitingCount').textContent=waiting.length;$('activeSummary').textContent=activeRides.length+' '+(activeRides.length===1?'entrega':'entregas');renderActiveList();$('doneList').className='';$('doneList').innerHTML=doneRides.length?doneRides.map(x=>ride(x,true)).join(''):'<div class="empty">Nenhuma corrida concluída ainda.</div>';bindRideActions()}
 
 function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
-function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:$('deliveryAddress').value.trim(),deliveryCity:$('deliveryCity').value.trim(),deliveryState:$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:$('deliveryZipCode').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,deliveryFee:currentFee,logisticsStages:stops,readyConfirmed:$('readyConfirm').checked}}
+function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:$('deliveryAddress').value.trim(),deliveryCity:$('deliveryCity').value.trim(),deliveryState:$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:$('deliveryZipCode').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,deliveryFee:currentFee,logisticsStages:stops,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
 function routeReview(){const pts=[['Retirada',[ $('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],...stops.map((x,i)=>['Parada '+(i+1),[x.name,x.address,x.city,x.state].filter(Boolean).join(' • ')]),['Entrega',[$('deliveryAddress').value,$('deliveryCity').value,$('deliveryState').value].filter(Boolean).join(' • ')]];$('routeBox').innerHTML=pts.map(p=>'<div class="route-point"><small>'+esc(p[0])+'</small><b>'+esc(p[1])+'</b></div>').join('');$('quoteValue').textContent=money(currentFee);const extra=stops.reduce((s,x)=>s+(x.hasFee?Number(x.fee)||0:0),0);$('extraFeeText').textContent=extra>0?'Taxas internas informadas: '+money(extra)+' (não alteram o ganho do entregador VELUM).':'Sem taxa extra de centros de distribuição.';$('review').classList.add('on');$('calc').closest('.form-actions').style.display='none';$('review').scrollIntoView({behavior:'smooth',block:'start'})}
 
 $('call').onclick=()=>{$('callBox').classList.toggle('on');if($('callBox').classList.contains('on'))$('callBox').scrollIntoView({behavior:'smooth',block:'start'})};
 $('addStop').onclick=()=>{stops.push({name:'',address:'',city:'',state:'PB',zipCode:'',hasFee:false,fee:0});renderStops()};
+function applyStorePickupMode(){
+  const selected=$('storePickupMode').checked;
+  document.body.classList.toggle('store-pickup-mode',selected);
+  $('storePickupReadyBox').style.display=selected?'flex':'none';
+  $('calc').textContent=selected?'REGISTRAR RETIRADA EM LOJA':'CALCULAR ENTREGA';
+  $('calc').disabled=false;
+  $('review').classList.remove('on');
+  $('calc').closest('.form-actions').style.display='grid';
+  if(!selected)$('storePickupReady').checked=false;
+  clearNotice();
+}
+$('storePickupMode').onchange=applyStorePickupMode;
 $('deliveryAddress').oninput=()=>{clearTimeout(suggestTimer);const term=$('deliveryAddress').value.trim();if(term.length<3){$('deliverySuggestions').classList.remove('on');return}suggestTimer=setTimeout(()=>send('SUGGEST_ADDRESS',{term,target:'delivery'}),350)};
-$('calc').onclick=()=>{clearNotice();currentFee=0;$('calc').disabled=true;$('calc').textContent='CALCULANDO...';send('CALCULATE',payload())};
+$('calc').onclick=()=>{
+  clearNotice();
+  if($('storePickupMode').checked){
+    const data=payload();
+    if(!data.customerName||data.customerPhone.replace(/\D/g,'').length<10)return notice('Informe nome e telefone do cliente que fará a retirada.');
+    if(!data.readyConfirmed)return notice('Confirme que o pedido está pronto para retirada na loja.');
+    $('calc').disabled=true;$('calc').textContent='SALVANDO RETIRADA...';
+    send('CREATE_STORE_PICKUP',data);return;
+  }
+  currentFee=0;$('calc').disabled=true;$('calc').textContent='CALCULANDO...';send('CALCULATE',payload())
+};
 $('editRoute').onclick=()=>{$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true};
 $('cancelRoute').onclick=()=>{currentFee=0;resetEditMode();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';clearNotice()};
 $('readyConfirm').onchange=()=>{$('create').disabled=!$('readyConfirm').checked};
 $('create').onclick=()=>{if(!(currentFee>0))return notice('Calcule a entrega primeiro.');$('create').disabled=true;if(editingDeliveryId){$('create').textContent='SALVANDO...';send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data:payload()})}else{$('create').textContent=stops.length?'CRIANDO PROCESSO...':'GERANDO ETIQUETA...';send('CREATE_DELIVERY',payload())}};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));$('activePanel').classList.toggle('on',b.dataset.tab==='active');$('donePanel').classList.toggle('on',b.dataset.tab==='done');updatePrintState()});
 document.querySelectorAll('[data-active-tab]').forEach(b=>b.onclick=()=>{activeRideTab=b.dataset.activeTab;renderActiveList()});
-$('selectVisible').onclick=()=>{const list=currentVisibleRides();const allSelected=list.length&&list.every(x=>selectedLabels.has(x.deliveryId));list.forEach(x=>allSelected?selectedLabels.delete(x.deliveryId):selectedLabels.add(x.deliveryId));renderActiveList()};
+$('selectVisible').onclick=()=>{const list=$('activePanel').classList.contains('on')?filteredRideSheet():currentVisibleRides();const allSelected=list.length&&list.every(x=>selectedLabels.has(x.deliveryId));list.forEach(x=>allSelected?selectedLabels.delete(x.deliveryId):selectedLabels.add(x.deliveryId));renderActiveList()};
+$('selectAllSheet').onchange=e=>{const items=filteredRideSheet();items.forEach(x=>{if(e.target.checked)selectedLabels.add(x.deliveryId);else selectedLabels.delete(x.deliveryId)});renderActiveList()};
 $('printSelected').onclick=()=>printLabels([...selectedLabels].map(rideById).filter(Boolean));
 $('printSelectedDone').onclick=()=>printLabels([...selectedLabels].map(rideById).filter(Boolean));
 $('logout').onclick=()=>send('LOGOUT');
@@ -197,12 +293,36 @@ $('logout').onclick=()=>send('LOGOUT');
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_ADMIN_PANEL_PAGE')return;const d=m.payload||{};
  if(m.type==='DATA')render(d);
  if(m.type==='ERROR')notice(d.message||m.message||'Não foi possível carregar.',false);
+ if(m.type==='BLING_SEARCH_RESULT'){
+    if(String(d.requestId)!==String(blingRequestId))return;
+    $('blingSearchBtn').disabled=false;
+    if(!d.ok){$('blingSearchStatus').textContent=d.mensagem||'Não foi possível consultar o Bling.';return}
+    const items=Array.isArray(d.items)?d.items:[];
+    showBlingSearchResults(items);
+    $('blingSearchStatus').textContent=items.length?items.length+' resultado(s) encontrado(s). Toque em um para selecionar.':'Nenhum cliente ou pedido encontrado no Bling.';
+  }
+ if(m.type==='BLING_RECORD_RESULT'){
+    if(String(d.requestId)!==String(blingRequestId))return;
+    if(!d.ok){$('blingSearchStatus').textContent=d.mensagem||'Não foi possível carregar o registro do Bling.';return}
+    applyBlingRecord(d.record||{});
+  }
+ if(m.type==='STORE_PICKUP_RESULT'){
+    $('calc').disabled=false;
+    $('calc').textContent='REGISTRAR RETIRADA EM LOJA';
+    if(!d.ok){notice(d.mensagem||'Não foi possível registrar a retirada em loja.',false);return}
+    notice(d.mensagem||'Retirada em loja registrada. Nenhum entregador foi chamado.',true);
+    $('storePickupReady').checked=false;
+    selectedBlingOrderId='';selectedBlingOrderNumber='';
+    $('customerName').value='';$('customerPhone').value='';$('blingSearch').value='';
+    $('blingSearchStatus').textContent='Retirada registrada. Você pode cadastrar outra.';
+    $('blingSearchResults').innerHTML='';
+  }
  if(m.type==='SUGGEST_RESULT'){const box=$('deliverySuggestions');const items=Array.isArray(d.items)?d.items:[];box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');box.classList.toggle('on',items.length>0);box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const x=items[Number(el.dataset.i)];$('deliveryAddress').value=x.address||x.label||'';$('deliveryCity').value=x.city||'';$('deliveryState').value=x.state||'';$('deliveryZipCode').value=x.zipCode||'';box.classList.remove('on')})}
  if(m.type==='CALCULATE_RESULT'){$('calc').disabled=false;$('calc').textContent='CALCULAR ENTREGA';if(!d.ok){currentFee=0;return notice(d.mensagem||'Não foi possível calcular.',false)}currentFee=Number(d.shipping?.amount)||0;routeReview();notice('Trajeto calculado. Revise antes de confirmar.',true)}
- if(m.type==='CREATE_RESULT'){$('create').textContent='GERAR ETIQUETA';if(!d.ok){$('create').disabled=false;return notice(d.mensagem||'Não foi possível criar a corrida.',false)}notice(d.mensagem||'Processo criado.',true);currentFee=0;stops=[];renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';$('callBox').classList.remove('on')}
+ if(m.type==='CREATE_RESULT'){$('create').textContent='GERAR ETIQUETA';if(!d.ok){$('create').disabled=false;return notice(d.mensagem||'Não foi possível criar a corrida.',false)}notice(d.mensagem||'Processo criado.',true);currentFee=0;stops=[];renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
  if(m.type==='LOGISTICS_RESULT'){document.querySelectorAll('.log-act').forEach(b=>b.disabled=false);notice(d.mensagem||'Processo atualizado.',d.ok===true)}
  if(m.type==='ACTION_RESULT'){
-   document.querySelectorAll('.ride-call-prepared,.ride-recall,.ride-cancel').forEach(b=>b.disabled=false);
+   document.querySelectorAll('.ride-call-prepared,.ride-recall,.ride-cancel,.store-complete').forEach(b=>b.disabled=false);
    if(!d.ok){$('create').disabled=false;if(editingDeliveryId)$('create').textContent='SALVAR ALTERAÇÕES E CHAMAR NOVAMENTE';notice(d.mensagem||'Não foi possível concluir a ação.',false);return}
    notice(d.mensagem||'Ação concluída.',true);
    if(d.action==='UPDATE'){resetEditMode();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('callBox').classList.remove('on')}
