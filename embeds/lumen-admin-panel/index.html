@@ -57,11 +57,56 @@
 .ride-sheet .sheet-actions button:disabled{opacity:.5;cursor:not-allowed;background:#eef1f5;color:#5e7188}
 .ride-sheet .sheet-actions .ride-delete:not(:disabled){color:#a13232;border-color:#ead0d0}
 .ride-sheet .sheet-actions .action-completed{display:block;color:#59708d;font-size:11px;padding:8px}
+
+/* Stage buttons: badge and phase share the same semantic palette. */
+.active-subtabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0 16px}
+.active-subtab{--phase-bg:#e8eef8;--phase-ink:#173d70;--phase-stroke:#cdd9ee;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:51px;padding:12px 14px;border-radius:13px;border:1px solid var(--phase-stroke);background:var(--phase-bg);color:var(--phase-ink);font-size:11px;font-weight:850;text-align:left;line-height:1.35;transition:box-shadow .15s,transform .15s}
+.active-subtab[data-stage="all"]{--phase-bg:#eef2f7;--phase-ink:#173d70;--phase-stroke:#d2dbe8}
+.active-subtab[data-stage="logistics"]{--phase-bg:#ffedd5;--phase-ink:#9a3412;--phase-stroke:#fed7aa}
+.active-subtab[data-stage="accepted"]{--phase-bg:#dbeafe;--phase-ink:#1d4ed8;--phase-stroke:#bfdbfe}
+.active-subtab[data-stage="waiting"]{--phase-bg:#fff2ce;--phase-ink:#854d0e;--phase-stroke:#fde68a}
+.active-subtab[data-stage="store"]{--phase-bg:#ede9fe;--phase-ink:#5b36a1;--phase-stroke:#ddd6fe}
+.active-subtab[data-stage="done"]{--phase-bg:#dcfce7;--phase-ink:#166534;--phase-stroke:#bbf7d0}
+.active-subtab:hover{transform:translateY(-1px)}.active-subtab.on{background:var(--phase-bg);color:var(--phase-ink);border-color:var(--phase-ink);box-shadow:inset 0 0 0 1px var(--phase-ink),0 4px 12px #122c480d}
+.active-subtab:focus-visible,.ride-sheet tbody tr:focus-visible,.ride-detail-close:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.phase-count{display:grid;place-items:center;min-width:36px;min-height:29px;padding:4px 9px;border-radius:10px;background:#ffffffbb;color:var(--phase-ink);font-size:14px;font-weight:900;line-height:1.15;flex:none;text-align:center}
+.ride-status[data-state="READY_TO_DISPATCH"]{background:#fff2ce;color:#854d0e}
+.ride-status[data-state="GOING_TO_STORE"],.ride-status[data-state="AT_STORE"],.ride-status[data-state="COLLECTED"]{background:#dbeafe;color:#1d4ed8}
+.ride-status[data-state="LOGISTICS_PACKED"],.ride-status[data-state="AT_LOGISTICS_CENTER"],.ride-status[data-state="LOGISTICS_READY_FOR_DRIVER"]{background:#ffedd5;color:#9a3412}
+.ride-status[data-state="STORE_PICKUP_READY"]{background:#ede9fe;color:#5b36a1}
+.ride-sheet tbody tr[data-ride-id]{cursor:pointer}
+.ride-sheet tbody tr[data-ride-id]:hover,.ride-sheet tbody tr[data-ride-id]:focus-visible{background:#f1f6fd}
+.ride-sheet tbody tr[data-ride-id] td:first-child .sheet-order-line span{text-decoration:underline;text-decoration-color:#c0cde0;text-underline-offset:2px}
+.ride-detail-overlay[hidden]{display:none!important}
+.ride-detail-overlay{position:fixed;inset:0;z-index:2147483001;display:flex;align-items:flex-end;justify-content:center}
+.ride-detail-backdrop{position:absolute;inset:0;background:#12274488}
+.ride-detail-drawer{position:relative;width:min(720px,100%);max-height:min(92vh,930px);overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border-radius:20px 20px 0 0;padding:16px 14px calc(env(safe-area-inset-bottom,0px) + 22px);box-shadow:0 -15px 40px #102f5940}
+.ride-detail-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.ride-detail-eyebrow{font-size:10px;letter-spacing:.7px;color:var(--muted);font-weight:850}
+.ride-detail-top h3{color:var(--navy);font-size:16px;margin:5px 0 0;overflow-wrap:anywhere}
+.ride-detail-close{width:42px;height:42px;border-radius:12px;flex:none;border:1px solid var(--line);background:#fff;color:var(--navy);font-size:19px;font-weight:900;cursor:pointer}
+.ride-detail-content .card.ride{padding:14px;border-radius:14px}
+.ride-detail-content .ride-detail-extra{border-radius:12px;padding:12px;margin:12px 0;background:white;border:1px solid var(--line);font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+.ride-detail-content .ride-detail-extra b{color:var(--navy)}
+.ride-detail-content .ride-detail-actions{margin-top:12px;padding:14px;border:1px solid var(--line);background:#fff;border-radius:14px}
+.ride-detail-content .ride-detail-actions h4{margin:0 0 10px;font-size:13px;color:var(--navy)}
+.ride-detail-content .sheet-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:none}
+.ride-detail-content .sheet-actions button{margin:0;min-height:42px;border-radius:10px;padding:10px 12px;text-align:left;background:#fff;border:1px solid var(--line);font-size:11px;color:var(--navy);cursor:pointer;white-space:normal}
+.ride-detail-content .sheet-actions button:disabled{opacity:.46;cursor:not-allowed;background:#eef1f5}
+.ride-detail-content .sheet-actions .ride-delete:not(:disabled){color:#a13232;border-color:#ead0d0}
+.ride-detail-content .sheet-actions .action-completed{grid-column:1/-1}
+.ride-detail-content .waiting-actions,.ride-detail-content .logistics-actions,.ride-detail-content .share,.ride-detail-content .store-complete{display:none}
+body.ride-detail-open{overflow:hidden}
+body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
+@media(max-width:650px){.active-subtabs{grid-template-columns:1fr}.ride-detail-drawer{width:100%;max-height:92vh}.ride-detail-content .sheet-actions{grid-template-columns:1fr}}
+
+/* Single primary call card; phase buttons own all stage counts. */
+.quick{display:block}.quick .call{width:100%;min-height:95px;display:block;padding:17px 18px}
 </style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
 <section class="hero"><small>LÚMEN LUXOS</small><h2>Chamar entregador</h2><p>Crie corridas e acompanhe a logística com o mesmo fluxo das lojas e revendedoras.</p></section>
-<section class="quick"><button class="card call" id="call"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button><div class="card stat"><small>Em andamento</small><strong id="activeCount">0</strong></div><div class="card stat"><small>Concluídas</small><strong id="doneCount">0</strong></div></section>
+<section class="quick"><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button></section>
 
 <section class="card callbox" id="callBox">
 <h3>Chamar entregador</h3><p>Monte o trajeto em etapas. O endereço da LÚMEN vem preenchido por padrão e continua editável.</p>
@@ -105,30 +150,34 @@
 <button id="create" class="btn primary" style="width:100%" disabled>GERAR ETIQUETA</button>
 </div></section>
 
-<div class="tabs"><button class="tab on" data-tab="active">Em andamento</button><button class="tab" data-tab="done">Concluídas</button></div>
+
 <section class="panel on" id="activePanel">
-  <div class="section-head"><h3>Entregas em andamento</h3><span id="activeSummary">0 entregas</span></div>
-  <div class="active-subtabs">
-    <button class="active-subtab on" data-active-tab="logistics">CENTRO LOGÍSTICO <span id="logisticsCount">0</span></button>
-    <button class="active-subtab" data-active-tab="accepted">CORRIDAS ACEITAS <span id="acceptedCount">0</span></button>
-    <button class="active-subtab" data-active-tab="waiting">AGUARDANDO ENTREGADOR <span id="waitingCount">0</span></button>
-     <button class="active-subtab" data-active-tab="store">RETIRADAS NA LOJA <span id="storeCount">0</span></button>
+  <div class="section-head"><h3>Entregas por fase</h3><span id="activeSummary">0 corridas</span></div>
+  <div class="active-subtabs" role="group" aria-label="Filtrar corridas pela fase de entrega">
+    <button type="button" class="active-subtab on" data-active-tab="all" data-stage="all" aria-pressed="true"><span>TODAS AS CORRIDAS</span><span class="phase-count" id="allCount">0</span></button>
+    <button type="button" class="active-subtab" data-active-tab="logistics" data-stage="logistics" aria-pressed="false"><span>CENTRO LOGÍSTICO</span><span class="phase-count" id="logisticsCount">0</span></button>
+    <button type="button" class="active-subtab" data-active-tab="accepted" data-stage="accepted" aria-pressed="false"><span>CORRIDAS ACEITAS</span><span class="phase-count" id="acceptedCount">0</span></button>
+    <button type="button" class="active-subtab" data-active-tab="waiting" data-stage="waiting" aria-pressed="false"><span>AGUARDANDO ENTREGADOR</span><span class="phase-count" id="waitingCount">0</span></button>
+    <button type="button" class="active-subtab" data-active-tab="store" data-stage="store" aria-pressed="false"><span>RETIRADAS NA LOJA</span><span class="phase-count" id="storeCount">0</span></button>
+    <button type="button" class="active-subtab" data-active-tab="done" data-stage="done" aria-pressed="false"><span>CONCLUÍDAS</span><span class="phase-count" id="completedCount">0</span></button>
   </div>
   <div class="print-toolbar"><span id="selectedInfo">Nenhuma etiqueta selecionada</span><div class="selection-actions"><button class="select-visible" id="selectVisible" type="button">SELECIONAR VISÍVEIS</button><button class="print-selected" id="printSelected" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg> IMPRIMIR SELECIONADAS</button></div></div>
   <div class="field" style="margin:12px 0"><label for="rideSearch">Pesquisar nas corridas registradas ou concluídas</label><input id="rideSearch" type="search" autocomplete="off" placeholder="Nome, telefone ou número do pedido" aria-label="Pesquisar nas corridas registradas ou concluídas"></div>
-  <div class="ride-sheet-wrap"><table class="ride-sheet" aria-label="Todas as corridas em andamento"><thead><tr><th><label class="sheet-select-label"><input type="checkbox" id="selectAllSheet" aria-label="Selecionar todas as corridas da tabela para impressão"> Pedido</label></th><th>Cliente</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="rideSheetBody"><tr><td colspan="5">Carregando corridas...</td></tr></tbody></table></div>
-  <div id="activeList" class="loading">Carregando...</div>
+  <div class="ride-sheet-wrap"><table class="ride-sheet" aria-label="Corridas filtradas por etapa"><thead><tr><th><label class="sheet-select-label"><input type="checkbox" id="selectAllSheet" aria-label="Selecionar todas as corridas da tabela para impressão"> Pedido</label></th><th>Cliente</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="rideSheetBody"><tr><td colspan="5">Carregando corridas...</td></tr></tbody></table></div>
 </section>
-<section class="panel" id="donePanel">
-  <div class="section-head"><h3>Corridas concluídas</h3><span>Histórico LÚMEN</span></div>
-  <div class="print-toolbar"><span>Selecione uma ou mais etiquetas para imprimir em lote.</span><button class="print-selected" id="printSelectedDone" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg> IMPRIMIR SELECIONADAS</button></div>
-  <div id="doneList" class="loading">Carregando...</div>
+<section class="ride-detail-overlay" id="rideDetailOverlay" role="presentation" aria-hidden="true" hidden>
+  <div class="ride-detail-backdrop" data-close-detail="yes"></div>
+  <section class="ride-detail-drawer" role="dialog" aria-modal="true" aria-labelledby="rideDetailHeading" tabindex="-1">
+    <div class="ride-detail-top"><div><div class="ride-detail-eyebrow">DETALHES DA CORRIDA</div><h3 id="rideDetailHeading">Corrida</h3></div><button type="button" class="ride-detail-close" id="closeRideDetail" aria-label="Fechar detalhes">✕</button></div>
+    <div class="ride-detail-content" id="rideDetailContent"></div>
+  </section>
 </section>
 </div>
 <script>
 
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])),money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-let currentFee=0,stops=[],suggestTimer=null,activeRideTab='logistics',activeRides=[],doneRides=[],selectedLabels=new Set(),editingDeliveryId='',availableDrivers=[];
+let currentFee=0,stops=[],suggestTimer=null,activeRideTab='all',activeRides=[],doneRides=[],selectedLabels=new Set(),editingDeliveryId='',availableDrivers=[];
+let openedRideId='',detailPreviousFocus=null;
 let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSearchResults=[];
 
 function send(type,payload={}){parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
@@ -156,7 +205,17 @@ function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary sh
 function fillOrigin(loja){if(!loja)return;[['pickupAddress','pickupAddress'],['pickupNumber','pickupNumber'],['pickupNeighborhood','pickupNeighborhood'],['pickupCity','pickupCity'],['pickupState','pickupState'],['pickupZipCode','pickupZipCode'],['pickupPhone','pickupPhone']].forEach(([id,key])=>{if($(id)&&!$(id).value)$(id).value=loja[key]||''})}
 function allRideData(){return [...activeRides,...doneRides]}
 function rideById(id){return allRideData().find(x=>String(x.deliveryId)===String(id))}
-function currentVisibleRides(){if(!$('activePanel').classList.contains('on'))return doneRides;return activeRides.filter(x=>activeRideTab==='store'?x.status==='STORE_PICKUP_READY':activeRideTab==='logistics'?(x.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(x.status)):activeRideTab==='accepted'?['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(x.status):['READY_TO_DISPATCH','WAITING_DRIVER'].includes(x.status))}
+function ridePhase(x){
+  const status=String(x?.status||'');
+  if(status==='DELIVERED')return'done';
+  if(status==='STORE_PICKUP_READY')return'store';
+  if(x?.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(status))return'logistics';
+  if(['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(status))return'accepted';
+  if(['READY_TO_DISPATCH','WAITING_DRIVER'].includes(status))return'waiting';
+  // Keep unexpected stages visible in "Todas" rather than silently hiding them.
+  return'other';
+}
+function currentVisibleRides(){return activeRideTab==='all'?allRideData():allRideData().filter(x=>ridePhase(x)===activeRideTab)}
 function updatePrintState(){const n=selectedLabels.size;const text=n===0?'Nenhuma etiqueta selecionada':n===1?'1 etiqueta selecionada':n+' etiquetas selecionadas';if($('selectedInfo'))$('selectedInfo').textContent=text;if($('printSelected'))$('printSelected').disabled=n===0;if($('printSelectedDone'))$('printSelectedDone').disabled=n===0;document.querySelectorAll('input.label-check[data-label-id]').forEach(el=>{el.checked=selectedLabels.has(el.dataset.labelId)});const visible=filteredRideSheet();if($('selectAllSheet')){$('selectAllSheet').checked=visible.length>0&&visible.every(x=>selectedLabels.has(x.deliveryId));$('selectAllSheet').indeterminate=visible.some(x=>selectedLabels.has(x.deliveryId))&&!visible.every(x=>selectedLabels.has(x.deliveryId))}}
 function labelHtml(x){const isStorePickup=x.storePickup===true||x.deliveryType==='Retirada em loja';const address=[isStorePickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):x.deliveryAddress,isStorePickup?([x.pickupCity,x.pickupState].filter(Boolean).join(' - ')):(x.deliveryCity&&x.deliveryState?[x.deliveryCity,x.deliveryState].join(' - '):x.deliveryCity||x.deliveryState),isStorePickup?x.pickupZipCode:x.deliveryZipCode].filter(Boolean);const qr='https://quickchart.io/qr?size=180&margin=1&text='+encodeURIComponent('https://www.lumenluxos.com');const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));const barcode='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=5&padding=2&text='+encodeURIComponent(code);return'<section class="shipping-label"><header><div class="lux">LÚMEN LUXOS</div><div class="tag">Exclusividade, Poder e Presença</div></header><main><div class="label-name">'+esc(x.customerName||'Recebedor')+'</div>'+(x.customerPhone?'<div class="label-phone">WhatsApp: '+esc(x.customerPhone)+'</div>':'')+'<div class="label-address">'+(isStorePickup?'<b>RETIRADA EM LOJA — NÃO ENVIAR ENTREGADOR</b><br>':'')+address.map(esc).join('<br>')+'</div>'+(x.deliveryInstructions?'<div class="label-ref"><b>Referência:</b> '+esc(x.deliveryInstructions)+'</div>':'')+'<div class="barcode"><img src="'+barcode+'" alt="QR Code da coleta"><div style="font-size:8pt;color:#738196;margin-top:1mm">QR de coleta • Etiqueta v'+esc(x.labelRevision||1)+'</div></div></main><footer><div class="thanks">Agradecemos pela sua compra!</div><div class="catalog"><img src="'+qr+'" alt="QR Code"><div><b>Conheça nosso catálogo</b><span>www.lumenluxos.com</span></div></div></footer></section>'}
 function printLabels(items){const list=(items||[]).filter(Boolean);if(!list.length)return;const w=window.open('','_blank');if(!w)return notice('Permita pop-ups para imprimir as etiquetas.',false);const doc='<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas LÚMEN LUXOS</title><style>@page{size:10cm 15cm;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Arial,sans-serif;color:#102f59}.shipping-label{width:10cm;height:15cm;padding:.65cm;display:flex;flex-direction:column;page-break-after:always;background:#fff}.shipping-label:last-child{page-break-after:auto}header{border-bottom:2px solid #102f59;padding-bottom:.35cm}.lux{font-size:24pt;font-weight:900;letter-spacing:.5px}.tag{font-size:10pt;margin-top:2mm;color:#5c6d80}main{flex:1;padding-top:.5cm}.label-name{font-size:20pt;font-weight:900;line-height:1.05}.label-phone{font-size:11pt;margin-top:2mm}.label-address{font-size:15pt;font-weight:700;line-height:1.3;margin-top:.55cm}.label-ref{font-size:10.5pt;line-height:1.35;margin-top:.5cm;padding:.3cm;border:1px solid #d7e0ea;border-radius:8px}.barcode{text-align:center;margin-top:.45cm}.barcode img{width:3.4cm;height:3.4cm;object-fit:contain}.thanks{text-align:center;font-weight:800;font-size:11pt;margin-bottom:.35cm}.catalog{display:flex;align-items:center;justify-content:center;gap:.35cm;border-top:1px solid #d7e0ea;padding-top:.35cm}.catalog img{width:2.8cm;height:2.8cm}.catalog div{display:flex;flex-direction:column;gap:1mm}.catalog b{font-size:11pt}.catalog span{font-size:9pt;color:#5c6d80}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'+list.map(labelHtml).join('')+'<script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>';w.document.open();w.document.write(doc);w.document.close()}
@@ -218,7 +277,7 @@ function bindRideActions(){
  document.querySelectorAll('.ride-call-prepared').forEach(b=>b.onclick=()=>{b.disabled=true;send('DISPATCH_PREPARED',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.ride-recall').forEach(b=>b.onclick=()=>{b.disabled=true;send('RECALL_DELIVERY',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.ride-cancel').forEach(b=>b.onclick=()=>{if(!confirm('Cancelar esta corrida? Ela deixará de aparecer para os entregadores.'))return;b.disabled=true;send('CANCEL_DELIVERY',{deliveryId:b.dataset.id})});
- document.querySelectorAll('.ride-edit').forEach(b=>b.onclick=()=>startEditRide(rideById(b.dataset.id)));
+ document.querySelectorAll('.ride-edit').forEach(b=>b.onclick=()=>{closeRideDetail();startEditRide(rideById(b.dataset.id))});
  document.querySelectorAll('.ride-sheet details').forEach(menu=>{
    if(menu.dataset.boundActions==='yes')return;
    menu.dataset.boundActions='yes';
@@ -234,7 +293,7 @@ function bindRideActions(){
  document.querySelectorAll('.drivers-apply').forEach(b=>b.onclick=()=>{const ids=[...document.querySelectorAll('.driver-pick-check[data-delivery="'+b.dataset.id+'"]:checked')].map(c=>c.dataset.driver);b.disabled=true;send('SELECT_DRIVERS',{deliveryId:b.dataset.id,driverIds:ids})});
  updatePrintState();
 }
-$('rideSearch').addEventListener('input',()=>renderActiveList());
+$('rideSearch').addEventListener('input',()=>{selectedLabels.clear();renderActiveList()});
 function showBlingSearchResults(items){
   blingSearchResults=items;
   $('blingSearchResults').innerHTML=items.map((x,i)=>'<button type="button" role="listitem" class="bling-result" data-bling-index="'+i+'"><b>'+esc(x.kind==='order'?'Pedido Bling '+(x.number||x.storeNumber||x.id):x.name||'Cliente')+'</b><small>'+esc(x.kind==='order'?x.name||'Selecione para preencher os dados da venda':(x.phone||'Cliente cadastrado no Bling'))+'</small></button>').join('');
@@ -271,7 +330,7 @@ function searchBling(){
 $('blingSearchBtn').onclick=searchBling;
 $('blingSearch').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();searchBling()}};
 $('blingSearch').oninput=()=>{$('blingSearchStatus').textContent='Toque em Pesquisar para consultar o Bling.'};
-function sheetActionButtons(x){
+function sheetActionButtons(x,detailMode=false){
   const id=esc(x.deliveryId),status=String(x.status||''),hasDriver=Boolean(x.driver?.name||x.driverId);
   const editable=!hasDriver&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','STORE_PICKUP_READY'].includes(status);
   const removable=(!hasDriver||status==='DELIVERED')&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','STORE_PICKUP_READY','DELIVERED'].includes(status);
@@ -295,14 +354,84 @@ function sheetActionButtons(x){
     items+=button('step-disabled','Avançar etapa','','Esta etapa só pode avançar pelo fluxo do entregador ou já foi concluída.');
   }
   if(status==='DELIVERED')items+='<span class="action-completed">Corrida concluída</span>';
-  return '<details><summary aria-label="Ações da corrida '+id+'">Ações ▾</summary><div class="sheet-actions">'+items+'</div></details>';
+  return detailMode?'<div class="sheet-actions">'+items+'</div>':'<details><summary aria-label="Ações da corrida '+id+'">Ações ▾</summary><div class="sheet-actions">'+items+'</div></details>';
 }
-function renderRideSheet(list){const body=$('rideSheetBody');if(!body)return;body.innerHTML=list.length?list.map(x=>'<tr><td><div class="sheet-order-line"><input type="checkbox" class="label-check sheet-label-check" data-label-id="'+esc(x.deliveryId)+'" aria-label="Selecionar etiqueta da corrida '+esc(x.orderNumber||x.deliveryId)+'"'+(selectedLabels.has(x.deliveryId)?' checked':'')+'><span>'+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'</span></div><span class="ride-mobile-meta"><b>'+esc(x.customerName||x.recipientName||'—')+'</b>'+esc(x.deliveryType||x.type||'Entrega')+'</span></td><td>'+esc(x.customerName||x.recipientName||'—')+'</td><td>'+esc(x.deliveryType||x.type||'Entrega')+'</td><td><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></td><td>'+sheetActionButtons(x)+'</td></tr>').join(''):'<tr><td colspan="5">Nenhuma corrida encontrada.</td></tr>'}
+function renderRideSheet(list){const body=$('rideSheetBody');if(!body)return;body.innerHTML=list.length?list.map(x=>'<tr data-ride-id="'+esc(x.deliveryId)+'" tabindex="0" aria-label="Abrir detalhes da corrida '+esc(x.orderNumber||x.deliveryId)+'"><td><div class="sheet-order-line"><input type="checkbox" class="label-check sheet-label-check" data-label-id="'+esc(x.deliveryId)+'" aria-label="Selecionar etiqueta da corrida '+esc(x.orderNumber||x.deliveryId)+'"'+(selectedLabels.has(x.deliveryId)?' checked':'')+'><span>'+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'</span></div><span class="ride-mobile-meta"><b>'+esc(x.customerName||x.recipientName||'—')+'</b>'+esc(x.deliveryType||x.type||'Entrega')+'</span></td><td>'+esc(x.customerName||x.recipientName||'—')+'</td><td>'+esc(x.deliveryType||x.type||'Entrega')+'</td><td><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></td><td>'+sheetActionButtons(x)+'</td></tr>').join(''):'<tr><td colspan="5">Nenhuma corrida encontrada.</td></tr>'}
 function rideMatchesTerm(x,term){return !term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))}
-function filteredRideSheet(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');return (term?[...activeRides,...doneRides]:activeRides).filter(x=>rideMatchesTerm(x,term))}
-function renderActiveList(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');const list=currentVisibleRides().filter(x=>!term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term)));renderRideSheet(filteredRideSheet());$('activeList').className='';$('activeList').innerHTML=list.length?list.map(x=>ride(x,false)).join(''):'<div class="empty">'+(activeRideTab==='logistics'?'Nenhuma entrega no centro logístico.':activeRideTab==='accepted'?'Nenhuma corrida aceita em andamento.':'Nenhuma corrida aguardando entregador.')+'</div>';document.querySelectorAll('[data-active-tab]').forEach(b=>b.classList.toggle('on',b.dataset.activeTab===activeRideTab));bindRideActions()}
-function render(d){availableDrivers=Array.isArray(d?.drivers)?d.drivers:[];$('activeCount').textContent=String(d?.resumo?.emCurso||0);$('doneCount').textContent=String(d?.resumo?.concluidas||0);fillOrigin(d?.loja);activeRides=Array.isArray(d?.emCurso)?d.emCurso:[];doneRides=Array.isArray(d?.concluidas)?d.concluidas:[];const logistics=activeRides.filter(x=>x.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(x.status));const accepted=activeRides.filter(x=>['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(x.status));const waiting=activeRides.filter(x=>['READY_TO_DISPATCH','WAITING_DRIVER'].includes(x.status));const store=activeRides.filter(x=>x.status==='STORE_PICKUP_READY');$('storeCount').textContent=store.length;$('logisticsCount').textContent=logistics.length;$('acceptedCount').textContent=accepted.length;$('waitingCount').textContent=waiting.length;$('activeSummary').textContent=activeRides.length+' '+(activeRides.length===1?'entrega':'entregas');renderActiveList();$('doneList').className='';$('doneList').innerHTML=doneRides.length?doneRides.map(x=>ride(x,true)).join(''):'<div class="empty">Nenhuma corrida concluída ainda.</div>';bindRideActions()}
+function filteredRideSheet(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');return currentVisibleRides().filter(x=>rideMatchesTerm(x,term))}
 
+function closeRideDetail(){
+  openedRideId='';
+  const overlay=$('rideDetailOverlay');
+  overlay.hidden=true;overlay.setAttribute('aria-hidden','true');
+  document.body.classList.remove('ride-detail-open');
+  $('rideDetailContent').innerHTML='';
+  const focus=detailPreviousFocus;detailPreviousFocus=null;
+  if(focus?.isConnected&&typeof focus.focus==='function')focus.focus();
+}
+function renderRideDetail(){
+  if(!openedRideId)return;
+  const x=rideById(openedRideId);
+  if(!x){closeRideDetail();return}
+  const done=ridePhase(x)==='done';
+  $('rideDetailHeading').textContent='Pedido '+(x.orderNumber||x.blingOrderNumber||x.deliveryId||'');
+  const extra='<div class="ride-detail-extra">'+
+    '<b>Pedido:</b> '+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'-')+'<br>'+
+    '<b>Situação:</b> <span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span><br>'+
+    '<b>Tipo:</b> '+esc(x.deliveryType||'Entrega')+'<br>'+
+    '<b>Telefone:</b> '+esc(x.customerPhone||'-')+'<br>'+
+    '<b>Endereço de retirada:</b> '+esc([x.pickupAddress,x.pickupNumber,x.pickupNeighborhood,x.pickupCity,x.pickupState].filter(Boolean).join(', ')||'-')+'<br>'+
+    '<b>Endereço de entrega:</b> '+esc([x.deliveryAddress,x.deliveryCity,x.deliveryState].filter(Boolean).join(', ')||'-')+'<br>'+
+    '<b>Observações:</b> '+esc(x.deliveryInstructions||'-')+'</div>';
+  $('rideDetailContent').innerHTML=ride(x,done)+extra+'<div class="ride-detail-actions"><h4>Ações disponíveis</h4>'+sheetActionButtons(x,true)+'</div>';
+  bindRideActions();
+}
+function openRideDetail(id){
+  const x=rideById(id);if(!x)return;
+  detailPreviousFocus=document.activeElement;
+  openedRideId=String(x.deliveryId);
+  const overlay=$('rideDetailOverlay');
+  overlay.hidden=false;overlay.setAttribute('aria-hidden','false');
+  document.body.classList.add('ride-detail-open');
+  renderRideDetail();
+  $('closeRideDetail').focus();
+}
+function bindRideRowOpen(){
+  $('rideSheetBody').querySelectorAll('tr[data-ride-id]').forEach(row=>{
+    const open=event=>{
+      if(event.target.closest('input,button,a,summary,details,label,select,textarea'))return;
+      openRideDetail(row.dataset.rideId);
+    };
+    row.onclick=open;
+    row.onkeydown=event=>{if(event.target!==row||!['Enter',' '].includes(event.key))return;event.preventDefault();openRideDetail(row.dataset.rideId)};
+  });
+}
+function renderActiveList(){
+  const list=filteredRideSheet();
+  renderRideSheet(list);
+  $('activeSummary').textContent=list.length+' '+(list.length===1?'corrida':'corridas');
+  document.querySelectorAll('[data-active-tab]').forEach(btn=>{
+    const on=btn.dataset.activeTab===activeRideTab;
+    btn.classList.toggle('on',on);
+    btn.setAttribute('aria-pressed',on?'true':'false');
+  });
+  bindRideRowOpen();
+  bindRideActions();
+}
+function render(d){
+  availableDrivers=Array.isArray(d?.drivers)?d.drivers:[];
+  activeRides=Array.isArray(d?.emCurso)?d.emCurso:[];
+  doneRides=Array.isArray(d?.concluidas)?d.concluidas:[];
+  const ids=new Set(allRideData().map(x=>String(x.deliveryId)));
+  [...selectedLabels].forEach(id=>{if(!ids.has(id))selectedLabels.delete(id)});
+
+  fillOrigin(d?.loja);
+  const phases={all:allRideData().length,logistics:0,accepted:0,waiting:0,store:0,done:0};
+  allRideData().forEach(x=>{const stage=ridePhase(x);if(Object.prototype.hasOwnProperty.call(phases,stage))phases[stage]++});
+  for(const [id,key] of [['allCount','all'],['logisticsCount','logistics'],['acceptedCount','accepted'],['waitingCount','waiting'],['storeCount','store'],['completedCount','done']])$(id).textContent=String(phases[key]);
+  renderActiveList();
+  if(openedRideId)renderRideDetail();
+}
 function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
 function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:$('deliveryAddress').value.trim(),deliveryCity:$('deliveryCity').value.trim(),deliveryState:$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:$('deliveryZipCode').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,deliveryFee:currentFee,logisticsStages:stops,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
 function routeReview(){const pts=[['Retirada',[ $('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],...stops.map((x,i)=>['Parada '+(i+1),[x.name,x.address,x.city,x.state].filter(Boolean).join(' • ')]),['Entrega',[$('deliveryAddress').value,$('deliveryCity').value,$('deliveryState').value].filter(Boolean).join(' • ')]];$('routeBox').innerHTML=pts.map(p=>'<div class="route-point"><small>'+esc(p[0])+'</small><b>'+esc(p[1])+'</b></div>').join('');$('quoteValue').textContent=money(currentFee);const extra=stops.reduce((s,x)=>s+(x.hasFee?Number(x.fee)||0:0),0);$('extraFeeText').textContent=extra>0?'Taxas internas informadas: '+money(extra)+' (não alteram o ganho do entregador VELUM).':'Sem taxa extra de centros de distribuição.';$('review').classList.add('on');$('calc').closest('.form-actions').style.display='none';$('review').scrollIntoView({behavior:'smooth',block:'start'})}
@@ -337,12 +466,21 @@ $('editRoute').onclick=()=>{$('review').classList.remove('on');$('calc').closest
 $('cancelRoute').onclick=()=>{currentFee=0;resetEditMode();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';clearNotice()};
 $('readyConfirm').onchange=()=>{$('create').disabled=!$('readyConfirm').checked};
 $('create').onclick=()=>{if(!(currentFee>0))return notice('Calcule a entrega primeiro.');$('create').disabled=true;if(editingDeliveryId){$('create').textContent='SALVANDO...';send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data:payload()})}else{$('create').textContent=stops.length?'CRIANDO PROCESSO...':'GERANDO ETIQUETA...';send('CREATE_DELIVERY',payload())}};
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));$('activePanel').classList.toggle('on',b.dataset.tab==='active');$('donePanel').classList.toggle('on',b.dataset.tab==='done');updatePrintState()});
-document.querySelectorAll('[data-active-tab]').forEach(b=>b.onclick=()=>{activeRideTab=b.dataset.activeTab;renderActiveList()});
-$('selectVisible').onclick=()=>{const list=$('activePanel').classList.contains('on')?filteredRideSheet():currentVisibleRides();const allSelected=list.length&&list.every(x=>selectedLabels.has(x.deliveryId));list.forEach(x=>allSelected?selectedLabels.delete(x.deliveryId):selectedLabels.add(x.deliveryId));renderActiveList()};
+
+document.querySelectorAll('[data-active-tab]').forEach(button=>button.onclick=()=>{
+  activeRideTab=button.dataset.activeTab;
+  selectedLabels.clear();
+  $('rideSearch').value='';
+  renderActiveList();
+  $('rideSheetBody').closest('.ride-sheet-wrap')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+$('closeRideDetail').onclick=closeRideDetail;
+$('rideDetailOverlay').addEventListener('click',event=>{if(event.target.closest('[data-close-detail]'))closeRideDetail()});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('rideDetailOverlay').hidden)closeRideDetail()});
+$('selectVisible').onclick=()=>{const list=filteredRideSheet();const allSelected=list.length&&list.every(x=>selectedLabels.has(x.deliveryId));list.forEach(x=>allSelected?selectedLabels.delete(x.deliveryId):selectedLabels.add(x.deliveryId));renderActiveList()};
 $('selectAllSheet').onchange=e=>{const items=filteredRideSheet();items.forEach(x=>{if(e.target.checked)selectedLabels.add(x.deliveryId);else selectedLabels.delete(x.deliveryId)});renderActiveList()};
 $('printSelected').onclick=()=>printLabels([...selectedLabels].map(rideById).filter(Boolean));
-$('printSelectedDone').onclick=()=>printLabels([...selectedLabels].map(rideById).filter(Boolean));
+
 $('logout').onclick=()=>send('LOGOUT');
 
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_ADMIN_PANEL_PAGE')return;const d=m.payload||{};
@@ -381,7 +519,7 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
    if(!d.ok){$('create').disabled=false;if(editingDeliveryId)$('create').textContent='SALVAR ALTERAÇÕES E CHAMAR NOVAMENTE';notice(d.mensagem||'Não foi possível concluir a ação.',false);return}
    notice(d.mensagem||'Ação concluída.',true);
    if(d.action==='UPDATE'){resetEditMode();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('callBox').classList.remove('on')}
-   if(d.action==='DELETE'&&d.ok){selectedLabels.delete(String(d.deliveryId||''));updatePrintState()}
+   if(d.action==='DELETE'&&d.ok){closeRideDetail();selectedLabels.delete(String(d.deliveryId||''));updatePrintState()}
  }
 });
 let firstDashboardData=false;
