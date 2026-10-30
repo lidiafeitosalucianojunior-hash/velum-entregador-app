@@ -102,6 +102,44 @@ body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
 
 /* Single primary call card; phase buttons own all stage counts. */
 .quick{display:block}.quick .call{width:100%;min-height:95px;display:block;padding:17px 18px}
+
+/* VELUM_RIDE_DETAIL_SINGLE_CARD_V2 */
+.ride-detail-drawer{background:#f4f7fb;width:min(760px,100%);padding:14px 12px calc(env(safe-area-inset-bottom,0px) + 20px)}
+.ride-detail-card{background:#fff;border:1px solid #e1e8f0;border-radius:19px;padding:22px;box-shadow:0 12px 32px #0f366513;color:#213951;overflow:hidden}
+.detail-section-title{margin:0 0 12px;font-weight:900;color:#75849a;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+.detail-progress-wrap{overflow-x:auto;overflow-y:hidden;padding:5px 0 14px;-webkit-overflow-scrolling:touch}
+.detail-progress{list-style:none;display:flex;align-items:flex-start;margin:0;padding:0;min-width:max-content}
+.detail-progress li{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;min-width:98px;max-width:125px;line-height:1.3;font-size:10px;font-weight:750;color:#8898aa}
+.detail-progress li:not(:last-child):after{position:absolute;content:"";top:16px;height:2px;background:#e1e8ef;left:calc(50% + 18px);right:calc(-50% + 18px)}
+.detail-progress li.done:not(:last-child):after{background:#37a877}
+.detail-step-dot{z-index:1;width:34px;height:34px;border-radius:50%;border:2px solid #e1e8ef;background:#eff3f7;display:grid;place-items:center;font-weight:900;color:#8290a2;font-size:13px}
+.detail-progress li.done{color:#237e58}.detail-progress li.done .detail-step-dot{color:#137850;background:#e2f5ec;border-color:#abdec2}
+.detail-progress li.current{color:#c75a0b}.detail-progress li.current .detail-step-dot{background:#fff0e5;color:#d65f0b;border-color:#ff802e;box-shadow:0 0 0 3px #fff1e6}
+.detail-primary{background:#f8fafc;border:1px solid #e2eaf2;border-radius:14px;padding:15px;margin-top:4px}
+.detail-next-caption{font-size:10px;letter-spacing:.6px;font-weight:900;color:#7f8ca0;text-transform:uppercase;margin-bottom:10px}
+.detail-primary .detail-primary-button{width:100%;min-height:50px;padding:12px 14px;background:#ff710b;color:#fff;border:0;border-radius:11px;font-weight:900;font-size:13px;line-height:1.35;cursor:pointer}
+.detail-primary .detail-primary-button:disabled{background:#e9eef4;color:#67778d;cursor:default}
+.ride-detail-content .detail-primary .store-complete{display:block}
+.detail-next-hint{font-size:11px;color:#6c7c90;line-height:1.5;margin:9px 0 0}
+.detail-primary .driver-picker{margin-top:12px;background:#fff}.detail-primary .driver-picker-toggle{background:#fff;gap:8px;min-height:49px;text-align:left;line-height:1.4}.detail-primary .driver-picker-toggle span:last-child{color:#cf600d;white-space:nowrap}
+.detail-main{margin-top:22px}.detail-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px}
+.detail-heading h4{margin:0 0 5px;font-size:19px;color:#0f3665;line-height:1.25;overflow-wrap:anywhere}.detail-heading .detail-subtitle{font-size:11px;color:#77879a;overflow-wrap:anywhere}
+.detail-heading .ride-status{max-width:47%;text-align:center;white-space:normal;font-size:10px;flex:none}
+.detail-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.detail-info-field{min-width:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.detail-info-field small{display:block;font-size:10px;font-weight:800;color:#8592a3;margin-bottom:4px}
+.detail-info-field strong{color:#243d5d;font-weight:750}.detail-info-field.full{grid-column:1/-1}
+.detail-rule{border:0;border-top:1px solid #e8eef3;margin:19px 0}
+.detail-stops{display:grid;gap:9px}.detail-stop{background:#f8fafc;padding:10px 12px;border-radius:10px;font-size:11px;line-height:1.5;color:#62748a}.detail-stop b{display:block;color:#23415e;margin-bottom:3px}
+.detail-footer{border-top:1px solid #e8edf3;margin-top:22px;padding-top:17px}
+.detail-footer h4{margin:0 0 12px;font-size:12px;color:#64768c;text-transform:uppercase;letter-spacing:.5px}
+.detail-mini-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.detail-mini-actions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:66px;padding:9px 5px;background:#f8fafc;border:1px solid #dce5ee;color:#20446d;border-radius:11px;font-size:10px;line-height:1.25;font-weight:800;cursor:pointer;text-align:center;overflow-wrap:anywhere}
+.detail-mini-actions button svg{width:19px;height:19px;flex:none}
+.detail-mini-actions button:disabled{opacity:.45;cursor:not-allowed}.detail-mini-actions button:hover:not(:disabled){border-color:#ff8c4e;background:#fff7ef}
+.detail-mini-actions .ride-delete{color:#b43d3d;border-color:#f0d6d6;background:#fffcfc}.detail-mini-actions .detail-call{color:#bb540b;background:#fff8f3}
+.detail-feedback{font-size:11px;color:#536c84;line-height:1.4}
+@media(max-width:650px){.ride-detail-drawer{max-height:94vh;padding:11px 9px calc(env(safe-area-inset-bottom,0px) + 15px)}.ride-detail-card{padding:17px 13px;border-radius:16px}.detail-progress li{min-width:82px;max-width:102px;font-size:9px}.detail-heading h4{font-size:17px}.detail-info-grid{gap:13px 12px}.detail-mini-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
@@ -369,22 +407,132 @@ function closeRideDetail(){
   const focus=detailPreviousFocus;detailPreviousFocus=null;
   if(focus?.isConnected&&typeof focus.focus==='function')focus.focus();
 }
+function detailProgress(x){
+  const status=String(x.status||'');
+  const afterCall=['WAITING_DRIVER','DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
+  const accepted=['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
+  const collected=['COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
+  const inRoute=['OUT_FOR_DELIVERY','DELIVERED'].includes(status);
+  const finished=status==='DELIVERED';
+  const steps=[];
+  if(status==='STORE_PICKUP_READY'||x.storePickup===true||x.deliveryType==='Retirada em loja'){
+    steps.push({name:'Pronto na loja',done:true},{name:'Retirada confirmada',done:finished});
+  }else{
+    if(x.internalLogistics===true){
+      const packed=status!=='PREPARING';
+      steps.push({name:'Preparação',done:packed},{name:'Conferido',done:packed});
+      const centers=Array.isArray(x.logisticsStages)?x.logisticsStages:[];
+      centers.forEach((st,i)=>{
+        const passed=afterCall||status==='LOGISTICS_READY_FOR_DRIVER';
+        steps.push({name:st.name||'Centro '+(i+1),done:st.status==='ARRIVED'||passed});
+      });
+    }else steps.push({name:'Etiqueta pronta',done:true});
+    steps.push({name:'Entregador chamado',done:afterCall},
+      {name:'Corrida aceita',done:accepted},
+      {name:'Pedido coletado',done:collected},
+      {name:'Em entrega',done:inRoute},
+      {name:'Concluída',done:finished});
+  }
+  const active=steps.findIndex(s=>!s.done);
+  return '<div class="detail-section-title">Linha do tempo da entrega</div><div class="detail-progress-wrap"><ol class="detail-progress" aria-label="Etapas da corrida">'+steps.map((s,i)=>{
+    const current=i===active;
+    return '<li class="'+(s.done?'done':current?'current':'pending')+'"'+(current?' aria-current="step"':'')+'><span class="detail-step-dot">'+(s.done?'✓':i+1)+'</span><span>'+esc(s.name)+'</span></li>';
+  }).join('')+'</ol></div>';
+}
+function detailPrimaryAction(x){
+  const id=esc(x.deliveryId),status=String(x.status||'');
+  const phases={
+    PREPARING:['log-act','MARK_PACKED','Confirmar produto conferido e embalado'],
+    LOGISTICS_PACKED:['log-act','SEND_TO_CENTER','Enviar ao próximo centro'],
+    LOGISTICS_IN_TRANSIT:['log-act','ARRIVE_CENTER','Confirmar chegada ao centro'],
+    AT_LOGISTICS_CENTER:['log-act','SEND_TO_CENTER','Enviar ao próximo centro'],
+    LOGISTICS_READY_FOR_DRIVER:['log-act','CALL_DRIVER','Chamar entregador'],
+    READY_TO_DISPATCH:['ride-call-prepared','','Chamar entregador'],
+    WAITING_DRIVER:['ride-recall','','Chamar entregador novamente'],
+    STORE_PICKUP_READY:['store-complete','','Confirmar retirada na loja']
+  };
+  const action=phases[status];
+  let button='',hint='';
+  if(status==='DELIVERED'){
+    button='<button type="button" class="detail-primary-button" disabled>✓ Corrida concluída</button>';
+    hint='Todas as etapas desta corrida foram concluídas.';
+  }else if(action){
+    const attrs=' data-id="'+id+'"'+(action[1]?' data-action="'+action[1]+'"':'');
+    button='<button type="button" class="detail-primary-button '+action[0]+'"'+attrs+'>'+esc(action[2])+' <span aria-hidden="true">→</span></button>';
+    hint=status==='READY_TO_DISPATCH'?'Escolha todos os entregadores ou selecione os específicos antes de chamar.':
+      status==='WAITING_DRIVER'?'Aguardando aceite. Você pode ajustar os destinatários ou chamar novamente.':
+      status==='LOGISTICS_READY_FOR_DRIVER'?'Pedido pronto no último centro de distribuição.':
+      'Confirme esta etapa somente quando a ação realmente acontecer.';
+  }else{
+    button='<button type="button" class="detail-primary-button" disabled>Aguardando atualização do entregador</button>';
+    hint='O avanço desta fase é realizado pelo entregador para preservar a sequência correta.';
+  }
+  return '<section class="detail-primary" aria-label="Ação da próxima etapa"><div class="detail-next-caption">Próxima etapa / confirmação</div>'+button+
+    '<p class="detail-next-hint">'+esc(hint)+'</p>'+driverPicker(x)+'</section>';
+}
+function detailMiniIcon(type){
+  const icons={
+    print:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5h-2M6 14h12v7H6zM18 12h.01"/>',
+    share:'<path d="M12 16V3m0 0L7 8m5-5 5 5M5 13H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1"/>',
+    edit:'<path d="M12 20h9M4 16.5 16.5 4a2.12 2.12 0 0 1 3 3L7 19.5 3 21z"/>',
+    trash:'<path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m4-7v7"/>',
+    dispatch:'<path d="M3 17h2l2-9h10l3 9h1M6 17a2 2 0 1 0 4 0M16 17a2 2 0 1 0 4 0M7 12h13"/>'
+  };
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(icons[type]||icons.edit)+'</svg>';
+}
+function detailQuickActions(x){
+  const id=esc(x.deliveryId),status=String(x.status||''),hasDriver=Boolean(x.driver?.name||x.driverId);
+  const editable=!hasDriver&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','STORE_PICKUP_READY'].includes(status);
+  const removable=(!hasDriver||status==='DELIVERED')&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','STORE_PICKUP_READY','DELIVERED'].includes(status);
+  const button=(cls,icon,label,attrs='',disabled=false,extra='')=>'<button type="button" class="'+cls+' '+extra+'"'+attrs+(disabled?' disabled title="Ação indisponível nesta etapa"':'')+'>'+detailMiniIcon(icon)+'<span>'+esc(label)+'</span></button>';
+  let buttons=button('print-one','print','Etiqueta',' data-print-id="'+id+'"');
+  const link=x.trackingUrl?' data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'"':'';
+  buttons+=button('share-track','share','Compartilhar',link,!x.trackingUrl);
+  buttons+=button('ride-edit','edit','Editar',' data-id="'+id+'"',!editable);
+  buttons+=button('ride-delete','trash','Excluir',' data-id="'+id+'"',!removable);
+  if(status==='READY_TO_DISPATCH')buttons+=button('ride-call-prepared','dispatch','Chamar',' data-id="'+id+'"',false,'detail-call');
+  if(status==='WAITING_DRIVER')buttons+=button('ride-recall','dispatch','Chamar novamente',' data-id="'+id+'"',false,'detail-call');
+  if(status==='LOGISTICS_READY_FOR_DRIVER')buttons+=button('log-act','dispatch','Chamar',' data-id="'+id+'" data-action="CALL_DRIVER"',false,'detail-call');
+  return '<footer class="detail-footer"><h4>Ações rápidas</h4><div class="detail-mini-actions">'+buttons+'</div></footer>';
+}
+function detailAddress(base,city,state){
+  const text=String(base||'').trim();
+  const tail=[city,state].filter(v=>v&&!text.toLocaleLowerCase('pt-BR').includes(String(v).toLocaleLowerCase('pt-BR'))).join(' - ');
+  return [text,tail].filter(Boolean).join(' • ')||'—';
+}
+function detailInfo(x){
+  const isStore=x.storePickup===true||x.status==='STORE_PICKUP_READY'||x.deliveryType==='Retirada em loja';
+  const payer=isStore?'Sem taxa de entrega':x.payerLabel||(x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'Recebedor paga na entrega':'LÚMEN paga na retirada');
+  const pickup=x.originalPickupAddress||[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', ');
+  const destination=isStore?'Retirada no endereço da loja':detailAddress(x.deliveryAddress,x.deliveryCity,x.deliveryState);
+  const field=(label,value,full=false)=>'<div class="detail-info-field'+(full?' full':'')+'"><small>'+esc(label)+'</small><strong>'+esc(value??'—')+'</strong></div>';
+  let html='<section class="detail-main"><div class="detail-section-title">Dados da corrida</div>'+
+    '<div class="detail-heading"><div><h4>'+esc(x.customerName||x.recipientName||'Cliente')+'</h4><div class="detail-subtitle">Pedido '+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'</div></div><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></div>'+
+    '<div class="detail-info-grid">'+field('Cliente / recebedor',x.customerName||x.recipientName||'—')+field('Telefone',x.customerPhone||'—')+
+    field('Modalidade',isStore?'Retirada em loja':x.deliveryType||x.type||'Entrega')+field('Valor da corrida',money(x.deliveryFee||0))+
+    field('Quem paga',payer)+field('Criada em',dt(x.createdAt))+
+    field('Endereço de retirada',detailAddress(pickup,x.originalPickupAddress?'':x.pickupCity,x.originalPickupAddress?'':x.pickupState),true)+
+    field('Endereço de entrega / destino',destination,true)+field('Observações / referência',x.deliveryInstructions||'Nenhuma',true)+
+    field('Código da corrida',x.deliveryId||'—')+field('Nº do pedido',x.orderNumber||x.blingOrderNumber||'—')+'</div>';
+  const stops=Array.isArray(x.logisticsStages)?x.logisticsStages:[];
+  if(stops.length)html+='<hr class="detail-rule"><div class="detail-section-title">Centros e paradas</div><div class="detail-stops">'+stops.map((st,i)=>
+    '<div class="detail-stop"><b>'+esc(st.name||'Centro '+(i+1))+' · '+(st.status==='ARRIVED'?'Chegada confirmada':'Pendente')+'</b>'+esc([st.address,st.city,st.state].filter(Boolean).join(' · ')||'Endereço não informado')+' · '+(st.hasFee?'Taxa '+money(st.fee||0):'Sem taxa adicional')+'</div>').join('')+'</div>';
+  if(x.driver)html+='<hr class="detail-rule"><div class="detail-section-title">Entregador responsável</div>'+driverHtml(x.driver);
+  return html+'</section>';
+}
 function renderRideDetail(){
   if(!openedRideId)return;
   const x=rideById(openedRideId);
   if(!x){closeRideDetail();return}
-  const done=ridePhase(x)==='done';
+  const content=$('rideDetailContent');
+  const drawer=$('rideDetailOverlay').querySelector('.ride-detail-drawer');
+  const scroll=drawer.scrollTop;
+  const pickerOpen=Boolean(content.querySelector('.driver-picker.open'));
   $('rideDetailHeading').textContent='Pedido '+(x.orderNumber||x.blingOrderNumber||x.deliveryId||'');
-  const extra='<div class="ride-detail-extra">'+
-    '<b>Pedido:</b> '+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'-')+'<br>'+
-    '<b>Situação:</b> <span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span><br>'+
-    '<b>Tipo:</b> '+esc(x.deliveryType||'Entrega')+'<br>'+
-    '<b>Telefone:</b> '+esc(x.customerPhone||'-')+'<br>'+
-    '<b>Endereço de retirada:</b> '+esc([x.pickupAddress,x.pickupNumber,x.pickupNeighborhood,x.pickupCity,x.pickupState].filter(Boolean).join(', ')||'-')+'<br>'+
-    '<b>Endereço de entrega:</b> '+esc([x.deliveryAddress,x.deliveryCity,x.deliveryState].filter(Boolean).join(', ')||'-')+'<br>'+
-    '<b>Observações:</b> '+esc(x.deliveryInstructions||'-')+'</div>';
-  $('rideDetailContent').innerHTML=ride(x,done)+extra+'<div class="ride-detail-actions"><h4>Ações disponíveis</h4>'+sheetActionButtons(x,true)+'</div>';
+  content.innerHTML='<article class="ride-detail-card">'+detailProgress(x)+detailPrimaryAction(x)+detailInfo(x)+detailQuickActions(x)+'<div class="detail-feedback" id="detailFeedback" role="status" aria-live="polite"></div></article>';
+  if(pickerOpen)content.querySelector('.driver-picker')?.classList.add('open');
   bindRideActions();
+  drawer.scrollTop=scroll;
 }
 function openRideDetail(id){
   const x=rideById(id);if(!x)return;
