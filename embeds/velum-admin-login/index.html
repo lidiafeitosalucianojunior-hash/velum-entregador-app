@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VELUM | Administração geral</title>
+  <style>
+    :root{color-scheme:light;--navy:#0f3665;--orange:#ff7a00;--ink:#17324d;--muted:#6c7e90}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(145deg,#102f58,#071d34);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);display:grid;place-items:center;padding:22px}
+    .card{background:white;width:min(430px,100%);border-radius:23px;padding:30px;box-shadow:0 25px 75px #0004}
+    .brand{font-size:26px;font-weight:950;letter-spacing:.04em;color:var(--navy)}.brand span{color:var(--orange)}
+    .eyebrow{margin-top:9px;color:var(--orange);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.12em}
+    h1{font-size:25px;color:var(--navy);margin:16px 0 8px}p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 20px}
+    label{display:block;font-size:11px;font-weight:800;color:#536579;margin:14px 0 7px}
+    input{width:100%;border:1px solid #dce4ed;border-radius:12px;background:#fff;height:48px;padding:0 13px;font:inherit;font-size:14px;color:var(--ink)}input:focus{outline:2px solid #ffc485;border-color:var(--orange)}
+    button{height:48px;width:100%;border:0;border-radius:12px;background:var(--orange);color:#fff;font-size:13px;font-weight:900;margin-top:20px;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
+    #error{display:none;margin:14px 0 0;padding:11px 12px;border-radius:10px;background:#fff0f0;color:#a52b36;font-size:12px;line-height:1.4}small{display:block;margin-top:20px;text-align:center;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">VE<span>LUM</span></div>
+    <div class="eyebrow">Administração geral</div>
+    <h1>Entrar no VELUM</h1>
+    <p>Acesso exclusivo à gestão de lojas parceiras, revendedoras, entregadores e logística VELUM.</p>
+    <form id="form">
+      <label for="email">E-mail administrativo</label><input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Senha</label><input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button id="submit" type="submit">ENTRAR NO PAINEL</button>
+      <div id="error" role="alert" aria-live="polite"></div>
+    </form>
+    <small>VELUM · Administração geral</small>
+  </main>
+  <script>
+    (()=>{
+      const form=document.getElementById('form'),button=document.getElementById('submit'),error=document.getElementById('error');
+      let pending=false,guard;
+      function showError(message){error.textContent=message||'Não foi possível entrar.';error.style.display='block'}
+      function reset(){pending=false;clearTimeout(guard);button.disabled=false;button.textContent='ENTRAR NO PAINEL'}
+      form.addEventListener('submit',event=>{
+        event.preventDefault();if(pending)return;
+        error.style.display='none';pending=true;button.disabled=true;button.textContent='ENTRANDO...';
+        const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;
+        window.parent.postMessage({source:'VELUM_ADMIN_LOGIN',type:'LOGIN',payload:{email,password}},'*');
+        guard=setTimeout(()=>{if(pending){reset();showError('A autenticação demorou demais. Tente novamente.')}},13000);
+      });
+      window.addEventListener('message',event=>{
+        if(event.source!==window.parent)return;
+        const message=event.data||{};
+        if(message.source!=='VELUM_ADMIN_LOGIN_PAGE'||message.type!=='LOGIN_RESULT')return;
+        reset();if(!message.payload?.ok)showError(message.payload?.mensagem||'E-mail ou senha inválidos.');
+      });
+    })();
+  </script>
+</body>
+</html>
