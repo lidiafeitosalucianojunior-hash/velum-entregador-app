@@ -255,8 +255,73 @@ function ridePhase(x){
 }
 function currentVisibleRides(){return activeRideTab==='all'?allRideData():allRideData().filter(x=>ridePhase(x)===activeRideTab)}
 function updatePrintState(){const n=selectedLabels.size;const text=n===0?'Nenhuma etiqueta selecionada':n===1?'1 etiqueta selecionada':n+' etiquetas selecionadas';if($('selectedInfo'))$('selectedInfo').textContent=text;if($('printSelected'))$('printSelected').disabled=n===0;if($('printSelectedDone'))$('printSelectedDone').disabled=n===0;document.querySelectorAll('input.label-check[data-label-id]').forEach(el=>{el.checked=selectedLabels.has(el.dataset.labelId)});const visible=filteredRideSheet();if($('selectAllSheet')){$('selectAllSheet').checked=visible.length>0&&visible.every(x=>selectedLabels.has(x.deliveryId));$('selectAllSheet').indeterminate=visible.some(x=>selectedLabels.has(x.deliveryId))&&!visible.every(x=>selectedLabels.has(x.deliveryId))}}
-function labelHtml(x){const isStorePickup=x.storePickup===true||x.deliveryType==='Retirada em loja';const address=[isStorePickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):x.deliveryAddress,isStorePickup?([x.pickupCity,x.pickupState].filter(Boolean).join(' - ')):(x.deliveryCity&&x.deliveryState?[x.deliveryCity,x.deliveryState].join(' - '):x.deliveryCity||x.deliveryState),isStorePickup?x.pickupZipCode:x.deliveryZipCode].filter(Boolean);const qr='https://quickchart.io/qr?size=180&margin=1&text='+encodeURIComponent('https://www.lumenluxos.com');const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));const barcode='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=5&padding=2&text='+encodeURIComponent(code);return'<section class="shipping-label"><header><div class="lux">LÚMEN LUXOS</div><div class="tag">Exclusividade, Poder e Presença</div></header><main><div class="label-name">'+esc(x.customerName||'Recebedor')+'</div>'+(x.customerPhone?'<div class="label-phone">WhatsApp: '+esc(x.customerPhone)+'</div>':'')+'<div class="label-address">'+(isStorePickup?'<b>RETIRADA EM LOJA — NÃO ENVIAR ENTREGADOR</b><br>':'')+address.map(esc).join('<br>')+'</div>'+(x.deliveryInstructions?'<div class="label-ref"><b>Referência:</b> '+esc(x.deliveryInstructions)+'</div>':'')+'<div class="barcode"><img src="'+barcode+'" alt="QR Code da coleta"><div style="font-size:8pt;color:#738196;margin-top:1mm">QR de coleta • Etiqueta v'+esc(x.labelRevision||1)+'</div></div></main><footer><div class="thanks">Agradecemos pela sua compra!</div><div class="catalog"><img src="'+qr+'" alt="QR Code"><div><b>Conheça nosso catálogo</b><span>www.lumenluxos.com</span></div></div></footer></section>'}
-function printLabels(items){const list=(items||[]).filter(Boolean);if(!list.length)return;const w=window.open('','_blank');if(!w)return notice('Permita pop-ups para imprimir as etiquetas.',false);const doc='<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas LÚMEN LUXOS</title><style>@page{size:10cm 15cm;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Arial,sans-serif;color:#102f59}.shipping-label{width:10cm;height:15cm;padding:.65cm;display:flex;flex-direction:column;page-break-after:always;background:#fff}.shipping-label:last-child{page-break-after:auto}header{border-bottom:2px solid #102f59;padding-bottom:.35cm}.lux{font-size:24pt;font-weight:900;letter-spacing:.5px}.tag{font-size:10pt;margin-top:2mm;color:#5c6d80}main{flex:1;padding-top:.5cm}.label-name{font-size:20pt;font-weight:900;line-height:1.05}.label-phone{font-size:11pt;margin-top:2mm}.label-address{font-size:15pt;font-weight:700;line-height:1.3;margin-top:.55cm}.label-ref{font-size:10.5pt;line-height:1.35;margin-top:.5cm;padding:.3cm;border:1px solid #d7e0ea;border-radius:8px}.barcode{text-align:center;margin-top:.45cm}.barcode img{width:3.4cm;height:3.4cm;object-fit:contain}.thanks{text-align:center;font-weight:800;font-size:11pt;margin-bottom:.35cm}.catalog{display:flex;align-items:center;justify-content:center;gap:.35cm;border-top:1px solid #d7e0ea;padding-top:.35cm}.catalog img{width:2.8cm;height:2.8cm}.catalog div{display:flex;flex-direction:column;gap:1mm}.catalog b{font-size:11pt}.catalog span{font-size:9pt;color:#5c6d80}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'+list.map(labelHtml).join('')+'<script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>';w.document.open();w.document.write(doc);w.document.close()}
+// VELUM_LUMEN_LABEL_LAYOUT_V2 — visual layout revision, independent of shipping-code revision
+function labelHtml(x){
+ const pickup=x.storePickup===true||x.deliveryType==='Retirada em loja'||x.status==='STORE_PICKUP_READY';
+ const number=x.orderNumber||x.blingOrderNumber||x.deliveryId||'—';
+ const address=pickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):String(x.deliveryAddress||'').trim();
+ const city=pickup?x.pickupCity:x.deliveryCity;
+ const state=pickup?x.pickupState:x.deliveryState;
+ const zip=pickup?x.pickupZipCode:x.deliveryZipCode;
+ const fullAddress=[address,[city,state].filter(Boolean).join(' - '),zip&&('CEP: '+zip)].filter(Boolean).map(esc).join('<br>');
+ const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));
+ const collectionQr='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=5&padding=2&text='+encodeURIComponent(code);
+ const catalogQr='https://quickchart.io/qr?size=220&margin=1&text='+encodeURIComponent('https://www.lumenluxos.com');
+ const mode=pickup?'RETIRADA EM LOJA':'ENTREGA';
+ return '<section class="shipping-label">'+
+  '<header class="ship-header"><div class="ship-brand"><div class="ship-mark">L</div><div><div class="ship-lux">LÚMEN LUXOS</div><div class="ship-tagline">Exclusividade, Poder e Presença</div></div></div><div class="ship-mode">'+mode+'</div></header>'+
+  '<div class="ship-order"><span>ETIQUETA LOGÍSTICA · LAYOUT V2</span><b>PEDIDO '+esc(number)+'</b></div>'+
+  '<main class="ship-body"><div class="ship-label">DESTINATÁRIO</div><div class="ship-name">'+esc(x.customerName||x.recipientName||'Recebedor')+'</div>'+
+  '<div class="ship-phone">'+(x.customerPhone?'TELEFONE / WHATSAPP: <strong>'+esc(x.customerPhone)+'</strong>':'TELEFONE: NÃO INFORMADO')+'</div>'+
+  '<div class="ship-destination"><div class="ship-label">'+(pickup?'LOCAL DE RETIRADA':'ENDEREÇO DE ENTREGA')+'</div><div class="ship-address">'+(fullAddress||'Endereço não informado')+'</div></div>'+
+  (x.deliveryInstructions?'<div class="ship-note"><b>REFERÊNCIA / INSTRUÇÕES</b><span>'+esc(x.deliveryInstructions)+'</span></div>':'')+'</main>'+
+  '<div class="ship-qr-block"><div class="ship-qr-main"><img src="'+collectionQr+'" alt="QR Code de identificação da encomenda"><strong>QR DE COLETA</strong><span>Identificação da encomenda</span></div>'+
+  '<div class="ship-qr-side"><img src="'+catalogQr+'" alt="QR Code do catálogo Lúmen"><strong>CONHEÇA NOSSO CATÁLOGO</strong><span>lumenluxos.com</span></div></div>'+
+  '<footer class="ship-footer"><b>OBRIGADA PELA PREFERÊNCIA!</b><span>Corrida: '+esc(x.deliveryId||'—')+' · VELUM</span></footer></section>';
+}
+function printLabels(items){
+ const list=(Array.isArray(items)?items:[]).filter(Boolean);
+ if(!list.length)return;
+ const w=window.open('','_blank');
+ if(!w)return notice('Permita pop-ups para imprimir as etiquetas.',false);
+ const style=[
+  '@page{size:100mm 150mm;margin:0}',
+  '*{box-sizing:border-box}',
+  'html,body{margin:0;padding:0;background:#fff;color:#152d50;font-family:Arial,Helvetica,sans-serif}',
+  '.shipping-label{width:100mm;height:150mm;padding:6mm 6mm 5mm;display:flex;flex-direction:column;background:#fff;overflow:hidden;page-break-inside:avoid;break-inside:avoid;page-break-after:always;break-after:page}',
+  '.shipping-label:last-child{page-break-after:auto;break-after:auto}',
+  '.ship-header{display:flex;justify-content:space-between;align-items:center;gap:3mm;padding-bottom:2mm;border-bottom:1mm solid #173c6d;flex-shrink:0}',
+  '.ship-brand{display:flex;align-items:center;gap:2.6mm;min-width:0}',
+  '.ship-mark{width:10.5mm;height:10.5mm;border-radius:2.5mm;flex:none;display:grid;place-items:center;color:#fff;background:#173c6d;font-size:21pt;font-weight:900}',
+  '.ship-lux{font-size:16pt;font-weight:900;line-height:1;white-space:nowrap;letter-spacing:-.3pt}',
+  '.ship-tagline{font-size:7.5pt;color:#67798d;margin-top:1.4mm}',
+  '.ship-mode{border:1px solid #f38a39;color:#ab4f0d;background:#fff2e6;padding:1.5mm 2mm;border-radius:2mm;font-size:7pt;font-weight:900;text-align:center;max-width:24mm;flex:none}',
+  '.ship-order{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:2mm 0;border-bottom:1px solid #e3e9f1;min-width:0;flex-shrink:0}',
+  '.ship-order span{font-size:7pt;color:#687c92;font-weight:900}',
+  '.ship-order b{font-size:9pt;color:#183b65;max-width:45mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}',
+  '.ship-body{padding:3mm 0 1.5mm;display:flex;flex-direction:column;gap:1.7mm;flex:0 0 auto}',
+  '.ship-label{font-size:7.5pt;letter-spacing:.35pt;color:#647890;font-weight:900}',
+  '.ship-name{font-size:16pt;line-height:1.06;letter-spacing:-.5pt;color:#17375d;font-weight:900;overflow-wrap:anywhere}',
+  '.ship-phone{font-size:9.5pt;line-height:1.35;overflow-wrap:anywhere}',
+  '.ship-phone strong{color:#17375d}',
+  '.ship-destination{border:1px solid #dbe4ee;background:#f7f9fc;border-radius:3mm;padding:2.3mm 2.7mm;margin-top:1.3mm}',
+  '.ship-address{font-size:11.8pt;line-height:1.2;font-weight:900;overflow-wrap:anywhere;margin-top:1.8mm}',
+  '.ship-note{border-left:1mm solid #f38a39;padding:1.5mm 0 1.5mm 3mm;display:flex;flex-direction:column;gap:1mm;overflow-wrap:anywhere}',
+  '.ship-note b{font-size:7pt;color:#6c7e92}.ship-note span{font-size:9pt;line-height:1.3}',
+  '.ship-qr-block{display:flex;align-items:center;justify-content:space-around;border-top:1px solid #dbe4ee;border-bottom:1px solid #dbe4ee;padding:2mm 0 1.6mm;margin-top:auto;gap:4mm;flex-shrink:0}',
+  '.ship-qr-main,.ship-qr-side{width:43%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:1mm;min-width:0}',
+  '.ship-qr-main img,.ship-qr-side img{width:26mm;height:26mm;object-fit:contain}',
+  '.ship-qr-block strong{font-size:8pt;line-height:1.1}',
+  '.ship-qr-block span{font-size:7.3pt;color:#6c7e92}',
+  '.ship-footer{padding-top:1.8mm;display:flex;flex-direction:column;align-items:center;gap:1mm;text-align:center;flex-shrink:0}',
+  '.ship-footer b{font-size:9pt;letter-spacing:.2pt}.ship-footer span{font-size:7.4pt;color:#6b7f93;overflow-wrap:anywhere}',
+  '@media screen{body{background:#e9eef5}.shipping-label{margin:10px auto;box-shadow:0 3px 18px #152d5020}}',
+  '@media print{html,body{width:100mm;min-height:0!important;background:#fff!important}.shipping-label{margin:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+ ].join('');
+ const printScript='<'+'script>window.addEventListener("load",function(){const images=Array.from(document.images);const jobs=images.map(function(img){return img.complete?Promise.resolve():new Promise(function(resolve){let done=false;const finish=function(){if(done)return;done=true;resolve()};img.addEventListener("load",finish,{once:true});img.addEventListener("error",finish,{once:true});setTimeout(finish,5000)})});Promise.all(jobs).then(function(){setTimeout(function(){window.print()},180)})},{once:true})<'+'/script>';
+ const doc='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Etiquetas LÚMEN LUXOS · V2</title><style>'+style+'</style></head><body>'+list.map(labelHtml).join('')+printScript+'</body></html>';
+ w.document.open();w.document.write(doc);w.document.close();
+}
 function toggleEditRouteFields(disabled){
   ['pickupAddress','pickupNumber','pickupNeighborhood','pickupCity','pickupState','pickupZipCode','deliveryAddress','deliveryCity','deliveryState','deliveryZipCode'].forEach(k=>{if($(k))$(k).disabled=disabled});
   $('addStop').disabled=disabled;
