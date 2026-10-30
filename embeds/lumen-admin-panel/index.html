@@ -140,10 +140,74 @@ body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
 .detail-mini-actions .ride-delete{color:#b43d3d;border-color:#f0d6d6;background:#fffcfc}.detail-mini-actions .detail-call{color:#bb540b;background:#fff8f3}
 .detail-feedback{font-size:11px;color:#536c84;line-height:1.4}
 @media(max-width:650px){.ride-detail-drawer{max-height:94vh;padding:11px 9px calc(env(safe-area-inset-bottom,0px) + 15px)}.ride-detail-card{padding:17px 13px;border-radius:16px}.detail-progress li{min-width:82px;max-width:102px;font-size:9px}.detail-heading h4{font-size:17px}.detail-info-grid{gap:13px 12px}.detail-mini-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* VELUM_LUMEN_RESPONSIVE_RIDE_CARDS_V1 */
+.app{max-width:none;width:100%;padding-left:clamp(12px,2.6vw,30px);padding-right:clamp(12px,2.6vw,30px)}
+.active-subtabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ride-sheet-wrap{border:0;overflow:visible;margin:12px 0;background:transparent;border-radius:0}
+.ride-cards{display:grid;gap:12px}
+.ride-record{background:#fff;border:1px solid #dbe3ed;border-radius:17px;padding:16px 17px;box-shadow:0 4px 17px #102b4410;cursor:pointer;min-width:0}
+.ride-record:hover{border-color:#9eb7d0;background:#fcfdff}
+.ride-record:focus-visible{outline:3px solid #ff7a00;outline-offset:2px}
+.ride-record-body{display:grid;grid-template-columns:36px minmax(130px,1.5fr) minmax(116px,1.25fr) minmax(100px,1fr) minmax(110px,1.1fr) minmax(105px,.9fr);gap:13px;align-items:center}
+.ride-record-field{min-width:0;line-height:1.35}
+.ride-record-field small{display:block;font-size:10px;font-weight:850;letter-spacing:.4px;text-transform:uppercase;color:#7d899b;margin-bottom:5px}
+.ride-record-field strong{font-size:13px;font-weight:850;color:#193c65;overflow-wrap:anywhere;display:block}
+.ride-record-field .ride-status{font-size:10px;font-weight:850;padding:7px 10px;max-width:100%;line-height:1.25;white-space:normal}
+.ride-select-standalone{display:grid;place-items:center;min-width:30px;min-height:34px}
+.ride-select-standalone input{width:20px;height:20px;accent-color:#ff7a00;cursor:pointer}
+.ride-card-phone{color:#1761a9!important;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;font-size:13px;font-weight:800;display:inline-block;line-height:1.3}
+.ride-card-phone:hover{color:#ff7a00!important}
+.ride-card-phone-blank{color:#8a98a9;font-size:12px}
+.ride-card-city{font-size:13px;font-weight:800;color:#173b65;overflow-wrap:anywhere}
+.ride-card-city span{display:block;font-size:11px;color:#6d7e92;font-weight:650;margin-top:2px}
+.ride-record-actions{min-width:0}
+.ride-record-actions details{position:relative}
+.ride-record-actions summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:6px;min-height:43px;border:1px solid #d7e1eb;border-radius:11px;background:#f6f9fd;color:#0f3665;padding:9px 10px;font-size:12px;font-weight:850;cursor:pointer}
+.ride-record-actions summary::-webkit-details-marker{display:none}
+.ride-record-actions details[open] summary{border-color:#ff9a52;background:#fff7f0}
+.ride-record-actions .sheet-actions{display:grid;grid-template-columns:1fr;gap:7px;position:absolute;right:0;top:calc(100% + 6px);width:min(265px,80vw);padding:10px;background:#fff;border:1px solid #dbe3ec;border-radius:13px;box-shadow:0 15px 30px #18345130;z-index:40;max-height:min(440px,65vh);overflow:auto}
+.ride-record-actions .sheet-actions button{min-height:38px;border:1px solid #dce5ef;border-radius:9px;background:#f9fbfd;color:#173d68;font-size:11px;font-weight:750;text-align:left;padding:9px 10px;cursor:pointer;white-space:normal;width:100%;height:auto}
+.ride-record-actions .sheet-actions button:disabled{opacity:.5;cursor:not-allowed}
+.ride-record-actions .sheet-actions .ride-delete:not(:disabled){color:#a13232;border-color:#ead0d0}
+.ride-record-actions .sheet-actions .print-one{display:block;width:100%}
+.ride-record-actions .sheet-actions .action-completed{font-size:11px;padding:8px;color:#65768c}
+.ride-sheet-empty{padding:28px;text-align:center;background:#fff;border:1px dashed #ced9e5;color:#718197;border-radius:14px}
+.print-toolbar{flex-wrap:wrap}
+@media(max-width:950px){
+ .ride-record-body{grid-template-columns:34px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
+ .ride-record-field.city-column{grid-column:3}
+ .ride-record-field.status-column{grid-column:2}
+ .ride-record-field.actions-column{grid-column:4}
+}
+@media(max-width:650px){
+ .app{max-width:100%;padding:13px 10px 86px}
+ .active-subtabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .active-subtab{min-height:66px;gap:5px;padding:10px 9px;font-size:9px;line-height:1.2;overflow-wrap:anywhere}
+ .phase-count{min-width:27px;min-height:27px;padding:4px 6px;font-size:12px}
+ .ride-record{padding:14px 12px;border-radius:15px}
+ .ride-record-body{grid-template-columns:25px minmax(0,1fr) minmax(0,.9fr);column-gap:11px;row-gap:13px;align-items:start}
+ .ride-select-standalone{grid-column:1;grid-row:1}
+ .ride-record-field.name-column{grid-column:2 / 4;grid-row:1}
+ .ride-record-field.phone-column{grid-column:2 / 4;grid-row:2}
+ .ride-record-field.city-column{grid-column:2;grid-row:3}
+ .ride-record-field.status-column{grid-column:3;grid-row:3}
+ .ride-record-field.actions-column{grid-column:2 / 4;grid-row:4}
+ .ride-record-field small{font-size:9px;margin-bottom:4px}
+ .ride-record-field strong,.ride-card-city{font-size:12px}
+ .ride-card-phone{font-size:12px}
+ .ride-record-actions summary{width:100%;min-height:43px;font-size:12px}
+ .ride-record-actions .sheet-actions{position:relative;top:auto;right:auto;width:100%;max-height:none;margin-top:7px;box-shadow:none}
+ .print-toolbar{align-items:stretch}
+}
+@media(max-width:350px){
+ .active-subtab{font-size:8px;padding:8px 6px}
+ .phase-count{min-width:23px;padding:3px}
+}
+body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 </style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
-<section class="hero"><small>LÚMEN LUXOS</small><h2>Chamar entregador</h2><p>Crie corridas e acompanhe a logística com o mesmo fluxo das lojas e revendedoras.</p></section>
 <section class="quick"><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button></section>
 
 <section class="card callbox" id="callBox">
@@ -201,7 +265,7 @@ body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
   </div>
   <div class="print-toolbar"><span id="selectedInfo">Nenhuma etiqueta selecionada</span><div class="selection-actions"><button class="select-visible" id="selectVisible" type="button">SELECIONAR VISÍVEIS</button><button class="print-selected" id="printSelected" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg> IMPRIMIR SELECIONADAS</button></div></div>
   <div class="field" style="margin:12px 0"><label for="rideSearch">Pesquisar nas corridas registradas ou concluídas</label><input id="rideSearch" type="search" autocomplete="off" placeholder="Nome, telefone ou número do pedido" aria-label="Pesquisar nas corridas registradas ou concluídas"></div>
-  <div class="ride-sheet-wrap"><table class="ride-sheet" aria-label="Corridas filtradas por etapa"><thead><tr><th><label class="sheet-select-label"><input type="checkbox" id="selectAllSheet" aria-label="Selecionar todas as corridas da tabela para impressão"> Pedido</label></th><th>Cliente</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="rideSheetBody"><tr><td colspan="5">Carregando corridas...</td></tr></tbody></table></div>
+  <div class="ride-sheet-wrap"><div class="ride-cards" id="rideSheetBody" role="list" aria-label="Corridas filtradas por etapa"><div class="ride-sheet-empty">Carregando corridas...</div></div></div>
 </section>
 <section class="ride-detail-overlay" id="rideDetailOverlay" role="presentation" aria-hidden="true" hidden>
   <div class="ride-detail-backdrop" data-close-detail="yes"></div>
@@ -214,7 +278,8 @@ body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
 <script>
 
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])),money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-let currentFee=0,stops=[],suggestTimer=null,activeRideTab='all',activeRides=[],doneRides=[],selectedLabels=new Set(),editingDeliveryId='',availableDrivers=[];
+const defaultXimbaStop=()=>({name:'CASA DE XIMBA',address:'Rua Pereira de Lucena, 515',city:'Brejo Santo',state:'CE',zipCode:'63260-000',hasFee:false,fee:0});
+let currentFee=0,stops=[defaultXimbaStop()],suggestTimer=null,activeRideTab='all',activeRides=[],doneRides=[],selectedLabels=new Set(),editingDeliveryId='',availableDrivers=[];
 let openedRideId='',detailPreviousFocus=null;
 let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSearchResults=[];
 
@@ -427,11 +492,11 @@ function bindRideActions(){
  document.querySelectorAll('.ride-recall').forEach(b=>b.onclick=()=>{b.disabled=true;send('RECALL_DELIVERY',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.ride-cancel').forEach(b=>b.onclick=()=>{if(!confirm('Cancelar esta corrida? Ela deixará de aparecer para os entregadores.'))return;b.disabled=true;send('CANCEL_DELIVERY',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.ride-edit').forEach(b=>b.onclick=()=>{closeRideDetail();startEditRide(rideById(b.dataset.id))});
- document.querySelectorAll('.ride-sheet details').forEach(menu=>{
+ document.querySelectorAll('.ride-record details').forEach(menu=>{
    if(menu.dataset.boundActions==='yes')return;
    menu.dataset.boundActions='yes';
    menu.addEventListener('toggle',()=>{
-     if(menu.open)document.querySelectorAll('.ride-sheet details[open]').forEach(other=>{if(other!==menu)other.open=false});
+     if(menu.open)document.querySelectorAll('.ride-record details[open]').forEach(other=>{if(other!==menu)other.open=false});
    });
    menu.querySelectorAll('.sheet-actions button').forEach(btn=>btn.addEventListener('click',()=>{menu.open=false}));
  });
@@ -505,8 +570,36 @@ function sheetActionButtons(x,detailMode=false){
   if(status==='DELIVERED')items+='<span class="action-completed">Corrida concluída</span>';
   return detailMode?'<div class="sheet-actions">'+items+'</div>':'<details><summary aria-label="Ações da corrida '+id+'">Ações ▾</summary><div class="sheet-actions">'+items+'</div></details>';
 }
-function renderRideSheet(list){const body=$('rideSheetBody');if(!body)return;body.innerHTML=list.length?list.map(x=>'<tr data-ride-id="'+esc(x.deliveryId)+'" tabindex="0" aria-label="Abrir detalhes da corrida '+esc(x.orderNumber||x.deliveryId)+'"><td><div class="sheet-order-line"><input type="checkbox" class="label-check sheet-label-check" data-label-id="'+esc(x.deliveryId)+'" aria-label="Selecionar etiqueta da corrida '+esc(x.orderNumber||x.deliveryId)+'"'+(selectedLabels.has(x.deliveryId)?' checked':'')+'><span>'+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'</span></div><span class="ride-mobile-meta"><b>'+esc(x.customerName||x.recipientName||'—')+'</b>'+esc(x.deliveryType||x.type||'Entrega')+'</span></td><td>'+esc(x.customerName||x.recipientName||'—')+'</td><td>'+esc(x.deliveryType||x.type||'Entrega')+'</td><td><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></td><td>'+sheetActionButtons(x)+'</td></tr>').join(''):'<tr><td colspan="5">Nenhuma corrida encontrada.</td></tr>'}
-function rideMatchesTerm(x,term){return !term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))}
+function ridePhoneWhatsApp(phone){
+ let digits=String(phone||'').replace(/\D/g,'');
+ if(digits.length===10||digits.length===11)digits='55'+digits;
+ if(!/^55\d{10,11}$/.test(digits))return '';
+ return 'https://wa.me/'+digits;
+}
+function renderRideSheet(list){
+ const body=$('rideSheetBody');if(!body)return;
+ body.innerHTML=list.length?list.map(x=>{
+  const id=esc(x.deliveryId),person=esc(x.customerName||x.recipientName||'Não informado');
+  const phone=String(x.customerPhone||'').trim();
+  const wa=ridePhoneWhatsApp(phone);
+  const city=String(x.deliveryType||'').toLowerCase().includes('retirada')||x.storePickup===true||x.status==='STORE_PICKUP_READY'?
+    String(x.pickupCity||x.deliveryCity||'—'):
+    String(x.deliveryCity||'—');
+  const mode=String(x.deliveryType||x.type||(x.storePickup?'Retirada':'Entrega'));
+  const phoneHtml=wa?'<a class="ride-card-phone" href="'+wa+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de '+person+'">'+esc(phone)+'</a>':
+   '<span class="ride-card-phone-blank">'+esc(phone||'Não informado')+'</span>';
+  return '<article class="ride-record" role="listitem" data-ride-id="'+id+'" tabindex="0" aria-label="Abrir detalhes da corrida de '+person+'">'+
+   '<div class="ride-record-body">'+
+    '<label class="ride-select-standalone" title="Selecionar etiqueta para impressão"><input type="checkbox" class="label-check sheet-label-check" data-label-id="'+id+'" aria-label="Selecionar etiqueta da corrida de '+person+'"'+(selectedLabels.has(x.deliveryId)?' checked':'')+'></label>'+
+    '<div class="ride-record-field name-column"><small>Nome</small><strong>'+person+'</strong></div>'+
+    '<div class="ride-record-field phone-column"><small>Telefone / WhatsApp</small>'+phoneHtml+'</div>'+
+    '<div class="ride-record-field city-column"><small>Cidade</small><div class="ride-card-city">'+esc(city)+'<span>'+esc(mode)+'</span></div></div>'+
+    '<div class="ride-record-field status-column"><small>Status</small><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></div>'+
+    '<div class="ride-record-field actions-column ride-record-actions"><small>Ações</small>'+sheetActionButtons(x)+'</div>'+
+   '</div></article>';
+ }).join(''):'<div class="ride-sheet-empty">Nenhuma corrida encontrada nesta fase.</div>';
+}
+function rideMatchesTerm(x,term){return !term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName,x.deliveryCity,x.pickupCity,x.deliveryType,statusLabel(x.status)].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))}
 function filteredRideSheet(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');return currentVisibleRides().filter(x=>rideMatchesTerm(x,term))}
 
 function closeRideDetail(){
@@ -656,7 +749,7 @@ function openRideDetail(id){
   $('closeRideDetail').focus();
 }
 function bindRideRowOpen(){
-  $('rideSheetBody').querySelectorAll('tr[data-ride-id]').forEach(row=>{
+  $('rideSheetBody').querySelectorAll('.ride-record[data-ride-id]').forEach(row=>{
     const open=event=>{
       if(event.target.closest('input,button,a,summary,details,label,select,textarea'))return;
       openRideDetail(row.dataset.rideId);
@@ -737,7 +830,7 @@ $('closeRideDetail').onclick=closeRideDetail;
 $('rideDetailOverlay').addEventListener('click',event=>{if(event.target.closest('[data-close-detail]'))closeRideDetail()});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('rideDetailOverlay').hidden)closeRideDetail()});
 $('selectVisible').onclick=()=>{const list=filteredRideSheet();const allSelected=list.length&&list.every(x=>selectedLabels.has(x.deliveryId));list.forEach(x=>allSelected?selectedLabels.delete(x.deliveryId):selectedLabels.add(x.deliveryId));renderActiveList()};
-$('selectAllSheet').onchange=e=>{const items=filteredRideSheet();items.forEach(x=>{if(e.target.checked)selectedLabels.add(x.deliveryId);else selectedLabels.delete(x.deliveryId)});renderActiveList()};
+// Selecting visible cards is handled by the toolbar button; each card has its own checkbox.
 $('printSelected').onclick=()=>printLabels([...selectedLabels].map(rideById).filter(Boolean));
 
 $('logout').onclick=()=>send('LOGOUT');
@@ -771,7 +864,7 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
   }
  if(m.type==='SUGGEST_RESULT'){const box=$('deliverySuggestions');const items=Array.isArray(d.items)?d.items:[];box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');box.classList.toggle('on',items.length>0);box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const x=items[Number(el.dataset.i)];$('deliveryAddress').value=x.address||x.label||'';$('deliveryCity').value=x.city||'';$('deliveryState').value=x.state||'';$('deliveryZipCode').value=x.zipCode||'';box.classList.remove('on')})}
  if(m.type==='CALCULATE_RESULT'){$('calc').disabled=false;$('calc').textContent='CALCULAR ENTREGA';if(!d.ok){currentFee=0;return notice(d.mensagem||'Não foi possível calcular.',false)}currentFee=Number(d.shipping?.amount)||0;routeReview();notice('Trajeto calculado. Revise antes de confirmar.',true)}
- if(m.type==='CREATE_RESULT'){$('create').textContent='GERAR ETIQUETA';if(!d.ok){$('create').disabled=false;return notice(d.mensagem||'Não foi possível criar a corrida.',false)}notice(d.mensagem||'Processo criado.',true);currentFee=0;stops=[];renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
+ if(m.type==='CREATE_RESULT'){$('create').textContent='GERAR ETIQUETA';if(!d.ok){$('create').disabled=false;return notice(d.mensagem||'Não foi possível criar a corrida.',false)}notice(d.mensagem||'Processo criado.',true);currentFee=0;stops=[defaultXimbaStop()];renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
  if(m.type==='LOGISTICS_RESULT'){document.querySelectorAll('.log-act').forEach(b=>b.disabled=false);notice(d.mensagem||'Processo atualizado.',d.ok===true)}
  if(m.type==='ACTION_RESULT'){
    document.querySelectorAll('.ride-call-prepared,.ride-recall,.ride-cancel,.store-complete,.ride-delete').forEach(b=>b.disabled=false);
