@@ -52,7 +52,7 @@
  .bling-search-row{grid-template-columns:1fr}.bling-search-row button{width:100%}
  .sheet-order-line{gap:5px}.sheet-order-line input{width:15px;height:15px}
 }
-.ride-status[data-state="STORE_PICKUP_READY"]{background:#ede9fe;color:#5b36a1}
+.ride-status[data-state="STORE_PICKUP_READY"],.ride-status[data-state="AVAILABLE_FOR_CUSTOMER_PICKUP"]{background:#ede9fe;color:#5b36a1}
 
 /* Consistent administrative actions. Restricted transitions remain visible but disabled. */
 .ride-sheet .sheet-actions button:disabled{opacity:.5;cursor:not-allowed;background:#eef1f5;color:#5e7188}
@@ -74,7 +74,7 @@
 .ride-status[data-state="READY_TO_DISPATCH"]{background:#fff2ce;color:#854d0e}
 .ride-status[data-state="GOING_TO_STORE"],.ride-status[data-state="AT_STORE"],.ride-status[data-state="COLLECTED"]{background:#dbeafe;color:#1d4ed8}
 .ride-status[data-state="LOGISTICS_PACKED"],.ride-status[data-state="AT_LOGISTICS_CENTER"],.ride-status[data-state="LOGISTICS_READY_FOR_DRIVER"]{background:#ffedd5;color:#9a3412}
-.ride-status[data-state="STORE_PICKUP_READY"]{background:#ede9fe;color:#5b36a1}
+.ride-status[data-state="STORE_PICKUP_READY"],.ride-status[data-state="AVAILABLE_FOR_CUSTOMER_PICKUP"]{background:#ede9fe;color:#5b36a1}
 .ride-sheet tbody tr[data-ride-id]{cursor:pointer}
 .ride-sheet tbody tr[data-ride-id]:hover,.ride-sheet tbody tr[data-ride-id]:focus-visible{background:#f1f6fd}
 .ride-sheet tbody tr[data-ride-id] td:first-child .sheet-order-line span{text-decoration:underline;text-decoration-color:#c0cde0;text-underline-offset:2px}
@@ -466,7 +466,7 @@ let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSe
 
 function send(type,payload={}){parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function dt(v){if(!v)return'—';try{return new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(_){return'—'}}
-function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Entrega aceita',GOING_TO_STORE:'Indo para a retirada',AT_STORE:'Na retirada',COLLECTED:'Pedido coletado',OUT_FOR_DELIVERY:'Saiu para entrega',DELIVERED:'Concluída'})[s]||s||'Corrida'}
+function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',AVAILABLE_FOR_CUSTOMER_PICKUP:'Disponível para retirada no centro',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Entrega aceita',GOING_TO_STORE:'Indo para a retirada',AT_STORE:'Na retirada',COLLECTED:'Pedido coletado',OUT_FOR_DELIVERY:'Saiu para entrega',DELIVERED:'Concluída'})[s]||s||'Corrida'}
 let lumenOrders=[],lumenOrdersLoading=false,lumenOrdersLoaded=false,lumenOrdersTimer=null;
 const lumenOrderPayLabel=v=>v==='VELUM_CREDIT'?'Crédito VELUM':'Mercado Pago';
 function lumenOrderStatusKey(o){
@@ -845,7 +845,7 @@ function rideById(id){return allRideData().find(x=>String(x.deliveryId)===String
 function ridePhase(x){
   const status=String(x?.status||'');
   if(status==='DELIVERED')return'done';
-  if(status==='STORE_PICKUP_READY')return'store';
+  if(['STORE_PICKUP_READY','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(status))return'store';
   if(x?.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER'].includes(status))return'logistics';
   if(['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY'].includes(status))return'accepted';
   if(['READY_TO_DISPATCH','WAITING_DRIVER'].includes(status))return'waiting';
@@ -1009,7 +1009,8 @@ function toggleEditRouteFields(disabled){
   ['pickupAddress','pickupNumber','pickupNeighborhood','pickupCity','pickupState','pickupZipCode','deliveryAddress','deliveryCity','deliveryState','deliveryZipCode'].forEach(k=>{if($(k))$(k).disabled=disabled});
   $('addStop').disabled=disabled;
   $('storePickupMode').disabled=disabled;
-  $('centerPickupMode').disabled=disabled;
+  // A modalidade de retirada continua editável antes de haver entregador.
+  $('centerPickupMode').disabled=false;
   document.querySelectorAll('#stopList input,#stopList button').forEach(el=>el.disabled=disabled);
 }
 function startEditRide(x){
@@ -1017,7 +1018,7 @@ function startEditRide(x){
   resetEditMode();
   editingDeliveryId=String(x.deliveryId||'');
   const store=x.status==='STORE_PICKUP_READY'||x.deliveryType==='Retirada em loja';
-  const logistics=x.status==='PREPARING'&&x.internalLogistics===true;
+  const logistics=x.internalLogistics===true&&['PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(x.status);
   $('callBox').classList.add('on');
   for(const k of ['pickupAddress','pickupNumber','pickupNeighborhood','pickupCity','pickupState','pickupZipCode','deliveryAddress','deliveryCity','deliveryState','deliveryZipCode']){
     if($(k))$(k).value=x[k]||'';
@@ -1061,7 +1062,7 @@ function resetEditMode(){
 let dispatchSelection=null;
 function dispatchOpen(id){
  const ride=rideById(id);
- if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(ride.status))return;
+ if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(ride.status))return;
  dispatchSelection={deliveryId:String(id),status:String(ride.status),sending:false};
  const overlay=$('driverDispatchOverlay');
  $('driverDispatchTitle').textContent=ride.status==='WAITING_DRIVER'?'Chamar entregador novamente':'Chamar entregador';
@@ -1120,14 +1121,14 @@ function dispatchSelectionResult(data){
   return;
  }
  $('driverDispatchConfirm').textContent='Chamando entregador...';
- if(state.status==='LOGISTICS_READY_FOR_DRIVER')
+ if(['LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(state.status))
   send('LOGISTICS_ACTION',{deliveryId:state.deliveryId,action:'CALL_DRIVER'});
  else send('DISPATCH_PREPARED',{deliveryId:state.deliveryId});
 }
 function dispatchFinalResult(data,kind){
  const state=dispatchSelection;
  if(!state||!state.sending)return;
- const valid=kind==='LOGISTICS'?state.status==='LOGISTICS_READY_FOR_DRIVER':state.status==='READY_TO_DISPATCH';
+ const valid=kind==='LOGISTICS'?['LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(state.status):state.status==='READY_TO_DISPATCH';
  if(!valid)return;
  if(!data.ok){
   state.sending=false;
@@ -1148,7 +1149,11 @@ $('driverDispatchOverlay').onclick=e=>{if(e.target===$('driverDispatchOverlay'))
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('driverDispatchOverlay').hidden)dispatchClose()});
 
 function bindRideActions(){
- document.querySelectorAll('.log-act').forEach(b=>b.onclick=()=>{b.disabled=true;send('LOGISTICS_ACTION',{deliveryId:b.dataset.id,action:b.dataset.action})});
+ document.querySelectorAll('.log-act').forEach(b=>b.onclick=()=>{
+  if(b.dataset.action==='COMPLETE_CENTER_PICKUP'&&!confirm('Confirma que a cliente recebeu fisicamente o pedido no centro logístico?'))return;
+  if(b.dataset.action==='CENTER_PICKUP_AVAILABLE'&&!confirm('Liberar retirada no centro sem chamar entregador?'))return;
+  b.disabled=true;send('LOGISTICS_ACTION',{deliveryId:b.dataset.id,action:b.dataset.action});
+});
  document.querySelectorAll('.share-track').forEach(b=>b.onclick=()=>{let n=String(b.dataset.phone||'').replace(/\D/g,'');if(n&&!n.startsWith('55'))n='55'+n;const msg='Olá'+(b.dataset.name?', '+b.dataset.name:'')+'! Acompanhe sua entrega LÚMEN em tempo real: '+b.dataset.url;if(n)window.open('https://wa.me/'+n+'?text='+encodeURIComponent(msg),'_blank');else navigator.clipboard?.writeText(b.dataset.url)});
  document.querySelectorAll('.label-check').forEach(c=>c.onchange=()=>{if(c.checked)selectedLabels.add(c.dataset.labelId);else selectedLabels.delete(c.dataset.labelId);updatePrintState()});
   document.querySelectorAll('.store-complete').forEach(b=>b.onclick=()=>{if(!confirm('Confirmar que o cliente retirou o pedido na loja?'))return;b.disabled=true;send('COMPLETE_STORE_PICKUP',{deliveryId:b.dataset.id})});
@@ -1215,7 +1220,11 @@ function nextRideActionButton(x){
  const logistics={PREPARING:['MARK_PACKED','Conferir e embalar'],LOGISTICS_PACKED:['SEND_TO_CENTER','Enviar ao centro'],
   LOGISTICS_IN_TRANSIT:['ARRIVE_CENTER','Confirmar chegada'],AT_LOGISTICS_CENTER:['SEND_TO_CENTER','Enviar ao próximo centro']};
  let cls='',label='',attrs=' data-id="'+id+'"',disabled=false;
- if(['READY_TO_DISPATCH','LOGISTICS_READY_FOR_DRIVER','WAITING_DRIVER'].includes(status)){
+ if(status==='LOGISTICS_READY_FOR_DRIVER'&&x.customerPickupAtCenter===true){
+  cls='log-act';label='Liberar retirada no centro';attrs+=' data-action="CENTER_PICKUP_AVAILABLE"';
+ }else if(status==='AVAILABLE_FOR_CUSTOMER_PICKUP'){
+  cls='log-act';label='Confirmar retirada no centro';attrs+=' data-action="COMPLETE_CENTER_PICKUP"';
+ }else if(['READY_TO_DISPATCH','LOGISTICS_READY_FOR_DRIVER','WAITING_DRIVER'].includes(status)){
   cls='dispatch-choice';
   label=status==='WAITING_DRIVER'?'Chamar entregador novamente':'Chamar entregador';
  }else if(status==='STORE_PICKUP_READY'){cls='store-complete';label='Confirmar retirada na loja'}
@@ -1233,7 +1242,7 @@ function rideToolButtons(x,detail=false){
 
 function sheetActionButtons(x,detailMode=false){
   const id=esc(x.deliveryId),status=String(x.status||''),hasDriver=Boolean(x.driver?.name||x.driverId);
-  const editable=!hasDriver&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','STORE_PICKUP_READY'].includes(status);
+  const editable=!hasDriver&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP','STORE_PICKUP_READY'].includes(status);
   const removable=(!hasDriver||status==='DELIVERED')&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','STORE_PICKUP_READY','DELIVERED'].includes(status);
   const disabled=(reason)=>' disabled title="'+esc(reason)+'"';
   const button=(cls,label,attrs='',notAllowed='')=>'<button type="button" class="'+cls+'"'+attrs+(notAllowed?disabled(notAllowed):'')+'>'+label+'</button>';
@@ -1256,10 +1265,11 @@ function renderRideSheet(list){
   const id=esc(x.deliveryId),person=esc(x.customerName||x.recipientName||'Não informado');
   const phone=String(x.customerPhone||'').trim();
   const wa=ridePhoneWhatsApp(phone);
-  const city=String(x.deliveryType||'').toLowerCase().includes('retirada')||x.storePickup===true||x.status==='STORE_PICKUP_READY'?
-    String(x.pickupCity||x.deliveryCity||'—'):
-    String(x.deliveryCity||'—');
-  const mode=String(x.deliveryType||x.type||(x.storePickup?'Retirada':'Entrega'));
+  const isCenterPickup=x.status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||x.completedByCenter===true;
+  const lastCenter=Array.isArray(x.logisticsStages)?x.logisticsStages[x.logisticsStages.length-1]:null;
+  const city=isCenterPickup?String(lastCenter?.city||x.finalLogisticsCenterCity||'—'):
+    String(x.deliveryType||'').toLowerCase().includes('retirada')||x.storePickup===true||x.status==='STORE_PICKUP_READY'?String(x.pickupCity||x.deliveryCity||'—'):String(x.deliveryCity||'—');
+  const mode=isCenterPickup?'Retirada no centro':String(x.deliveryType||x.type||(x.storePickup?'Retirada':'Entrega'));
   const phoneHtml=wa?'<a class="ride-card-phone" href="'+wa+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de '+person+'">'+esc(phone)+'</a>':
    '<span class="ride-card-phone-blank">'+esc(phone||'Não informado')+'</span>';
   return '<article class="ride-record" role="listitem" data-ride-id="'+id+'" tabindex="0" aria-label="Abrir detalhes da corrida de '+person+'">'+
@@ -1296,13 +1306,17 @@ function detailProgress(x){
   const steps=[];
   if(status==='STORE_PICKUP_READY'||x.storePickup===true||x.deliveryType==='Retirada em loja'){
     steps.push({name:'Pronto na loja',done:true},{name:'Retirada confirmada',done:finished});
+  }else if(status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||(finished&&x.completedByCenter===true)){
+    steps.push({name:'Preparação',done:true});
+    (Array.isArray(x.logisticsStages)?x.logisticsStages:[]).forEach(st=>steps.push({name:st.name||'Centro logístico',done:true}));
+    steps.push({name:'Retirada no centro',done:finished},{name:'Concluída',done:finished});
   }else{
     if(x.internalLogistics===true){
       const packed=status!=='PREPARING';
       steps.push({name:'Preparação',done:packed},{name:'Conferido',done:packed});
       const centers=Array.isArray(x.logisticsStages)?x.logisticsStages:[];
       centers.forEach((st,i)=>{
-        const passed=afterCall||status==='LOGISTICS_READY_FOR_DRIVER';
+        const passed=afterCall||['LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(status);
         steps.push({name:st.name||'Centro '+(i+1),done:st.status==='ARRIVED'||passed});
       });
     }else steps.push({name:'Etiqueta pronta',done:true});
@@ -1326,10 +1340,13 @@ function detailPrimaryAction(x){
     LOGISTICS_IN_TRANSIT:['log-act','ARRIVE_CENTER','Confirmar chegada ao centro'],
     AT_LOGISTICS_CENTER:['log-act','SEND_TO_CENTER','Enviar ao próximo centro'],
     LOGISTICS_READY_FOR_DRIVER:['dispatch-choice','','Chamar entregador'],
+    AVAILABLE_FOR_CUSTOMER_PICKUP:['log-act','COMPLETE_CENTER_PICKUP','Confirmar retirada no centro'],
     READY_TO_DISPATCH:['dispatch-choice','','Chamar entregador'],
     WAITING_DRIVER:['dispatch-choice','','Chamar entregador novamente'],
     STORE_PICKUP_READY:['store-complete','','Confirmar retirada na loja']
   };
+  if(status==='LOGISTICS_READY_FOR_DRIVER'&&x.customerPickupAtCenter===true)
+    phases.LOGISTICS_READY_FOR_DRIVER=['log-act','CENTER_PICKUP_AVAILABLE','Liberar retirada no centro'];
   const action=phases[status];
   let button='',hint='';
   if(status==='DELIVERED'){
@@ -1346,6 +1363,8 @@ function detailPrimaryAction(x){
     button='<button type="button" class="detail-primary-button" disabled>Aguardando atualização do entregador</button>';
     hint='O avanço desta fase é realizado pelo entregador para preservar a sequência correta.';
   }
+  if((status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||(status==='LOGISTICS_READY_FOR_DRIVER'&&x.customerPickupAtCenter===true))&&x.internalLogistics===true)
+    button+='<button type="button" class="detail-primary-button dispatch-choice" data-id="'+id+'" style="margin-top:9px;background:#fff;color:#0f3665;border:1px solid #0f3665">Chamar entregador</button>';
   return '<section class="detail-primary" aria-label="Ação da próxima etapa"><div class="detail-next-caption">Próxima etapa / confirmação</div>'+button+
     '<p class="detail-next-hint">'+esc(hint)+'</p></section>';
 }
@@ -1361,7 +1380,7 @@ function detailMiniIcon(type){
 }
 function detailQuickActions(x){
   const id=esc(x.deliveryId),status=String(x.status||''),hasDriver=Boolean(x.driver?.name||x.driverId);
-  const editable=!hasDriver&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','STORE_PICKUP_READY'].includes(status);
+  const editable=!hasDriver&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP','STORE_PICKUP_READY'].includes(status);
   const removable=(!hasDriver||status==='DELIVERED')&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','STORE_PICKUP_READY','DELIVERED'].includes(status);
   const button=(cls,icon,label,attrs='',disabled=false,extra='')=>'<button type="button" class="'+cls+' '+extra+'"'+attrs+(disabled?' disabled title="Ação indisponível nesta etapa"':'')+'>'+detailMiniIcon(icon)+'<span>'+esc(label)+'</span></button>';
   let buttons='';
@@ -1376,7 +1395,7 @@ function detailAddress(base,city,state){
 }
 function detailInfo(x){
   const isStore=x.storePickup===true||x.status==='STORE_PICKUP_READY'||x.deliveryType==='Retirada em loja';
-  const isCenter=!isStore&&x.customerPickupAtCenter===true;
+  const isCenter=!isStore&&(x.customerPickupAtCenter===true||x.completedByCenter===true);
   const payer=isStore?'Sem taxa de entrega':x.payerLabel||(x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'Recebedor paga na entrega':'LÚMEN paga na retirada');
   const pickup=x.originalPickupAddress||[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', ');
   const lastCenter=Array.isArray(x.logisticsStages)&&x.logisticsStages.length?x.logisticsStages[x.logisticsStages.length-1]:null;
@@ -1487,8 +1506,14 @@ function applyStorePickupMode(){
 $('storePickupMode').onchange=applyStorePickupMode;
 $('centerPickupMode').onchange=()=>{
   if($('centerPickupMode').checked&&$('storePickupMode').checked){$('storePickupMode').checked=false;applyStorePickupMode()}
-  currentFee=0;$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;
-  if($('centerPickupMode').checked&&!stops.length)notice('Adicione uma parada para indicar o centro de retirada.',false);else clearNotice();
+  const editingLogistics=!!editingDeliveryId&&rideById(editingDeliveryId)?.internalLogistics===true;
+  if(!editingLogistics)currentFee=0;
+  $('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;
+  if($('centerPickupMode').checked&&!stops.length)notice('Adicione uma parada para indicar o centro de retirada.',false);
+  else if(editingDeliveryId&&rideById(editingDeliveryId)?.internalLogistics===true){
+    routeReview();$('readyConfirm').checked=true;$('create').disabled=false;
+    $('create').textContent='SALVAR ALTERAÇÕES';
+  }else clearNotice();
 };
 $('deliveryAddress').oninput=()=>{clearTimeout(suggestTimer);const term=$('deliveryAddress').value.trim();if(term.length<3){$('deliverySuggestions').classList.remove('on');return}suggestTimer=setTimeout(()=>send('SUGGEST_ADDRESS',{term,target:'delivery'}),350)};
 $('calc').onclick=()=>{
