@@ -540,26 +540,35 @@ function lumenOrderPickedResult(result){
   sheet.scrollTop=oldScroll;
  }
 }
+// There is only one logistics label for each order, before or after calling a driver.
+function lumenOrderLabelPayload(o,ride=null){
+ const activeRide=ride&&ride.deliveryId?ride:null;
+ return {
+  ...(activeRide||{}),
+  orderLabel:true,orderId:o.orderId,orderNumber:o.orderId,
+  isMalaDireta:o.fulfillmentMode==='RESALE',fulfillmentMode:o.fulfillmentMode,
+  shippingType:o.shippingType,
+  senderName:o.resellerName||'Lúmen Luxos',
+  senderContact:o.resellerContact||'',
+  senderPhone:o.resellerPhone||'',
+  customerName:o.customerName||'',
+  customerPhone:o.customerPhone||'',
+  deliveryAddress:o.deliveryAddress||'',
+  deliveryCity:o.deliveryCity||'',
+  deliveryState:o.deliveryState||'',
+  deliveryZipCode:o.deliveryZipCode||'',
+  // Never include pickupAddress / owner address in a reseller's label.
+  deliveryFee:activeRide?Number(activeRide.deliveryFee||0):(o.shippingType==='PICKUP_LUMEN'?0:null),
+  labelCode:activeRide?activeRide.labelCode:'',
+  labelRevision:activeRide?activeRide.labelRevision:1,
+  deliveryId:activeRide?activeRide.deliveryId:''
+ };
+}
 function lumenOrderPrintLabel(){
  const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
  const o=lumenOrders.find(x=>x.orderId===id);if(!o)return;
  const ride=o.linkedDelivery&&typeof rideById==='function'?rideById(o.linkedDelivery.deliveryId):null;
- if(ride){printLabels([ride]);return}
- const win=window.open('','_blank');
- if(!win){$('lumenOrderHelp').textContent='Permita a abertura de janelas para imprimir.';return}
- const lines=(o.products||[]).map(p=>'<tr><td>'+esc(p.name)+'<small>'+esc(p.size?'Tamanho '+p.size:'')+'</small></td>'+
-   '<td>'+esc(p.quantity)+'</td><td>'+(p.picked?'✓':'□')+'</td></tr>').join('');
- const barcode='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=4&padding=2&text='+encodeURIComponent('VELUM:PEDIDO:'+o.orderId);
- const doc='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Etiqueta de separação '+esc(o.orderId)+'</title>'+
-  '<style>@page{size:100mm 150mm;margin:0}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#112f57;padding:5mm;margin:0;width:100mm}header{border-bottom:3px solid #ff7a00;padding-bottom:3mm}h1{font-size:17pt;margin:0}h2{font-size:12pt;margin:4mm 0}p{font-size:10pt;line-height:1.45;margin:2mm 0}small{font-size:8pt;color:#5b6c80;display:block;margin-top:1mm}table{width:100%;border-collapse:collapse;margin-top:4mm}td,th{border-bottom:1px solid #d3dce8;padding:2mm;text-align:left;font-size:9pt}img{width:25mm;height:25mm;object-fit:contain}.footer{text-align:center;margin-top:4mm}.tag{font-size:10pt;background:#e9f0f8;padding:2mm;border-radius:2mm}@media print{body{width:100mm}}</style></head><body>'+
-  '<header><h1>VELUM <span style="color:#ff7a00">| LÚMEN</span></h1><p>Etiqueta de separação • '+esc(o.orderId)+'</p></header>'+
-  '<h2>'+esc(o.customerName||'Cliente')+'</h2><p>Revendedora: '+esc(o.resellerName||'Compra direta')+'</p>'+
-  '<p>WhatsApp: '+esc(o.customerPhone||'Não informado')+'</p><p>Modalidade: '+esc(o.fulfillmentMode==='WHOLESALE'?'Atacado':o.fulfillmentMode==='RESALE'?'Mala direta':'Compra direta')+'</p>'+
-  '<table><thead><tr><th>Produto</th><th>Qtd.</th><th>OK</th></tr></thead><tbody>'+lines+'</tbody></table>'+
-  '<div class="footer"><img src="'+barcode+'" alt="QR do pedido"><p class="tag">'+esc(o.orderId)+'</p>'+
-  '<small>Identificação interna do pedido. A etiqueta oficial de transporte será gerada após cadastrar a corrida.</small></div></body></html>';
- win.document.open();win.document.write(doc);win.document.close();
- setTimeout(()=>{try{win.focus();win.print()}catch(_){ }},650);
+ printLabels([lumenOrderLabelPayload(o,ride)]);
 }
 function lumenOrderCallDriver(){
  const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
@@ -698,7 +707,12 @@ function labelWhatsappLink(phone){
  return '';
 }
 function labelHtml(x){
- const isPickup=x.storePickup===true||x.deliveryType==='Retirada em loja'||x.status==='STORE_PICKUP_READY';
+ const orderLabel=x.orderLabel===true;
+ const isPickup=!orderLabel&&(x.storePickup===true||x.deliveryType==='Retirada em loja'||x.status==='STORE_PICKUP_READY');
+ const malaDireta=orderLabel&&x.isMalaDireta===true;
+ const isBasePickup=orderLabel&&x.shippingType==='PICKUP_LUMEN';
+ const labelMode=malaDireta?'MALA DIRETA':isBasePickup?'RETIRADA NA BASE':isPickup?'RETIRADA':'ENTREGA';
+ const orderQrOnly=orderLabel&&!(x.deliveryId&&x.labelCode);
  const name=String(x.customerName||x.recipientName||'Recebedor');
  const phone=String(x.customerPhone||'');
  const whatsapp=labelWhatsappLink(phone);
@@ -712,26 +726,39 @@ function labelHtml(x){
  const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));
  // A native-camera QR is a URL: the driver can open it without a separate barcode scanner.
  // A signed-in approved driver must explicitly confirm collection; ownership and version are validated by the existing backend.
- const collectionUrl='https://www.vaidevelum.com/painel-entregador?coleta='+encodeURIComponent(code);
+ const collectionUrl=orderQrOnly?'VELUM:PEDIDO:'+String(x.orderId||x.orderNumber||''):
+  'https://www.vaidevelum.com/painel-entregador?coleta='+encodeURIComponent(code);
  const largeQr='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=5&padding=2&text='+encodeURIComponent(collectionUrl);
  const smallQr=whatsapp?'https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=4&padding=1&text='+encodeURIComponent(whatsapp):'';
  const section=(cls,icon,heading,value)=>'<div class="label-fact '+cls+'"><span class="label-fact-icon">'+labelIcon(icon)+'</span><div class="label-fact-text"><small>'+heading+'</small><b>'+value+'</b></div></div>';
- return '<article class="shipping-label">'+
-  '<header class="label-header"><div class="label-brand"><strong>LÚMEN LUXOS</strong><span>Exclusividade, Poder e Presença</span></div><div class="label-mode">'+labelIcon(isPickup?'store':'truck')+'<b>'+(isPickup?'RETIRADA':'ENTREGA')+'</b></div></header>'+
+ const senderHtml=orderLabel?'<section class="label-sender-block"><small>REMETENTE · REVENDEDORA</small>'+
+  '<strong>'+esc(x.senderName||'Revendedora não identificada')+'</strong>'+
+  (x.senderContact&&x.senderContact!==x.senderName?'<span>Responsável: '+esc(x.senderContact)+'</span>':'')+
+  (x.senderPhone?'<span>WhatsApp: '+esc(x.senderPhone)+'</span>':'')+
+  '</section>':'';
+ const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):money(amount);
+ const shippingPayer=orderLabel?(isBasePickup?'Retirada na base':malaDireta?'A confirmar na corrida':'Consultar a corrida'):esc(payer);
+ return '<article class="shipping-label'+(orderLabel?' order-logistic':'')+'">'+
+  '<header class="label-header"><div class="label-brand"><strong>'+(orderLabel?'VELUM LOGÍSTICA':'LÚMEN LUXOS')+'</strong><span>'+(orderLabel?'Pedido '+esc(x.orderId||x.orderNumber||''):'Exclusividade, Poder e Presença')+'</span></div><div class="label-mode">'+labelIcon((isPickup||isBasePickup)?'store':'truck')+'<b>'+labelMode+'</b></div></header>'+
+  senderHtml+
   '<section class="label-recipient"><div class="label-recipient-info"><small class="label-eyebrow">DESTINATÁRIO</small><div class="label-name-row"><span class="label-icon-square">'+labelIcon('person')+'</span><strong class="label-name">'+esc(name)+'</strong></div><div class="label-phone-row"><span class="label-icon-square">'+labelIcon('phone')+'</span><div><small>TELEFONE / WHATSAPP</small><b>'+esc(phone||'Não informado')+'</b></div></div></div>'+
   '<div class="label-qr-whats">'+(smallQr?'<img src="'+smallQr+'" alt="QR Code para WhatsApp da destinatária"><b>FALAR NO<br>WHATSAPP</b>':'<span>WhatsApp<br>indisponível</span>')+'</div></section>'+
-  '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(isPickup?'ENDEREÇO DE RETIRADA':'ENDEREÇO DE ENTREGA')+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
-  '<section class="label-facts">'+section('fact-mode',isPickup?'store':'truck','TIPO DE ENTREGA',isPickup?'Retirada':'Entrega')+
-  section('fact-cost','coins',isPickup?'VALOR DA RETIRADA':'VALOR DA ENTREGA',money(amount))+
-  section('fact-payer','card','QUEM PAGA',esc(payer))+'</section>'+
+  '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isBasePickup?'ENDEREÇO DA CLIENTE · RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):(isPickup?'ENDEREÇO DE RETIRADA':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
+  '<section class="label-facts">'+section('fact-mode',(isPickup||isBasePickup)?'store':'truck',orderLabel?'MODALIDADE':'TIPO DE ENTREGA',labelMode)+
+  section('fact-cost','coins',orderLabel?'FRETE / RETIRADA':isPickup?'VALOR DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
+  section('fact-payer','card',orderLabel?'LOGÍSTICA':'QUEM PAGA',shippingPayer)+'</section>'+
   '<section class="label-collection"><div class="label-collection-code"><img src="'+largeQr+'" alt="QR Code de coleta pela câmera do celular"></div>'+
-  '<div class="label-collection-info"><div class="label-collection-heading">'+labelIcon('box')+'<div><small>QR DE COLETA</small><strong>PARA O<br>ENTREGADOR</strong></div></div>'+
-  '<p>Escaneie este QR Code com a câmera do celular para identificar e confirmar a coleta.</p>'+
-  '<div class="label-collection-steps"><span><b>1</b>Abra a câmera</span><span><b>2</b>Aponte para o QR</span><span><b>3</b>Confirme a coleta</span></div></div></section>'+
+  '<div class="label-collection-info"><div class="label-collection-heading">'+labelIcon('box')+'<div><small>'+(orderQrOnly?'QR DO PEDIDO':'QR DE COLETA')+'</small><strong>'+(orderQrOnly?'IDENTIFICAÇÃO<br>DO PEDIDO':'PARA O<br>ENTREGADOR')+'</strong></div></div>'+
+  '<p>'+(orderQrOnly?'Identificação logística do pedido. A confirmação de coleta será liberada após criar a corrida.':'Escaneie este QR Code com a câmera do celular para identificar e confirmar a coleta.')+'</p>'+
+  '<div class="label-collection-steps"><span><b>1</b>Abra a câmera</span><span><b>2</b>Aponte para o QR</span><span><b>3</b>'+(orderQrOnly?'Confira o pedido':'Confirme a coleta')+'</span></div></div></section>'+
   '</article>';
 }
 function printLabels(items){
- const list=(Array.isArray(items)?items:[]).filter(Boolean);
+ const list=(Array.isArray(items)?items:[]).filter(Boolean).map(x=>{
+  if(x.orderLabel===true)return x;
+  const o=lumenOrders.find(o=>o.orderId&&o.orderId===x.orderNumber);
+  return o?lumenOrderLabelPayload(o,x):x;
+ });
  if(!list.length)return;
  const w=window.open('','_blank');
  if(!w)return notice('Permita pop-ups para imprimir as etiquetas.',false);
@@ -741,6 +768,16 @@ function printLabels(items){
   'html,body{padding:0;margin:0;color:#142e53;background:#fff;font-family:Arial,Helvetica,sans-serif}',
   '.shipping-label{width:100mm;height:150mm;background:#fff;padding:3mm 4mm 3mm;display:flex;flex-direction:column;overflow:hidden;break-inside:avoid;page-break-inside:avoid;break-after:page;page-break-after:always}',
   '.shipping-label:last-child{break-after:auto;page-break-after:auto}',
+  '.label-sender-block{margin-top:2mm;padding:2mm 2.5mm;background:#ecf3fb;border:1px solid #d9e2ed;border-radius:2.5mm;display:flex;flex-direction:column;gap:1mm;flex-shrink:0;min-height:17mm}',
+  '.label-sender-block small{font-size:7pt;font-weight:900;color:#57718f}',
+  '.label-sender-block strong{font-size:11.5pt;line-height:1.1;color:#142e53;overflow-wrap:anywhere}',
+  '.label-sender-block span{font-size:8.2pt;line-height:1.12;overflow-wrap:anywhere}',
+  '.shipping-label.order-logistic .label-recipient{min-height:27mm}',
+  '.shipping-label.order-logistic .label-address-block{min-height:21mm}',
+  '.shipping-label.order-logistic .label-facts{min-height:16mm}',
+  '.shipping-label.order-logistic .label-collection{min-height:31mm;padding-top:2mm}',
+  '.shipping-label.order-logistic .label-collection-code img{width:25mm;height:25mm}',
+  '.shipping-label.order-logistic .label-mode b{font-size:8.5pt}',
   '.vicon{width:100%;height:100%;display:block}',
   '.label-header{display:flex;align-items:center;justify-content:space-between;gap:2mm;border-bottom:1mm solid #142e53;padding-bottom:2mm;flex-shrink:0}',
   '.label-brand{display:flex;flex-direction:column;min-width:0;gap:1mm}',
@@ -786,7 +823,7 @@ function printLabels(items){
   '@media print{html,body{width:100mm!important;height:auto!important;background:#fff!important}.shipping-label{margin:0!important;box-shadow:none!important;filter:grayscale(1);-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
  ].join('');
  const printScript='<'+'script>window.addEventListener("load",function(){const images=Array.from(document.images),ready=images.map(function(img){return img.complete?Promise.resolve():new Promise(function(resolve){var ok=false;function done(){if(ok)return;ok=true;resolve()}img.addEventListener("load",done,{once:true});img.addEventListener("error",done,{once:true});setTimeout(done,5500)})});Promise.all(ready).then(function(){setTimeout(function(){window.print()},200)})},{once:true})<'+'/script>';
- const doc='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Etiquetas LÚMEN LUXOS · Modelo aprovado</title><style>'+style+'</style></head><body>'+list.map(labelHtml).join('')+printScript+'</body></html>';
+ const doc='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Etiqueta logística VELUM</title><style>'+style+'</style></head><body>'+list.map(labelHtml).join('')+printScript+'</body></html>';
  w.document.open();w.document.write(doc);w.document.close();
 }
 function toggleEditRouteFields(disabled){
