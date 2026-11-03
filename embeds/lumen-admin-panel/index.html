@@ -233,6 +233,8 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 #lumenOrderPrint{background:#0f3665;color:#fff}
 #lumenOrderCall{background:#ff7a00;color:#fff}
 #lumenOrderCall:disabled{background:#e8edf2;color:#718092;cursor:not-allowed}
+.lumen-pickup-whatsapp{display:block;margin-top:10px;padding:12px 14px;border-radius:12px;background:#e4f4eb;border:1px solid #b5e3ca;color:#136543;font-size:12px;font-weight:850;text-align:center;text-decoration:none}
+.lumen-pickup-whatsapp[hidden]{display:none!important}
 .lumen-order-help{font-size:11px;color:#667b92;margin:9px 0;line-height:1.5;overflow-wrap:anywhere}
 .lumen-order-error{color:#b03746;font-weight:800}
 @media(max-width:600px){.lumen-order-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.lumen-picked-item{grid-template-columns:24px 56px minmax(0,1fr)!important;gap:8px}.lumen-picked-item img,.lumen-picked-item .item-fallback{height:56px;width:56px}.lumen-picked-item .item-price{grid-column:3;text-align:left;font-size:11px}.lumen-order-bottom-actions{grid-template-columns:minmax(0,1fr)}.lumen-order-sheet{max-height:90dvh}}
@@ -275,6 +277,12 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 .lumen-order-products h4{margin:0 0 8px;color:#0f3665;font-size:13px}
 .lumen-order-products>div{padding:9px 0;border-top:1px solid #e9edf3;font-size:12px;color:#294362;display:flex;justify-content:space-between;gap:10px}
 @media(max-width:650px){.lumen-orders-controls{grid-template-columns:minmax(0,1fr)}.lumen-order-fields{grid-template-columns:minmax(0,1fr)}.lumen-order-sheet{max-height:90dvh}.lumen-orders-actions .btn{width:100%}}
+</style><style id="lumenOrderDeleteAndCourierStyles">
+.lumen-order-delete{display:block;width:100%;border:1px solid #eccbd0;border-radius:12px;background:#fff6f6;color:#a53647;font-size:12px;font-weight:850;cursor:pointer;padding:12px 16px;margin-top:11px}
+.lumen-order-delete:disabled{opacity:.6;cursor:wait}
+#lumenOrderDirectCourier{background:#ff7a00;color:#fff;border:0;border-radius:12px;min-height:49px;padding:13px 10px;font-size:12px;font-weight:850;cursor:pointer}
+#lumenOrderDirectCourier:disabled{background:#e8edf2;color:#718092;cursor:not-allowed}
+#lumenOrderDirectCourier[hidden]{display:none!important}
 </style><style id="lumenSyncStyles">#lumenOrderSync{border:1px solid #0f3665;background:#eef4fa;color:#0f3665}#lumenOrderSync:disabled{opacity:.58;cursor:not-allowed}</style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
@@ -349,8 +357,10 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
   <div id="lumenOrderDetailProducts" class="lumen-order-products"></div>
   <div class="lumen-order-bottom-actions">
    <button type="button" id="lumenOrderPrint">🖨️ Imprimir etiqueta</button>
-   <button type="button" id="lumenOrderCall">🛵 Chamar entregador</button><button type="button" id="lumenOrderSync">↻ Sincronizar pedido no Wix</button>
+   <button type="button" id="lumenOrderCall">🛵 Chamar entregador</button><button type="button" id="lumenOrderDirectCourier" hidden>🛵 Chamar entregador (mala direta)</button><button type="button" id="lumenOrderSync">↻ Sincronizar pedido no Wix</button>
   </div>
+  <a id="lumenPickupWhatsApp" class="lumen-pickup-whatsapp" href="#" target="_blank" rel="noopener noreferrer" hidden>💬 Enviar aviso de retirada pelo WhatsApp</a>
+  <button type="button" id="lumenOrderDelete" class="lumen-order-delete">🗑 Excluir pedido</button>
   <p id="lumenOrderHelp" class="lumen-order-help" role="status"></p>
  </section>
 </div>
@@ -484,12 +494,29 @@ function lumenOrderRenderHelp(o){
  const linked=o.linkedDelivery;
  const paid=lumenOrderStatusKey(o)==='PAID';
  const allPicked=total>0&&count===total;
+ const isPickup=o.shippingType==='PICKUP_LUMEN';
  const actionable=!linked||lumenOrderEditableDelivery(o);
- call.disabled=!(paid&&allPicked&&actionable);
- call.textContent=linked&&linked.status==='WAITING_DRIVER'?'🛵 Chamar novamente':linked&&linked.status==='READY_TO_DISPATCH'?'🛵 Chamar entregador':linked?'🛵 Chamar entregador':'🛵 Chamar entregador';
+ call.disabled=!(paid&&allPicked&&(isPickup||actionable));
+ const extra=$('lumenOrderDirectCourier');
+ extra.hidden=!(o.fulfillmentMode==='RESALE'&&isPickup);
+ extra.disabled=!(paid&&allPicked&&actionable&&!linked);
+
+ call.textContent=isPickup?(o.pickupReadyAtIso?'✓ Pedido pronto para retirada':'📦 Pedido pronto para retirada'):
+  linked&&linked.status==='WAITING_DRIVER'?'🛵 Chamar novamente':'🛵 Chamar entregador';
+ const whatsapp=$('lumenPickupWhatsApp');
+ whatsapp.hidden=!isPickup||!o.pickupReadyAtIso;
+ if(!whatsapp.hidden){
+  const digits=String(o.customerPhone||'').replace(/\D/g,'');
+  const message='Olá, '+String(o.customerName||'Cliente')+'! Seu pedido '+o.orderId+
+   ' da Lúmen, feito pela VELUM, já está separado e disponível para retirada na base Lúmen. Combine o horário de retirada com nossa equipe antes de sair. Aguardamos você!';
+  whatsapp.href=digits.length>=10?'https://wa.me/'+(digits.startsWith('55')?digits:'55'+digits)+'?text='+encodeURIComponent(message):'#';
+  if(digits.length<10){whatsapp.hidden=true}
+ }
  let msg='';
- if(!paid)msg='Aguarde o pagamento ser confirmado antes de chamar um motorista.';
- else if(!allPicked)msg='Marque todos os produtos como separados para liberar o chamado.';
+ if(!paid)msg='Aguarde a confirmação do pagamento antes de liberar a retirada.';
+ else if(!allPicked)msg='Marque todos os produtos como separados antes de liberar a retirada.';
+ else if(isPickup&&o.pickupReadyAtIso)msg='Pedido pronto para retirada na base Lúmen. Toque em Enviar aviso pelo WhatsApp e confirme o envio para a cliente. A revendedora poderá chamar entregador para este pedido pelo painel dela.';
+ else if(isPickup)msg='Libere a retirada após separar os produtos. O botão registra a disponibilidade e prepara o aviso pelo WhatsApp da cliente.';
  else if(linked&&linked.status==='LOGISTICS_READY_FOR_DRIVER')msg='Existe uma rota logística pronta. Use Acompanhar entregas para avançar o chamado.';
  else if(linked&&!actionable)msg='Este pedido já tem uma corrida: '+linked.deliveryId+' ('+linked.status+'). Acompanhe na lista de corridas.';
  else if(linked)msg='Corrida '+linked.deliveryId+' vinculada ao pedido. A etiqueta de transporte está disponível.';
@@ -570,10 +597,16 @@ function lumenOrderPrintLabel(){
  const ride=o.linkedDelivery&&typeof rideById==='function'?rideById(o.linkedDelivery.deliveryId):null;
  printLabels([lumenOrderLabelPayload(o,ride)]);
 }
-function lumenOrderCallDriver(){
+function lumenOrderCallDriver(asCourier=false){
  const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
  const o=lumenOrders.find(x=>x.orderId===id);if(!o)return;
  if(!lumenOrderReady(o)){lumenOrderRenderHelp(o);return}
+ if(o.shippingType==='PICKUP_LUMEN'&&!asCourier){
+  $('lumenOrderCall').disabled=true;
+  $('lumenOrderHelp').textContent=o.pickupReadyAtIso?'Atualizando disponibilidade para retirada...':'Registrando pedido pronto para retirada...';
+  send('PICKUP_READY',{orderId:o.orderId});
+  return;
+ }
  if(o.linkedDelivery){
   const code=o.linkedDelivery.status;
   if(code==='READY_TO_DISPATCH')send('DISPATCH_PREPARED',{deliveryId:o.linkedDelivery.deliveryId});
@@ -597,8 +630,51 @@ function lumenOrderCallDriver(){
  $('callBox').classList.add('on');
  $('callBox').scrollIntoView({behavior:'smooth',block:'start'});
 }
+function lumenOrderDelete(){
+ const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
+ const o=lumenOrders.find(x=>x.orderId===id);if(!o)return;
+ const paid=lumenOrderStatusKey(o)==='PAID';
+ const msg='Excluir o pedido '+id+' da lista administrativa Lúmen?\n\nEsta ação é um ARQUIVAMENTO, não um cancelamento financeiro.'+
+  (paid?' O pagamento aprovado e os débitos de crédito continuarão registrados.':' Nenhum pagamento será alterado.')+
+  '\n\nA operação NÃO apaga o pedido no aplicativo Wix, não estorna valores e não exclui a compra da revendedora.\n\nConfirma a exclusão da lista?';
+ if(!window.confirm(msg))return;
+ $('lumenOrderDelete').disabled=true;
+ $('lumenOrderHelp').textContent='Excluindo pedido da lista administrativa...';
+ send('DELETE_ORDER',{orderId:id});
+}
+function lumenOrderDeleteResult(data){
+ $('lumenOrderDelete').disabled=false;
+ if(!data?.ok){
+  $('lumenOrderHelp').textContent=data?.mensagem||'Não foi possível excluir o pedido.';
+  $('lumenOrderHelp').classList.add('lumen-order-error');return;
+ }
+ $('lumenOrderDetailModal').hidden=true;
+ lumenOrders=lumenOrders.filter(o=>o.orderId!==data.orderId);
+ lumenOrdersRender();
+ lumenOrdersRequest();
+}
+$('lumenOrderDelete').onclick=lumenOrderDelete;
+function lumenPickupReadyResult(result){
+ const o=lumenOrders.find(x=>x.orderId===result.orderId);
+ if(!o)return;
+ if(!result.ok){
+  $('lumenOrderHelp').textContent=result.mensagem||'Não foi possível liberar a retirada.';
+  $('lumenOrderHelp').classList.add('lumen-order-error');
+  lumenOrderRenderHelp(o);
+  $('lumenOrderHelp').textContent=result.mensagem||'Não foi possível liberar a retirada.';
+  return;
+ }
+ o.pickupReadyAtIso=result.readyAt||o.pickupReadyAtIso;
+ lumenOrderRenderHelp(o);
+ const whatsapp=$('lumenPickupWhatsApp');
+ if(result.notification?.url){whatsapp.href=result.notification.url;whatsapp.hidden=false}
+ $('lumenOrderHelp').textContent='Pedido liberado para retirada. Abra o WhatsApp e toque em Enviar para avisar a cliente; o aviso não é enviado automaticamente.';
+ lumenOrdersRender();
+ // Persisted status is immediately available in the reseller's Pedidos screen.
+}
 $('lumenOrderPrint').onclick=lumenOrderPrintLabel;
-$('lumenOrderCall').onclick=lumenOrderCallDriver;
+$('lumenOrderCall').onclick=()=>lumenOrderCallDriver(false);
+$('lumenOrderDirectCourier').onclick=()=>lumenOrderCallDriver(true);
 $('lumenOrderSync').onclick=()=>{
  const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
  const o=lumenOrders.find(x=>x.orderId===id);
@@ -744,9 +820,10 @@ function labelHtml(x){
   '<section class="label-recipient"><div class="label-recipient-info"><small class="label-eyebrow">DESTINATÁRIO</small><div class="label-name-row"><span class="label-icon-square">'+labelIcon('person')+'</span><strong class="label-name">'+esc(name)+'</strong></div><div class="label-phone-row"><span class="label-icon-square">'+labelIcon('phone')+'</span><div><small>TELEFONE / WHATSAPP</small><b>'+esc(phone||'Não informado')+'</b></div></div></div>'+
   '<div class="label-qr-whats">'+(smallQr?'<img src="'+smallQr+'" alt="QR Code para WhatsApp da destinatária"><b>FALAR NO<br>WHATSAPP</b>':'<span>WhatsApp<br>indisponível</span>')+'</div></section>'+
   '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isBasePickup?'ENDEREÇO DA CLIENTE · RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):(isPickup?'ENDEREÇO DE RETIRADA':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
-  '<section class="label-facts">'+section('fact-mode',(isPickup||isBasePickup)?'store':'truck',orderLabel?'MODALIDADE':'TIPO DE ENTREGA',labelMode)+
-  section('fact-cost','coins',orderLabel?'FRETE / RETIRADA':isPickup?'VALOR DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
-  section('fact-payer','card',orderLabel?'LOGÍSTICA':'QUEM PAGA',shippingPayer)+'</section>'+
+  (orderLabel?'':'<section class="label-facts">'+
+  section('fact-mode',(isPickup||isBasePickup)?'store':'truck','TIPO DE ENTREGA',labelMode)+
+  section('fact-cost','coins',isPickup?'VALOR DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
+  section('fact-payer','card','QUEM PAGA',shippingPayer)+'</section>')+
   '<section class="label-collection"><div class="label-collection-code"><img src="'+largeQr+'" alt="QR Code de coleta pela câmera do celular"></div>'+
   '<div class="label-collection-info"><div class="label-collection-heading">'+labelIcon('box')+'<div><small>'+(orderQrOnly?'QR DO PEDIDO':'QR DE COLETA')+'</small><strong>'+(orderQrOnly?'IDENTIFICAÇÃO<br>DO PEDIDO':'PARA O<br>ENTREGADOR')+'</strong></div></div>'+
   '<p>'+(orderQrOnly?'Identificação logística do pedido. A confirmação de coleta será liberada após criar a corrida.':'Escaneie este QR Code com a câmera do celular para identificar e confirmar a coleta.')+'</p>'+
@@ -819,7 +896,10 @@ function printLabels(items){
   '.label-collection-steps{display:flex;align-items:flex-start;gap:1mm;padding-top:2mm;border-top:1px solid #dce3ec}',
   '.label-collection-steps span{width:33.333%;text-align:center;font-size:6pt;line-height:1.15;display:flex;flex-direction:column;align-items:center;gap:1mm}',
   '.label-collection-steps span b{border-radius:50%;color:#fff;background:#f26f1a;width:5mm;height:5mm;display:grid;place-items:center;font-size:8pt}',
-  '@media screen{html,body{background:#eef1f5}.shipping-label{margin:8px auto;box-shadow:0 7px 28px #132c4d24}}',
+  '.shipping-label.order-logistic .label-collection{margin-top:3mm;min-height:39mm;padding-top:3mm}',
+  '.shipping-label.order-logistic .label-collection-code img{width:27mm;height:27mm}',
+  '.shipping-label.order-logistic{height:150mm;max-height:150mm;min-height:150mm}',
+  '@media screen{html,body{background:#eef1f5;overflow:auto}.shipping-label{margin:8px auto;box-shadow:0 7px 28px #132c4d24}}',
   '@media print{html,body{width:100mm!important;height:auto!important;background:#fff!important}.shipping-label{margin:0!important;box-shadow:none!important;filter:grayscale(1);-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
  ].join('');
  const printScript='<'+'script>window.addEventListener("load",function(){const images=Array.from(document.images),ready=images.map(function(img){return img.complete?Promise.resolve():new Promise(function(resolve){var ok=false;function done(){if(ok)return;ok=true;resolve()}img.addEventListener("load",done,{once:true});img.addEventListener("error",done,{once:true});setTimeout(done,5500)})});Promise.all(ready).then(function(){setTimeout(function(){window.print()},200)})},{once:true})<'+'/script>';
@@ -1231,6 +1311,8 @@ $('logout').onclick=()=>send('LOGOUT');
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_ADMIN_PANEL_PAGE')return;const d=m.payload||{};
  if(m.type==='DATA')render(d);
  if(m.type==='ORDER_PICK_RESULT')lumenOrderPickedResult(d);
+ if(m.type==='PICKUP_READY_RESULT')lumenPickupReadyResult(d);
+ if(m.type==='DELETE_ORDER_RESULT')lumenOrderDeleteResult(d);
  if(m.type==='ORDER_SYNC_RESULT')lumenOrderSyncResult(d);
  if(m.type==='CREATE_RESULT'&&d.ok&&lumenOrdersLoaded)lumenOrdersRequest();
  if(m.type==='ACTION_RESULT'&&d.ok&&['DISPATCH_PREPARED','RECALL'].includes(d.action)){
