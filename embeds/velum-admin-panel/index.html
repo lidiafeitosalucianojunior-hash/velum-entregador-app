@@ -166,7 +166,12 @@
 .delivery-empty{padding:16px;font-size:12px;color:#718198}
 @media(max-width:650px){.delivery-detail-grid{grid-template-columns:1fr}.delivery-overview-filter{width:100%}.delivery-overview-filter select{flex:1;min-width:120px}}
 </style>
-</head><body>
+<style id="creditLoadingGuardStyles">
+.credit-header-controls{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end;align-items:center}
+.credit-header-controls button{font-size:11px;min-height:37px}
+#creditMessage{white-space:pre-wrap}
+@media(max-width:430px){.credit-header-controls{justify-content:space-between;width:100%}.credit-header-controls button{flex:1}}
+</style></head><body>
 <section class="login hidden" id="loginView" aria-hidden="true" style="display:none!important"><input id="email" type="email" hidden><input id="password" type="password" hidden><button id="loginBtn" hidden>ENTRAR</button><div id="loginError" hidden></div></section> <section class="app hidden" id="appView"><header class="topbar"><div class="topin"><div><div class="topbrand">VE<span>LUM</span> ADMIN</div><div class="topsub">Gerenciamento de cadastros</div></div><button class="logout" id="logout">Sair</button></div></header><main class="wrap"><div class="hero"><div><h1 id="title">Lojas Parceiras</h1><p id="subtitle">Gerencie os cadastros e a disponibilidade das lojas.</p></div><div class="hero-actions"><button class="hero-call" id="velumAtendimentoIaOpen" type="button" style="background:#153a67" aria-label="Abrir Atendimento IA">🤖 ATENDIMENTO IA</button><button class="hero-call" id="newDriverCallBtn">🛵 CHAMAR ENTREGADOR</button><button class="hero-call" type="button" id="newPickupBtn" style="background:#0F3665;border:2px solid #ff7a00">📦 GERAR RETIRADA</button><div class="summary"><span class="badge">Total <b id="sumTotal">0</b></span><span class="badge"><span id="adminActiveLabel">Ativos</span> <b id="sumActive">0</b></span><span class="badge"><span id="adminInactiveLabel">Inativos</span> <b id="sumInactive">0</b></span></div></div></div>
 <div class="tabs"><button type="button" class="tab" data-entity="credit">💳 Crédito<small>Limites e cobranças</small></button><button type="button" class="tab" data-entity="receivables">📋 Contas a receber<small>Saldos, prazos e fichas</small></button><button class="tab active" data-entity="sellers">🏬 Lojas Parceiras<small>Cadastro das lojas fornecedoras</small></button><button class="tab" data-entity="resellers">🛍️ Revendedoras<small>Sacoleiras e vitrines de revenda</small></button><button class="tab" data-entity="drivers">🛵 Entregadores<small>Cadastros da rede logística</small></button><button class="tab" data-entity="deliveries">📍 Acompanhar entregas<small>Visão geral de todas as etapas</small></button><button class="tab" data-entity="freights">🚚 Fretes<small>Taxas por CEP e entrega local</small></button><button class="tab" type="button" onclick="nativeMembersOpen()">👥 Gerenciar membros Wix<small>Consultar, criar, editar e excluir cadastros</small></button><button class="tab" type="button" onclick="shareVelumApp()">📲 Compartilhar aplicativo<small>Enviar o link do APK pelas redes sociais</small></button></div>
 
@@ -227,7 +232,7 @@
 
 <div id="creditModal" class="credit-modal" role="dialog" aria-modal="true" aria-label="Financeiro de crédito VELUM">
 <section class="credit-window">
- <div class="modal-head"><div><h2 id="creditModalTitle">Financeiro VELUM</h2><p class="credit-hint" id="creditModalDesc">Limite e histórico de movimentações</p></div><button type="button" class="modal-close" id="creditClose">Fechar</button></div>
+ <div class="modal-head"><div><h2 id="creditModalTitle">Financeiro VELUM</h2><p class="credit-hint" id="creditModalDesc">Limite e histórico de movimentações</p></div><div class="credit-header-controls"><button type="button" class="credit-small" id="creditDetailReload">↻ Tentar novamente</button><button type="button" class="modal-close" id="creditClose">Fechar</button></div></div>
  <div class="credit-hero" id="creditWalletSummary">
   <div><small>Limite liberado</small><strong id="creditStatLimit">—</strong></div>
   <div><small>Limite disponível</small><strong id="creditStatAvailable">—</strong></div>
@@ -738,7 +743,25 @@ $('receivableSearch').oninput=renderReceivables;
 $('receivableStatusFilter').onchange=renderReceivables;
 $('receivableRefresh').onclick=creditList;
 
-function creditList(){if(token)send('CREDIT_LIST',{token})}
+let creditListLoadTimer=null,creditDetailLoadTimer=null,creditListRequestSeq=0,creditDetailRequestSeq=0;
+function creditList(){
+ if(!token){$('creditSummary').textContent='Sessão não identificada. Entre novamente no painel da Lídia.';return}
+ const seq=++creditListRequestSeq;
+ clearTimeout(creditListLoadTimer);
+ $('creditSummary').textContent='Consultando limites autorizados...';
+ if(!creditAccounts.length)$('creditAccountList').innerHTML='<tr><td colspan="6">Consultando contas de crédito...</td></tr>';
+ if(!creditAccounts.length)$('creditRequestList').innerHTML='<p>Consultando solicitações...</p>';
+ if($('receivableNotice'))$('receivableNotice').textContent='Consultando contas a receber...';
+ creditListLoadTimer=setTimeout(()=>{
+  if(seq!==creditListRequestSeq)return;
+  const msg='A consulta de crédito não respondeu. Verifique sua conexão e toque em Atualizar.';
+  $('creditSummary').textContent=msg;
+  $('creditAccountList').innerHTML='<tr><td colspan="6">'+esc(msg)+'</td></tr>';
+  $('creditRequestList').innerHTML='<p>'+esc(msg)+'</p>';
+  if($('receivableNotice'))$('receivableNotice').textContent=msg;
+ },18000);
+ send('CREDIT_LIST',{token});
+}
 function creditPick(type,id){
  if(!id)return alert('Informe o identificador da revendedora ou o e-mail da cliente.');
  creditCurrent={type,id};creditCurrentWallet=null;creditBulkMode=false;creditHolderInfo={};
@@ -747,6 +770,15 @@ function creditPick(type,id){
  creditOpenModal();
  $('creditModalTitle').textContent='Financeiro · '+(stored?.displayName||card?.name||id);
  $('creditPhone').value=stored?.whatsapp||card?.whatsapp||'';
+ clearTimeout(creditDetailLoadTimer);
+ const seq=++creditDetailRequestSeq;
+ creditDetailLoadTimer=setTimeout(()=>{
+  if(seq!==creditDetailRequestSeq||!creditCurrent||creditCurrent.id!==id||creditCurrent.type!==type)return;
+  const msg='A ficha financeira não respondeu. Toque em Tentar novamente.';
+  $('creditMessage').textContent=msg;
+  $('creditDueSummary').textContent=msg;
+  $('creditHistory').textContent=msg;
+ },18000);
  send('CREDIT_DETAILS',{token,holderType:type,holderId:id});
 }
 function creditOpenModal(){
@@ -807,7 +839,16 @@ function creditRenderTable(){
  });
 }
 function renderCreditOverview(d){
- if(!d.ok){$('creditSummary').textContent=d.mensagem||'Não foi possível consultar limites.';return}
+ clearTimeout(creditListLoadTimer);
+ if(!d.ok){
+  const msg=d.mensagem||'Não foi possível consultar limites. Toque em Atualizar para tentar novamente.';
+  $('creditSummary').textContent=msg;
+  $('creditAccountList').innerHTML='<tr><td colspan="6">'+esc(msg)+'</td></tr>';
+  $('creditRequestList').innerHTML='<p>'+esc(msg)+'</p>';
+  if($('receivableNotice'))$('receivableNotice').textContent=msg;
+  if($('receivableRows'))$('receivableRows').innerHTML='<tr><td colspan="5">'+esc(msg)+'</td></tr>';
+  return;
+ }
  creditAccounts=Array.isArray(d.items)?d.items:[];
  creditRequests=Array.isArray(d.requests)?d.requests:[];
  renderReceivables();
@@ -822,7 +863,15 @@ function renderCreditOverview(d){
  });
 }
 function showCreditDetails(d){
- if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao carregar financeiro.';return}
+ clearTimeout(creditDetailLoadTimer);
+ if(!d.ok){
+  const msg=d.mensagem||'Falha ao carregar financeiro. Tente novamente.';
+  $('creditMessage').textContent=msg;
+  $('creditDueSummary').textContent=msg;
+  $('creditHistory').textContent=msg;
+  $('receivableFichaInfo').innerHTML='<p>'+esc(msg)+'</p>';
+  return;
+ }
  const w=d.wallet||{};creditCurrentWallet=w;creditHolderInfo=d.holder||{};
  renderReceivableFicha(d);
  $('creditModalTitle').textContent='Financeiro · '+(creditHolderInfo.displayName||creditCurrent?.id||'Titular');
@@ -924,7 +973,12 @@ $('creditBulkAddClients').onclick=()=>{
 $('creditOpen').onclick=()=>creditPick($('creditHolderType').value,$('creditHolderId').value.trim());
 $('creditRefresh').onclick=creditList;
 $('creditBulkOpen').onclick=creditBulkOpen;
-$('creditClose').onclick=()=>{$('creditModal').classList.remove('open');$('creditEditorPanel').hidden=true};
+$('creditClose').onclick=()=>{$('creditModal').classList.remove('open');$('creditEditorPanel').hidden=true;clearTimeout(creditDetailLoadTimer);creditDetailRequestSeq++};
+$('creditDetailReload').onclick=()=>{
+ if(!creditCurrent)return;
+ const {type,id}=creditCurrent;
+ creditPick(type,id);
+};
 document.querySelectorAll('[data-credit-editor]').forEach(btn=>btn.onclick=()=>creditEditor(btn.dataset.creditEditor));
 document.querySelectorAll('[data-credit-bulk]').forEach(btn=>btn.onclick=()=>{
  if(btn.dataset.creditBulk==='SUSPEND')creditBulk('SUSPEND');else creditEditor(btn.dataset.creditBulk);
