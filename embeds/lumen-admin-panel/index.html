@@ -42,7 +42,8 @@
 .store-pickup-option{display:flex;gap:12px;align-items:center;cursor:pointer;background:#fff6eb;border:1px solid #f6d4ae;border-radius:12px;margin-top:12px;padding:12px;color:var(--navy)}
 .store-pickup-option input{width:20px;height:20px;flex:none;accent-color:var(--orange)}
 .store-pickup-option b{display:block;font-size:13px}.store-pickup-option small{display:block;margin-top:3px;line-height:1.5;color:#715c47;font-size:10px}
-.store-pickup-mode #deliveryAddressBlock,.store-pickup-mode #stopList,.store-pickup-mode #addStop,.store-pickup-mode #payerField,.store-pickup-mode #review{display:none!important}
+.store-pickup-mode #deliveryAddressBlock,.store-pickup-mode #stopList,.store-pickup-mode #addStop,.store-pickup-mode #payerField,.store-pickup-mode #review,.store-pickup-mode #centerPickupOption{display:none!important}
+.logistics-pickup-option{background:#eef5fc;border-color:#cadcf0}.logistics-pickup-option small{color:#59708d}.logistics-pickup-option input{accent-color:var(--orange)}
 .sheet-select-label{display:flex;align-items:center;gap:5px}
 .sheet-select-label input,.sheet-order-line input{width:16px;height:16px;flex:none;accent-color:var(--orange);cursor:pointer}
 .sheet-order-line{display:flex;align-items:flex-start;gap:7px;overflow-wrap:anywhere}
@@ -363,6 +364,7 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 
 <div class="address-block"><h4>4. Paradas / centros de distribuição</h4><p>Opcional. Adicione uma ou mais paradas antes de chamar o entregador. Cada parada pode ter taxa extra ou não.</p>
 <div id="stopList" class="stop-list"></div><button id="addStop" class="add-stop" type="button">+ ADICIONAR PARADA</button>
+<label class="store-pickup-option logistics-pickup-option" id="centerPickupOption"><input id="centerPickupMode" type="checkbox"><span><b>Retirada no centro logístico</b><small>A cliente retira o pedido no último centro informado. O endereço da cliente permanece na etiqueta e não há entrega após o centro.</small></span></label>
 <label class="store-pickup-option"><input id="storePickupMode" type="checkbox"><span><b>Retirada em loja</b><small>O próprio cliente busca o pedido na Lúmen. Sem entregador e sem taxa de entrega.</small></span></label>
 <label class="ready-check" id="storePickupReadyBox" style="display:none"><input id="storePickupReady" type="checkbox"><span>Confirmo que o pedido está pronto para retirada na loja.</span></label>
 </div>
@@ -457,7 +459,7 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])),money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const defaultXimbaStop=()=>({name:'CASA DE XIMBA',address:'Rua Pereira de Lucena, 515',city:'Brejo Santo',state:'CE',zipCode:'63260-000',hasFee:false,fee:0});
-let currentFee=0,stops=[defaultXimbaStop()],suggestTimer=null,activeRideTab='all',activeRides=[],doneRides=[],selectedLabels=new Set(),editingDeliveryId='',availableDrivers=[];
+let currentFee=0,stops=[],suggestTimer=null,activeRideTab='all',activeRides=[],doneRides=[],selectedLabels=new Set(),editingDeliveryId='',availableDrivers=[];
 let openedRideId='',detailPreviousFocus=null;
 let reservedPrintWindow=null,pendingCreatedDeliveryId='',labelReturnRideId='';
 let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSearchResults=[];
@@ -708,6 +710,8 @@ function lumenOrderCallDriver(asCourier=false){
  $('blingSearch').value=o.orderId;
  $('blingSearchStatus').textContent='Pedido VELUM '+o.orderId+' vinculado. Revise endereço, frete e paradas antes de gerar a etiqueta.';
  $('storePickupMode').checked=false;
+ $('centerPickupMode').checked=false;
+ stops=[];renderStops();
  applyStorePickupMode();
  $('callBox').classList.add('on');
  $('callBox').scrollIntoView({behavior:'smooth',block:'start'});
@@ -874,9 +878,10 @@ function labelWhatsappLink(phone){
 function labelHtml(x){
  const orderLabel=x.orderLabel===true;
  const isPickup=!orderLabel&&(x.storePickup===true||x.deliveryType==='Retirada em loja'||x.status==='STORE_PICKUP_READY');
+ const isCenterPickup=!orderLabel&&x.customerPickupAtCenter===true;
  const malaDireta=orderLabel&&x.isMalaDireta===true;
  const isBasePickup=orderLabel&&x.shippingType==='PICKUP_LUMEN';
- const labelMode=malaDireta?'MALA DIRETA':isBasePickup?'RETIRADA NA BASE':isPickup?'RETIRADA':'ENTREGA';
+ const labelMode=malaDireta?'MALA DIRETA':isBasePickup?'RETIRADA NA BASE':isPickup?'RETIRADA':isCenterPickup?'RETIRADA NO CENTRO':'ENTREGA';
  const orderQrOnly=orderLabel&&!(x.deliveryId&&x.labelCode);
  const name=String(x.customerName||x.recipientName||'Recebedor');
  const phone=String(x.customerPhone||'');
@@ -904,14 +909,14 @@ function labelHtml(x){
  const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):money(amount);
  const shippingPayer=orderLabel?(isBasePickup?'Retirada na base':malaDireta?'A confirmar na corrida':'Consultar a corrida'):esc(payer);
  return '<article class="shipping-label'+(orderLabel?' order-logistic':'')+'">'+
-  '<header class="label-header"><div class="label-brand"><strong>'+(orderLabel?'VELUM LOGÍSTICA':'LÚMEN LUXOS')+'</strong><span>'+(orderLabel?'Pedido '+esc(x.orderId||x.orderNumber||''):'Exclusividade, Poder e Presença')+'</span></div><div class="label-mode">'+labelIcon((isPickup||isBasePickup)?'store':'truck')+'<b>'+labelMode+'</b></div></header>'+
+  '<header class="label-header"><div class="label-brand"><strong>'+(orderLabel?'VELUM LOGÍSTICA':'LÚMEN LUXOS')+'</strong><span>'+(orderLabel?'Pedido '+esc(x.orderId||x.orderNumber||''):'Exclusividade, Poder e Presença')+'</span></div><div class="label-mode">'+labelIcon((isPickup||isBasePickup||isCenterPickup)?'store':'truck')+'<b>'+labelMode+'</b></div></header>'+
   senderHtml+
   '<section class="label-recipient"><div class="label-recipient-info"><small class="label-eyebrow">DESTINATÁRIO</small><div class="label-name-row"><span class="label-icon-square">'+labelIcon('person')+'</span><strong class="label-name">'+esc(name)+'</strong></div><div class="label-phone-row"><span class="label-icon-square">'+labelIcon('phone')+'</span><div><small>TELEFONE / WHATSAPP</small><b>'+esc(phone||'Não informado')+'</b></div></div></div>'+
   '<div class="label-qr-whats">'+(smallQr?'<img src="'+smallQr+'" alt="QR Code para WhatsApp da destinatária"><b>FALAR NO<br>WHATSAPP</b>':'<span>WhatsApp<br>indisponível</span>')+'</div></section>'+
-  '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isBasePickup?'ENDEREÇO DA CLIENTE · RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):(isPickup?'ENDEREÇO DE RETIRADA':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
+  '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isBasePickup?'ENDEREÇO DA CLIENTE · RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):(isPickup?'ENDEREÇO DE RETIRADA':isCenterPickup?'ENDEREÇO DA CLIENTE':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
   (orderLabel?'':'<section class="label-facts">'+
-  section('fact-mode',(isPickup||isBasePickup)?'store':'truck','TIPO DE ENTREGA',labelMode)+
-  section('fact-cost','coins',isPickup?'VALOR DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
+  section('fact-mode',(isPickup||isBasePickup||isCenterPickup)?'store':'truck','TIPO DE ENTREGA',labelMode)+
+  section('fact-cost','coins',(isPickup||isCenterPickup)?'VALOR DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
   section('fact-payer','card','QUEM PAGA',shippingPayer)+'</section>')+
   '<section class="label-collection"><div class="label-collection-code"><img src="'+largeQr+'" alt="QR Code de coleta pela câmera do celular"></div>'+
   '<div class="label-collection-info"><div class="label-collection-heading">'+labelIcon('box')+'<div><small>'+(orderQrOnly?'QR DO PEDIDO':'QR DE COLETA')+'</small><strong>'+(orderQrOnly?'IDENTIFICAÇÃO<br>DO PEDIDO':'PARA O<br>ENTREGADOR')+'</strong></div></div>'+
@@ -1004,6 +1009,8 @@ function toggleEditRouteFields(disabled){
   ['pickupAddress','pickupNumber','pickupNeighborhood','pickupCity','pickupState','pickupZipCode','deliveryAddress','deliveryCity','deliveryState','deliveryZipCode'].forEach(k=>{if($(k))$(k).disabled=disabled});
   $('addStop').disabled=disabled;
   $('storePickupMode').disabled=disabled;
+  $('centerPickupMode').disabled=disabled;
+  document.querySelectorAll('#stopList input,#stopList button').forEach(el=>el.disabled=disabled);
 }
 function startEditRide(x){
   if(!x)return;
@@ -1022,7 +1029,8 @@ function startEditRide(x){
   selectedBlingOrderId=String(x.blingOrderId||'');
   selectedBlingOrderNumber=String(x.orderNumber||'');
   currentFee=Number(x.deliveryFee)||0;
-  stops=[];renderStops();
+  stops=(Array.isArray(x.logisticsStages)?x.logisticsStages:[]).map(s=>({...s,hasFee:s.hasFee===true||Number(s.fee)>0}));renderStops();
+  $('centerPickupMode').checked=x.customerPickupAtCenter===true;
   $('storePickupMode').checked=store;
   applyStorePickupMode();
   if(store){
@@ -1042,6 +1050,7 @@ function resetEditMode(){
   editingDeliveryId='';
   toggleEditRouteFields(false);
   $('storePickupMode').checked=false;
+  $('centerPickupMode').checked=false;
   $('storePickupReady').checked=false;
   document.body.classList.remove('store-pickup-mode');
   $('storePickupReadyBox').style.display='none';
@@ -1367,14 +1376,16 @@ function detailAddress(base,city,state){
 }
 function detailInfo(x){
   const isStore=x.storePickup===true||x.status==='STORE_PICKUP_READY'||x.deliveryType==='Retirada em loja';
+  const isCenter=!isStore&&x.customerPickupAtCenter===true;
   const payer=isStore?'Sem taxa de entrega':x.payerLabel||(x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'Recebedor paga na entrega':'LÚMEN paga na retirada');
   const pickup=x.originalPickupAddress||[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', ');
-  const destination=isStore?'Retirada no endereço da loja':detailAddress(x.deliveryAddress,x.deliveryCity,x.deliveryState);
+  const lastCenter=Array.isArray(x.logisticsStages)&&x.logisticsStages.length?x.logisticsStages[x.logisticsStages.length-1]:null;
+  const destination=isStore?'Retirada no endereço da loja':isCenter?'Retirada no centro logístico: '+(lastCenter?[lastCenter.name,lastCenter.address,lastCenter.city,lastCenter.state].filter(Boolean).join(' • '):'centro informado'):detailAddress(x.deliveryAddress,x.deliveryCity,x.deliveryState);
   const field=(label,value,full=false)=>'<div class="detail-info-field'+(full?' full':'')+'"><small>'+esc(label)+'</small><strong>'+esc(value??'—')+'</strong></div>';
   let html='<section class="detail-main"><div class="detail-section-title">Dados da corrida</div>'+
     '<div class="detail-heading"><div><h4>'+esc(x.customerName||x.recipientName||'Cliente')+'</h4><div class="detail-subtitle">Pedido '+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'</div></div><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></div>'+
     '<div class="detail-info-grid">'+field('Cliente / recebedor',x.customerName||x.recipientName||'—')+field('Telefone',x.customerPhone||'—')+
-    field('Modalidade',isStore?'Retirada em loja':x.deliveryType||x.type||'Entrega')+field('Valor da corrida',money(x.deliveryFee||0))+
+    field('Modalidade',isStore?'Retirada em loja':isCenter?'Retirada no centro logístico':x.deliveryType||x.type||'Entrega')+field('Valor da corrida',money(x.deliveryFee||0))+
     field('Quem paga',payer)+field('Criada em',dt(x.createdAt))+
     field('Endereço de retirada',detailAddress(pickup,x.originalPickupAddress?'':x.pickupCity,x.originalPickupAddress?'':x.pickupState),true)+
     field('Endereço de entrega / destino',destination,true)+field('Observações / referência',x.deliveryInstructions||'Nenhuma',true)+
@@ -1445,14 +1456,25 @@ function render(d){
   renderActiveList();
   if(openedRideId)renderRideDetail();
 }
-function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
-function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:$('deliveryAddress').value.trim(),deliveryCity:$('deliveryCity').value.trim(),deliveryState:$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:$('deliveryZipCode').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,deliveryFee:currentFee,logisticsStages:stops,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
-function routeReview(){const pts=[['Retirada',[ $('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],...stops.map((x,i)=>['Parada '+(i+1),[x.name,x.address,x.city,x.state].filter(Boolean).join(' • ')]),['Entrega',[$('deliveryAddress').value,$('deliveryCity').value,$('deliveryState').value].filter(Boolean).join(' • ')]];$('routeBox').innerHTML=pts.map(p=>'<div class="route-point"><small>'+esc(p[0])+'</small><b>'+esc(p[1])+'</b></div>').join('');$('quoteValue').textContent=money(currentFee);const extra=stops.reduce((s,x)=>s+(x.hasFee?Number(x.fee)||0:0),0);$('extraFeeText').textContent=extra>0?'Taxas internas informadas: '+money(extra)+' (não alteram o ganho do entregador VELUM).':'Sem taxa extra de centros de distribuição.';$('review').classList.add('on');$('calc').closest('.form-actions').style.display='none';$('review').scrollIntoView({behavior:'smooth',block:'start'})}
+function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);if(!stops.length)$('centerPickupMode').checked=false;renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
+function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:$('deliveryAddress').value.trim(),deliveryCity:$('deliveryCity').value.trim(),deliveryState:$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:$('deliveryZipCode').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
+function routeReview(){
+ const centerPickup=$('centerPickupMode').checked;
+ const pts=[['Retirada',[$('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],
+   ...stops.map((x,i)=>[centerPickup&&i===stops.length-1?'Retirada pela cliente no centro':'Parada '+(i+1),[x.name,x.address,x.city,x.state].filter(Boolean).join(' • ')]),
+   ...(centerPickup?[]:[['Entrega',[$('deliveryAddress').value,$('deliveryCity').value,$('deliveryState').value].filter(Boolean).join(' • ')]])];
+ $('routeBox').innerHTML=pts.map(p=>'<div class="route-point"><small>'+esc(p[0])+'</small><b>'+esc(p[1])+'</b></div>').join('');
+ $('quoteValue').textContent=money(currentFee);
+ const extra=stops.reduce((s,x)=>s+(x.hasFee?Number(x.fee)||0:0),0);
+ $('extraFeeText').textContent=(centerPickup?'A cliente retira no último centro logístico. ':'')+(extra>0?'Taxas internas informadas: '+money(extra)+' (não alteram o ganho do entregador VELUM).':'Sem taxa extra de centros de distribuição.');
+ $('review').classList.add('on');$('calc').closest('.form-actions').style.display='none';$('review').scrollIntoView({behavior:'smooth',block:'start'});
+}
 
 $('call').onclick=()=>{$('callBox').classList.toggle('on');if($('callBox').classList.contains('on'))$('callBox').scrollIntoView({behavior:'smooth',block:'start'})};
-$('addStop').onclick=()=>{stops.push({name:'',address:'',city:'',state:'PB',zipCode:'',hasFee:false,fee:0});renderStops()};
+$('addStop').onclick=()=>{stops.push(stops.length===0?defaultXimbaStop():{name:'',address:'',city:'',state:'PB',zipCode:'',hasFee:false,fee:0});renderStops()};
 function applyStorePickupMode(){
   const selected=$('storePickupMode').checked;
+  if(selected)$('centerPickupMode').checked=false;
   document.body.classList.toggle('store-pickup-mode',selected);
   $('storePickupReadyBox').style.display=selected?'flex':'none';
   $('calc').textContent=selected?'REGISTRAR RETIRADA EM LOJA':'CALCULAR ENTREGA';
@@ -1463,6 +1485,11 @@ function applyStorePickupMode(){
   clearNotice();
 }
 $('storePickupMode').onchange=applyStorePickupMode;
+$('centerPickupMode').onchange=()=>{
+  if($('centerPickupMode').checked&&$('storePickupMode').checked){$('storePickupMode').checked=false;applyStorePickupMode()}
+  currentFee=0;$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;
+  if($('centerPickupMode').checked&&!stops.length)notice('Adicione uma parada para indicar o centro de retirada.',false);else clearNotice();
+};
 $('deliveryAddress').oninput=()=>{clearTimeout(suggestTimer);const term=$('deliveryAddress').value.trim();if(term.length<3){$('deliverySuggestions').classList.remove('on');return}suggestTimer=setTimeout(()=>send('SUGGEST_ADDRESS',{term,target:'delivery'}),350)};
 $('calc').onclick=()=>{
   clearNotice();
@@ -1473,6 +1500,7 @@ $('calc').onclick=()=>{
     $('calc').disabled=true;$('calc').textContent=editingDeliveryId?'SALVANDO ALTERAÇÕES...':'SALVANDO RETIRADA...';
     if(editingDeliveryId)send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data});else send('CREATE_STORE_PICKUP',data);return;
   }
+  if($('centerPickupMode').checked&&!stops.length)return notice('Adicione o centro logístico de retirada antes de calcular.',false);
   currentFee=0;$('calc').disabled=true;$('calc').textContent='CALCULANDO...';send('CALCULATE',payload())
 };
 $('editRoute').onclick=()=>{$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true};
@@ -1570,7 +1598,7 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
   reservedPrintWindow=null;
   notice('Corrida criada. Reabra a corrida para imprimir a etiqueta.',false);
  }
- notice(d.mensagem||'Processo criado.',true);currentFee=0;stops=[defaultXimbaStop()];renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
+ notice(d.mensagem||'Processo criado.',true);currentFee=0;stops=[];$('centerPickupMode').checked=false;renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
  if(m.type==='LOGISTICS_RESULT'){document.querySelectorAll('.log-act').forEach(b=>b.disabled=false);dispatchFinalResult(d,'LOGISTICS');notice(d.mensagem||'Processo atualizado.',d.ok===true)}
  if(m.type==='ACTION_RESULT'){
    if(d.action==='SELECT_DRIVERS')dispatchSelectionResult(d);
