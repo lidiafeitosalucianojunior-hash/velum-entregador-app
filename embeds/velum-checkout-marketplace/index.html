@@ -11,6 +11,9 @@
 .credit-payment-choice b{display:block;font-size:12px}.credit-payment-choice small{display:block;margin-top:4px;font-size:10px;color:#63768a;line-height:1.5}
 .credit-payment-note{font-size:11px;color:#60768d;line-height:1.5;margin:9px 0 0}
 .credit-payment-note.warn{color:#a24d27;background:#fff2e4;border-radius:8px;padding:9px}
+.credit-retry{background:#fff;border:1px solid #ff7a00;color:#0f3665;border-radius:9px;padding:10px 12px;font-size:11px;font-weight:850;margin-top:9px;cursor:pointer;width:100%}
+.credit-retry[hidden]{display:none!important}
+.credit-error-message{padding:16px;background:#fff5e8;color:#944419;border-radius:11px;border:1px solid #f4d6bc;font-size:13px;line-height:1.5}
 .reseller-only{display:none}.reseller-mode .reseller-only{display:block}.reseller-mode .standard-only{display:none!important}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.mode-card{border:1px solid var(--l);background:#fff;border-radius:14px;padding:14px;text-align:left;cursor:pointer;color:var(--n)}.mode-card.active{border-color:var(--o);background:#fff8ef;box-shadow:0 0 0 2px #ff7a0016}.mode-card b{font-size:13px}.mode-card small{display:block;color:var(--m);font-size:10px;line-height:1.5;margin-top:5px}.mode-detail{background:#f8fafc;border:1px solid var(--l);border-radius:12px;padding:12px;font-size:10px;line-height:1.55;margin:10px 0 14px}.address-block.hidden{display:none}.success{display:none;text-align:center;padding:35px 15px}.orderid{font-size:18px;font-weight:950;background:#f2f6fa;border-radius:12px;padding:12px;margin:12px auto;max-width:360px}@media(max-width:760px){.grid{grid-template-columns:1fr}.form,.mode-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.summary{position:static}.item{grid-template-columns:60px 1fr}.item img{width:60px;height:60px}.price{grid-column:2}}
 </style></head><body>
 <header class="top"><div class="topin"><div class="brand">VE<span>LUM</span></div><button class="back" id="back">← Voltar</button></div></header>
@@ -30,7 +33,8 @@
  <button type="button" id="payMercado" class="credit-payment-choice active" data-pay-method="MERCADO_PAGO" aria-pressed="true"><input type="radio" name="payVisual" checked tabindex="-1"><span><b>Mercado Pago</b><small>Cartão, PIX e demais opções disponíveis no pagamento seguro.</small></span></button>
  <button type="button" id="payVelumCredit" class="credit-payment-choice" data-pay-method="VELUM_CREDIT" aria-pressed="false" disabled><input type="radio" name="payVisual" tabindex="-1"><span><b>💳 Crédito VELUM</b><small id="creditOptionDetail">Consultando sua carteira...</small></span></button>
 </div>
-<p id="creditPaymentNotice" class="credit-payment-note">O crédito é exclusivo para produtos Lúmen. Não pode pagar produtos parceiros nem frete.</p>
+<p id="creditPaymentNotice" class="credit-payment-note" role="status">O crédito é exclusivo para produtos Lúmen. Não pode pagar produtos parceiros nem frete.</p>
+<button type="button" class="credit-retry" id="creditRetry" hidden>↻ Atualizar limite e produtos</button>
 </div>
 <button class="finish" id="finish">CONTINUAR PARA PAGAMENTO</button></aside></div>
 <section class="panel success" id="success"><h2>Pedido criado</h2><div class="orderid" id="orderId"></div><p id="successText"></p><button class="finish" id="home" style="max-width:320px">VOLTAR AO PAINEL</button></section></main><div class="toast" id="toast"></div>
@@ -38,6 +42,39 @@
 const $=id=>document.getElementById(id),money=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 let cart=[],review=null,busy=false,isReseller=false,fulfillmentMode='WHOLESALE',selectedShippingId='';
 let paymentMethod='MERCADO_PAGO',creditWallet=null,creditAllLumen=false,currentFreight=null,checkoutAttemptId='';
+const resellerCheckoutIntent=new URLSearchParams(location.search).get('modo')==='revendedora';
+let resellerInitReceived=false,creditWalletError='',creditInitError='',creditHandshakeTries=0;
+if(resellerCheckoutIntent){
+ document.body.classList.add('reseller-mode');
+ $('creditOptionDetail').textContent='Identificando revendedora e consultando limite...';
+ $('creditPaymentNotice').textContent='O crédito é exclusivo para produtos Lúmen e depende de limite aprovado. Estamos verificando sua conta.';
+}
+function showCreditRetry(visible){$('creditRetry').hidden=!visible}
+function creditHandshake(){
+ if(!resellerCheckoutIntent||resellerInitReceived||creditHandshakeTries>=9)return;
+ creditHandshakeTries++;
+ send('READY');
+ if(creditHandshakeTries===9){
+  creditInitError='Não foi possível carregar os produtos ou confirmar sua sessão. Toque em Atualizar limite e produtos.';
+  $('creditOptionDetail').textContent=creditInitError;
+  $('creditPaymentNotice').textContent=creditInitError;
+  $('creditPaymentNotice').classList.add('warn');
+  showCreditRetry(true);
+ }
+}
+$('creditRetry').onclick=()=>{
+ if(resellerCheckoutIntent&&!isReseller){
+  resellerInitReceived=false;creditInitError='';creditHandshakeTries=0;
+  $('creditOptionDetail').textContent='Revalidando os produtos e sua sessão...';
+  $('creditPaymentNotice').textContent='Aguardando identificação da revendedora...';
+  send('RETRY_INIT');
+ }else{
+  creditWalletError='';creditWallet=null;updatePaymentOptions();
+  send('GET_CREDIT_WALLET');
+  if(cart.length)send('REVIEW',{items:cart});
+ }
+ showCreditRetry(false);
+};
 function newCheckoutAttempt(){
  try{if(crypto?.randomUUID)return crypto.randomUUID()}catch(e){}
  return String(Date.now())+'-'+Math.random().toString(36).slice(2,15)+'-'+Math.random().toString(36).slice(2,15);
@@ -45,7 +82,7 @@ function newCheckoutAttempt(){
 function creditEligibility(){
  if(!isReseller)return {ok:false,reason:'Opção exclusiva das revendedoras.'};
  if(!creditAllLumen)return {ok:false,reason:'O Crédito VELUM é exclusivo para produtos Lúmen. Volte ao carrinho e finalize os itens Lúmen separadamente dos produtos das Lojas Parceiras.'};
- if(!creditWallet)return {ok:false,reason:'Consultando a carteira VELUM...'};
+ if(!creditWallet)return {ok:false,reason:creditWalletError||'Consultando a carteira VELUM...'};
  if(!creditWallet.active)return {ok:false,reason:'Crédito suspenso, não aprovado ou fora da validade. Use Mercado Pago.'};
  if(!review?.ok)return {ok:false,reason:'Conferindo produtos e total da compra...'};
  const subtotalCents=Math.round(Number(review.subtotal||0)*100);
@@ -62,6 +99,7 @@ function updatePaymentOptions(){
  $('creditOptionDetail').textContent=eligible.reason;
  $('creditPaymentNotice').textContent=eligible.ok?'O limite cobre apenas os produtos Lúmen. O débito será registrado na sua carteira após a confirmação do pedido.':eligible.reason;
  $('creditPaymentNotice').classList.toggle('warn',!eligible.ok);
+ showCreditRetry(!!creditWalletError||!!creditInitError);
  if(!eligible.ok&&paymentMethod==='VELUM_CREDIT')paymentMethod='MERCADO_PAGO';
  document.querySelectorAll('[data-pay-method]').forEach(btn=>{
   const active=btn.dataset.payMethod===paymentMethod;
@@ -93,14 +131,37 @@ $('finish').onclick=()=>{
  const p=payload();if(!p.customerName||!p.customerEmail||!p.customerPhone)return toast('Preencha nome, e-mail e WhatsApp.');if(isReseller&&fulfillmentMode==='RESALE'&&(!p.deliveryZipCode||!p.deliveryAddress||!p.deliveryCity||!p.deliveryState))return toast('No modo revenda, preencha o endereço completo da cliente.');if(isReseller&&fulfillmentMode==='RESALE'&&!p.shippingId)return toast('Calcule o frete e escolha uma opção de entrega.');if(!isReseller&&(!p.deliveryZipCode||!p.deliveryAddress||!p.deliveryCity||!p.deliveryState))return toast('Preencha o endereço de entrega.');busy=true;$('finish').disabled=true;$('finish').textContent=paymentMethod==='VELUM_CREDIT'?'CONFIRMANDO CRÉDITO...':'CRIANDO PEDIDO...';send('CREATE_ORDER',p)};
 $('back').onclick=()=>send('NAV',{url:isReseller?'/painel-revendedora':'/'});$('home').onclick=()=>send('NAV',{url:isReseller?'/painel-revendedora':'/'});
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='VELUM_CHECKOUT_PAGE')return;
-if(m.type==='RESELLER_INIT'){const d=m.payload||{};if(!d.ok)return toast(d.mensagem||'Não foi possível carregar os produtos.');isReseller=true;document.body.classList.add('reseller-mode');cart=Array.isArray(d.items)?d.items:[];
+if(m.type==='RESELLER_INIT'){const d=m.payload||{};resellerInitReceived=true;
+ if(!d.ok){
+  creditInitError=d.mensagem||'Não foi possível carregar os produtos. Entre novamente no painel da revendedora.';
+  $('creditOptionDetail').textContent=creditInitError;
+  $('creditPaymentNotice').textContent=creditInitError;
+  $('creditPaymentNotice').classList.add('warn');
+  $('items').innerHTML='<div class="credit-error-message"></div>';
+  $('items').firstChild.textContent=creditInitError;
+  $('finish').disabled=true;
+  showCreditRetry(true);
+  return;
+ }
+ creditInitError='';isReseller=true;document.body.classList.add('reseller-mode');cart=Array.isArray(d.items)?d.items:[];
  creditAllLumen=cart.length>0&&cart.every(x=>String(x.origem||'').toLowerCase()==='lumen'&&String(x.sellerId||'').toUpperCase()==='LUMEN');
  send('GET_CREDIT_WALLET');if(cart[0]?.customerName)$('name').value=cart[0].customerName;if(cart[0]?.customerWhatsApp)$('phone').value=cart[0].customerWhatsApp;const prescribed=cart.length&&cart.every(x=>String(x.deliveryMode||'WHOLESALE').toUpperCase()==='RESALE')?'RESALE':'WHOLESALE';$('dataTitle').textContent=prescribed==='RESALE'?'Mala direta para a cliente':'Modo atacado';$('finish').textContent='PAGAR VALOR BASE DOS PRODUTOS';applyFulfillment(prescribed);document.querySelectorAll('[data-fulfillment]').forEach(b=>{b.disabled=true;b.style.opacity=b.dataset.fulfillment===prescribed?'1':'.45'});render();updatePaymentOptions();if(cart.length)send('REVIEW',{items:cart});return}
-if(m.type==='CREDIT_WALLET_RESULT'){creditWallet=m.payload?.ok?m.payload.wallet:null;updatePaymentOptions()}
+if(m.type==='CREDIT_WALLET_RESULT'){
+ creditWalletError=m.payload?.ok?'':(m.payload?.mensagem||'Não foi possível carregar a carteira VELUM. Toque em Atualizar limite e produtos.');
+ creditWallet=m.payload?.ok?m.payload.wallet:null;
+ updatePaymentOptions();
+}
 if(m.type==='REVIEW_RESULT'){if(m.payload?.ok)fillReview(m.payload);else toast(m.payload?.mensagem||'Não foi possível revisar o pedido.')}
 if(m.type==='FREIGHT_RESULT'){$('calcFreight').disabled=false;$('calcFreight').textContent='CALCULAR FRETE';let opts=Array.isArray(m.payload?.options)?m.payload.options:[];if(isReseller&&fulfillmentMode==='RESALE'&&!opts.some(x=>x.id==='PICKUP_LUMEN'))opts=[...opts,{id:'PICKUP_LUMEN',type:'PICKUP_LUMEN',service:'Retirada na base Lúmen',amount:0}];$('shipopts').innerHTML=opts.map(x=>'<div class="shipopt" data-ship="'+x.id+'"><span>'+x.service+'</span><strong>'+money(x.amount)+'</strong></div>').join('');document.querySelectorAll('[data-ship]').forEach(el=>el.onclick=()=>{selectedShippingId=el.dataset.ship;document.querySelectorAll('.shipopt').forEach(x=>x.classList.toggle('active',x===el));const op=opts.find(x=>x.id===selectedShippingId);currentFreight=Number(op?.amount||0);updatePaymentOptions();$('freight').textContent=money(op?.amount);$('total').textContent=money((review?.subtotal||0)+(op?.amount||0))})}
 if(m.type==='ORDER_RESULT'){busy=false;$('finish').disabled=false;updatePaymentOptions();if(!isReseller)$('finish').textContent='CONTINUAR PARA PAGAMENTO';if(!m.payload?.ok){if(paymentMethod==='VELUM_CREDIT')checkoutAttemptId='';return toast(m.payload?.mensagem||'Não foi possível criar o pedido.');}
  if(m.payload?.paymentMethod==='VELUM_CREDIT'){checkoutAttemptId='';}if(m.payload?.paymentUrl){$('finish').disabled=true;$('finish').textContent='ABRINDO PAGAMENTO...';return}$('checkout').style.display='none';$('success').style.display='block';$('orderId').textContent=m.payload.orderId||'Pedido';$('successText').textContent=m.payload.mensagem||'Pedido registrado.'}
 if(m.type==='PAYMENT_RETURN'){const d=m.payload||{};if(d.paid){if(!isReseller)localStorage.removeItem('velum_cart');$('checkout').style.display='none';$('success').style.display='block';$('orderId').textContent=d.orderId||'Pedido';$('successText').textContent=isReseller?'Pagamento aprovado. A logística será definida depois no seu painel.':'Pagamento aprovado.'}}});
-send('READY');setTimeout(()=>{if(!isReseller)loadCart()},900);
+send('READY');
+if(resellerCheckoutIntent){
+ setTimeout(()=>{if(!resellerInitReceived)creditHandshake()},900);
+ const handshakeTimer=setInterval(()=>{
+  creditHandshake();
+  if(resellerInitReceived||creditHandshakeTries>=9)clearInterval(handshakeTimer);
+ },1800);
+}else setTimeout(()=>loadCart(),900);
 </script></body></html>
