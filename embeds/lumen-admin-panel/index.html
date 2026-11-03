@@ -275,7 +275,7 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 .lumen-order-products h4{margin:0 0 8px;color:#0f3665;font-size:13px}
 .lumen-order-products>div{padding:9px 0;border-top:1px solid #e9edf3;font-size:12px;color:#294362;display:flex;justify-content:space-between;gap:10px}
 @media(max-width:650px){.lumen-orders-controls{grid-template-columns:minmax(0,1fr)}.lumen-order-fields{grid-template-columns:minmax(0,1fr)}.lumen-order-sheet{max-height:90dvh}.lumen-orders-actions .btn{width:100%}}
-</style></head>
+</style><style id="lumenSyncStyles">#lumenOrderSync{border:1px solid #0f3665;background:#eef4fa;color:#0f3665}#lumenOrderSync:disabled{opacity:.58;cursor:not-allowed}</style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
 <section class="quick"><button class="card call" id="velumAtendimentoIaOpen" type="button" style="background:#153a67;color:#fff"><b>🤖 Atendimento IA</b><span style="color:#dce9fc">Conversas e atendimento humano</span></button><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button><button class="card call lumen-orders-button" id="openLumenOrders" type="button"><b>📦 Pedidos recebidos</b><span>Compras da Lúmen • crédito e Mercado Pago</span></button></section>
@@ -337,8 +337,8 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
  </div>
  <div id="lumenOrdersFeedback" class="lumen-orders-feedback" role="status">Abra Pedidos recebidos para consultar os pedidos da loja.</div>
  <div class="lumen-orders-table-wrap"><table class="lumen-orders-table">
- <thead><tr><th>Pedido</th><th>Cliente / revendedora</th><th>Produtos Lúmen</th><th>Total Lúmen</th><th>Pagamento</th><th>Situação</th><th>Ações</th></tr></thead>
- <tbody id="lumenOrdersRows"><tr><td colspan="7">Clique em Atualizar pedidos.</td></tr></tbody></table></div>
+ <thead><tr><th>Pedido</th><th>Cliente / revendedora</th><th>Produtos Lúmen</th><th>Total Lúmen</th><th>Pagamento</th><th>Situação</th><th>Wix Lúmen</th><th>Ações</th></tr></thead>
+ <tbody id="lumenOrdersRows"><tr><td colspan="8">Clique em Atualizar pedidos.</td></tr></tbody></table></div>
 </section>
 <div id="lumenOrderDetailModal" class="lumen-order-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="lumenOrderDetailHeading">
  <section class="lumen-order-sheet">
@@ -349,7 +349,7 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
   <div id="lumenOrderDetailProducts" class="lumen-order-products"></div>
   <div class="lumen-order-bottom-actions">
    <button type="button" id="lumenOrderPrint">🖨️ Imprimir etiqueta</button>
-   <button type="button" id="lumenOrderCall">🛵 Chamar entregador</button>
+   <button type="button" id="lumenOrderCall">🛵 Chamar entregador</button><button type="button" id="lumenOrderSync">↻ Sincronizar pedido no Wix</button>
   </div>
   <p id="lumenOrderHelp" class="lumen-order-help" role="status"></p>
  </section>
@@ -431,8 +431,9 @@ function lumenOrdersRender(){
     '<td><strong>'+money(o.lumenTotal)+'</strong></td>'+
     '<td><span class="lumen-pay-badge '+p+'">'+lumenOrderPayLabel(o.paymentMethod)+'</span></td>'+
     '<td><span class="lumen-order-badge '+(st==='PAID'?'approved':st==='FAILED'?'failed':'pending')+'">'+lumenOrderStatusLabel(st)+'</span></td>'+
+    '<td><small>'+esc(o.wixOrderNumber?'Nº '+o.wixOrderNumber:(o.wixSyncStatus==='ERROR'?'Falha — reenviar':'Pendente'))+'</small></td>'+
     '<td><button type="button" class="lumen-order-open" data-order-open="'+esc(o.orderId)+'">Ver pedido</button></td></tr>';
- }).join(''):'<tr><td colspan="7">Nenhum pedido encontrado para os filtros informados.</td></tr>';
+ }).join(''):'<tr><td colspan="8">Nenhum pedido encontrado para os filtros informados.</td></tr>';
  $('lumenOrdersRows').querySelectorAll('[data-order-open]').forEach(b=>b.onclick=()=>lumenOrderDetail(b.dataset.orderOpen));
 }
 function lumenOrderDetail(id){
@@ -442,10 +443,16 @@ function lumenOrderDetail(id){
  $('lumenOrderDetailFields').innerHTML=[
   field('Cliente',o.customerName),field('WhatsApp',o.customerPhone),
   field('Revendedora',o.resellerName),field('Cidade',o.deliveryCity),
+  field('Entrega / retirada',o.shippingType==='PICKUP_LUMEN'?'Retirada na base Lúmen':
+    o.shippingType==='DELIVERY'?'Entrega para cliente':o.shippingType||'Conferir modalidade'),
+  field('Endereço da cliente',[o.deliveryAddress,o.deliveryCity,o.deliveryState,o.deliveryZipCode].filter(Boolean).join(' • ')),
   field('Pagamento',lumenOrderPayLabel(o.paymentMethod)),
   field('Situação financeira',lumenOrderStatusLabel(lumenOrderStatusKey(o))),
   field('Modalidade',o.fulfillmentMode==='WHOLESALE'?'Atacado':o.fulfillmentMode==='RESALE'?'Mala direta':o.fulfillmentMode||'Venda direta'),
   field('Valor dos produtos Lúmen',money(o.lumenTotal)),
+  field('Pedido no aplicativo Wix',o.wixOrderNumber?'Nº '+o.wixOrderNumber+
+    (o.wixSyncVersion==='20261103-address-credit-v2'?' • atualizado':' • atualizar status/endereço'):
+    (o.wixSyncStatus==='ERROR'?'Falha na sincronização':'Aguardando sincronização')),
   field('Data',dt(o.createdAt))
  ].join('');
  lumenOrderRenderProducts(o);
@@ -468,6 +475,11 @@ function lumenOrderReady(o){
 function lumenOrderRenderHelp(o){
  const count=lumenOrderPickedCount(o),total=(o.products||[]).length;
  $('lumenOrderPickingProgress').textContent=count+' de '+total+' produtos separados'+(total&&count===total?' • Separação concluída':'');
+ const sync=$('lumenOrderSync');
+ const synced=!!o.wixOrderNumber && o.wixSyncVersion==='20261103-address-credit-v2';
+ sync.disabled=synced || lumenOrderStatusKey(o)!=='PAID';
+ sync.textContent=synced?'✓ Wix Lúmen nº '+o.wixOrderNumber:
+  (o.wixOrderNumber?'↻ Atualizar status e dados no Wix':'↻ Sincronizar pedido no Wix');
  const call=$('lumenOrderCall');
  const linked=o.linkedDelivery;
  const paid=lumenOrderStatusKey(o)==='PAID';
@@ -578,6 +590,37 @@ function lumenOrderCallDriver(){
 }
 $('lumenOrderPrint').onclick=lumenOrderPrintLabel;
 $('lumenOrderCall').onclick=lumenOrderCallDriver;
+$('lumenOrderSync').onclick=()=>{
+ const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
+ const o=lumenOrders.find(x=>x.orderId===id);
+ if(!o||lumenOrderStatusKey(o)!=='PAID'||(o.wixOrderNumber&&o.wixSyncVersion==='20261103-address-credit-v2'))return;
+ $('lumenOrderSync').disabled=true;
+ $('lumenOrderHelp').textContent=o.wixOrderNumber?'Atualizando o pedido já existente no Wix — sem duplicar cobrança ou estoque...':'Enviando pedido confirmado para o aplicativo Wix Lúmen...';
+ send('SYNC_WIX_ORDER',{orderId:id});
+};
+function lumenOrderSyncResult(data){
+ const o=lumenOrders.find(x=>x.orderId===data.orderId);
+ if(!o)return;
+ if(data.ok){
+  o.wixSyncStatus='SYNCED';
+  o.wixOrderNumber=String(data.wixOrderNumber||'');
+  o.wixSyncVersion='20261103-address-credit-v2';
+  o.wixSyncError='';
+  lumenOrdersRender();
+  if(!$('lumenOrderDetailModal').hidden){
+   const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
+   if(id===o.orderId)lumenOrderDetail(id);
+  }
+  $('lumenOrderHelp').textContent='Pedido confirmado no aplicativo Wix Lúmen'+(o.wixOrderNumber?' nº '+o.wixOrderNumber:'')+'.';
+  lumenOrdersRequest();
+ }else{
+  o.wixSyncStatus=data.status||'ERROR';
+  o.wixSyncError=data.mensagem||'A sincronização não foi concluída.';
+  $('lumenOrderSync').disabled=false;
+  $('lumenOrderHelp').textContent=o.wixSyncError;
+  $('lumenOrderHelp').classList.add('lumen-order-error');
+ }
+}
 
 $('openLumenOrders').onclick=lumenOrdersShow;
 $('lumenOrdersRefresh').onclick=lumenOrdersRequest;
@@ -1151,6 +1194,7 @@ $('logout').onclick=()=>send('LOGOUT');
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_ADMIN_PANEL_PAGE')return;const d=m.payload||{};
  if(m.type==='DATA')render(d);
  if(m.type==='ORDER_PICK_RESULT')lumenOrderPickedResult(d);
+ if(m.type==='ORDER_SYNC_RESULT')lumenOrderSyncResult(d);
  if(m.type==='CREATE_RESULT'&&d.ok&&lumenOrdersLoaded)lumenOrdersRequest();
  if(m.type==='ACTION_RESULT'&&d.ok&&['DISPATCH_PREPARED','RECALL'].includes(d.action)){
   if(!$('lumenOrderDetailModal').hidden)$('lumenOrderHelp').textContent=d.mensagem||'Chamado registrado. Atualizando a corrida...';
