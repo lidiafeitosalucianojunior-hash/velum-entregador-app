@@ -205,10 +205,48 @@ body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
  .phase-count{min-width:23px;padding:3px}
 }
 body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
+
+</style><style id="lumenMarketplaceOrdersStyles">
+.lumen-orders-button{margin-top:12px!important;border:1px solid #ffd6a8!important;background:#fff7ed!important;color:#0f3665!important}
+.lumen-orders-panel[hidden]{display:none!important}
+.lumen-orders-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(125px,1fr) minmax(130px,1fr);gap:10px;margin:12px 0}
+.lumen-orders-controls label{font-size:11px;font-weight:850;color:#0f3665;display:grid;gap:6px;min-width:0}
+.lumen-orders-controls input,.lumen-orders-controls select{width:100%;min-width:0;border:1px solid #dbe5ef;border-radius:11px;background:#fff;padding:11px;color:#14375e;font-size:12px}
+.lumen-orders-table-wrap{overflow-x:auto;max-width:100%;border:1px solid #dfe8f0;border-radius:13px;background:#fff}
+.lumen-orders-table{width:100%;min-width:750px;border-collapse:collapse;text-align:left;font-size:12px}
+.lumen-orders-table th{padding:12px 10px;background:#eef3f9;color:#163e69;font-size:11px;white-space:nowrap}
+.lumen-orders-table td{padding:12px 10px;border-top:1px solid #e6ecf3;color:#263e5a;vertical-align:middle}
+.lumen-orders-table td strong{color:#0f3665;font-size:12px}
+.lumen-orders-table td small{display:block;font-size:10px;color:#6d8095;margin-top:4px}
+.lumen-orders-table tr:nth-child(even){background:#fafcfe}
+.lumen-pay-badge,.lumen-order-badge{font-size:10px;line-height:1.35;display:inline-block;padding:6px 9px;border-radius:999px;font-weight:850;white-space:nowrap}
+.lumen-pay-badge.credit{background:#e2edf9;color:#0f3665}
+.lumen-pay-badge.mp{background:#eaf1f5;color:#4b6078}
+.lumen-order-badge.approved{background:#e2f5eb;color:#167849}
+.lumen-order-badge.pending{background:#fff1d9;color:#996015}
+.lumen-order-badge.failed{background:#fce9eb;color:#a73642}
+.lumen-order-open{border:0;border-radius:10px;background:#0f3665;color:#fff;padding:10px 12px;font-size:11px;cursor:pointer;white-space:nowrap;font-weight:850}
+.lumen-orders-feedback{min-height:24px;margin:8px 0 12px;font-size:12px;color:#647c93;line-height:1.45}
+.lumen-orders-actions{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.lumen-orders-actions h3{margin:0;color:#0f3665;font-size:18px}
+.lumen-order-overlay[hidden]{display:none!important}
+.lumen-order-overlay{position:fixed;inset:0;z-index:2147483500;display:grid;place-items:center;padding:12px;background:#0c24458e}
+.lumen-order-sheet{width:min(660px,100%);max-height:92dvh;overflow:auto;background:#fff;border-radius:18px;padding:18px;box-shadow:0 16px 50px #0620406a}
+.lumen-order-sheet-head{display:flex;align-items:start;justify-content:space-between;gap:10px;border-bottom:1px solid #e1e8ef;padding-bottom:12px}
+.lumen-order-sheet-head h3{font-size:18px;color:#0f3665;margin:0}
+.lumen-order-sheet-head button{border:0;border-radius:10px;background:#eaf1f8;color:#153e67;padding:10px;font-weight:850}
+.lumen-order-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:13px 0}
+.lumen-order-fields .fieldbox{border:1px solid #dfe7f0;padding:12px;border-radius:12px;overflow-wrap:anywhere}
+.lumen-order-fields .fieldbox small{display:block;font-size:10px;color:#788a9b;margin-bottom:6px}
+.lumen-order-fields .fieldbox b{display:block;font-size:12px;color:#1d3f66}
+.lumen-order-products{border:1px solid #dee8f0;border-radius:12px;padding:12px}
+.lumen-order-products h4{margin:0 0 8px;color:#0f3665;font-size:13px}
+.lumen-order-products>div{padding:9px 0;border-top:1px solid #e9edf3;font-size:12px;color:#294362;display:flex;justify-content:space-between;gap:10px}
+@media(max-width:650px){.lumen-orders-controls{grid-template-columns:minmax(0,1fr)}.lumen-order-fields{grid-template-columns:minmax(0,1fr)}.lumen-order-sheet{max-height:90dvh}.lumen-orders-actions .btn{width:100%}}
 </style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
-<section class="quick"><button class="card call" id="velumAtendimentoIaOpen" type="button" style="background:#153a67;color:#fff"><b>🤖 Atendimento IA</b><span style="color:#dce9fc">Conversas e atendimento humano</span></button><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button></section>
+<section class="quick"><button class="card call" id="velumAtendimentoIaOpen" type="button" style="background:#153a67;color:#fff"><b>🤖 Atendimento IA</b><span style="color:#dce9fc">Conversas e atendimento humano</span></button><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button><button class="card call lumen-orders-button" id="openLumenOrders" type="button"><b>📦 Pedidos recebidos</b><span>Compras da Lúmen • crédito e Mercado Pago</span></button></section>
 
 <section class="card callbox" id="callBox">
 <h3>Chamar entregador</h3><p>Monte o trajeto em etapas. O endereço da LÚMEN vem preenchido por padrão e continua editável.</p>
@@ -253,6 +291,31 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 </div></section>
 
 
+
+<section class="panel on lumen-orders-panel" id="lumenOrdersPanel" hidden aria-label="Pedidos recebidos Lúmen">
+ <div class="lumen-orders-actions">
+  <h3>📦 Pedidos recebidos — Lúmen</h3>
+  <button class="btn secondary" type="button" id="lumenOrdersRefresh">↻ Atualizar pedidos</button>
+ </div>
+ <p class="meta">Pedidos do checkout VELUM com produtos da Lúmen. Inclui pagamentos com Crédito VELUM e Mercado Pago, independentemente de já existir uma corrida.</p>
+ <div class="lumen-orders-controls">
+  <label>Pesquisar pedido, cliente ou revendedora<input type="search" id="lumenOrdersSearch" placeholder="Nome, pedido, cidade ou WhatsApp"></label>
+  <label>Pagamento<select id="lumenOrdersPaymentFilter"><option value="ALL">Todas as formas</option><option value="VELUM_CREDIT">Crédito VELUM</option><option value="MERCADO_PAGO">Mercado Pago</option></select></label>
+  <label>Situação<select id="lumenOrdersStatusFilter"><option value="ALL">Todos os status</option><option value="PAID">Pagamento aprovado</option><option value="PENDING">Aguardando pagamento</option><option value="FAILED">Falha/cancelado</option></select></label>
+ </div>
+ <div id="lumenOrdersFeedback" class="lumen-orders-feedback" role="status">Abra Pedidos recebidos para consultar os pedidos da loja.</div>
+ <div class="lumen-orders-table-wrap"><table class="lumen-orders-table">
+ <thead><tr><th>Pedido</th><th>Cliente / revendedora</th><th>Produtos Lúmen</th><th>Total Lúmen</th><th>Pagamento</th><th>Situação</th><th>Ações</th></tr></thead>
+ <tbody id="lumenOrdersRows"><tr><td colspan="7">Clique em Atualizar pedidos.</td></tr></tbody></table></div>
+</section>
+<div id="lumenOrderDetailModal" class="lumen-order-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="lumenOrderDetailHeading">
+ <section class="lumen-order-sheet">
+  <div class="lumen-order-sheet-head"><h3 id="lumenOrderDetailHeading">Pedido Lúmen</h3><button id="lumenOrderDetailClose" type="button">Fechar</button></div>
+  <div id="lumenOrderDetailFields" class="lumen-order-fields"></div>
+  <div id="lumenOrderDetailProducts" class="lumen-order-products"></div>
+ </section>
+</div>
+
 <section class="panel on" id="activePanel">
   <div class="section-head"><h3>Entregas por fase</h3><span id="activeSummary">0 corridas</span></div>
   <div class="active-subtabs" role="group" aria-label="Filtrar corridas pela fase de entrega">
@@ -286,6 +349,91 @@ let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSe
 function send(type,payload={}){parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function dt(v){if(!v)return'—';try{return new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(_){return'—'}}
 function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Entrega aceita',GOING_TO_STORE:'Indo para a retirada',AT_STORE:'Na retirada',COLLECTED:'Pedido coletado',OUT_FOR_DELIVERY:'Saiu para entrega',DELIVERED:'Concluída'})[s]||s||'Corrida'}
+let lumenOrders=[],lumenOrdersLoading=false,lumenOrdersLoaded=false,lumenOrdersTimer=null;
+const lumenOrderPayLabel=v=>v==='VELUM_CREDIT'?'Crédito VELUM':'Mercado Pago';
+function lumenOrderStatusKey(o){
+ const p=String(o.paymentStatus||'').toUpperCase(),s=String(o.orderStatus||'').toUpperCase();
+ if(['APPROVED','PAID'].includes(p))return 'PAID';
+ if(['FAILED','REJECTED','CANCELED','CANCELLED','REFUNDED'].includes(p)||['CREDIT_FAILED','CANCELLED','CANCELED'].includes(s))return 'FAILED';
+ return 'PENDING';
+}
+const lumenOrderStatusLabel=key=>({PAID:'Pagamento aprovado',FAILED:'Falha ou cancelado',PENDING:'Aguardando pagamento'})[key]||'Em análise';
+function lumenOrdersRequest(){
+ if(lumenOrdersLoading)return;
+ lumenOrdersLoading=true;
+ $('lumenOrdersFeedback').textContent='Atualizando pedidos da Lúmen...';
+ clearTimeout(lumenOrdersTimer);
+ lumenOrdersTimer=setTimeout(()=>{
+  if(lumenOrdersLoading){lumenOrdersLoading=false;$('lumenOrdersFeedback').textContent='A consulta demorou demais. Toque em Atualizar pedidos para tentar novamente.';}
+ },18000);
+ send('LOAD_ORDERS');
+}
+function lumenOrdersShow(){
+ const panel=$('lumenOrdersPanel');
+ panel.hidden=false;
+ panel.scrollIntoView({behavior:'smooth',block:'start'});
+ if(!lumenOrdersLoaded)lumenOrdersRequest();
+}
+function lumenOrdersRender(){
+ const query=$('lumenOrdersSearch').value.toLocaleLowerCase('pt-BR').trim();
+ const method=$('lumenOrdersPaymentFilter').value,status=$('lumenOrdersStatusFilter').value;
+ const filtered=lumenOrders.filter(o=>{
+  if(method!=='ALL'&&o.paymentMethod!==method)return false;
+  if(status!=='ALL'&&lumenOrderStatusKey(o)!==status)return false;
+  return !query||[o.orderId,o.resellerName,o.customerName,o.customerPhone,o.deliveryCity,...(o.products||[]).map(i=>i.name)]
+    .join(' ').toLocaleLowerCase('pt-BR').includes(query);
+ });
+ $('lumenOrdersFeedback').textContent=filtered.length+' de '+lumenOrders.length+' pedido(s) Lúmen'+(lumenOrders.length>=150?' (últimos 150 pedidos)':'')+'.';
+ $('lumenOrdersRows').innerHTML=filtered.length?filtered.map(o=>{
+  const st=lumenOrderStatusKey(o),p=o.paymentMethod==='VELUM_CREDIT'?'credit':'mp';
+  return '<tr><td><strong>'+esc(o.orderId)+'</strong><small>'+esc(dt(o.createdAt))+'</small></td>'+
+    '<td><strong>'+esc(o.customerName||'Cliente')+'</strong><small>'+esc(o.resellerName||'Compra direta')+'</small></td>'+
+    '<td>'+esc(String((o.products||[]).reduce((sum,p)=>sum+Number(p.quantity||1),0)))+' peça(s)<small>'+esc((o.products||[]).map(x=>x.name).slice(0,2).join(', '))+'</small></td>'+
+    '<td><strong>'+money(o.lumenTotal)+'</strong></td>'+
+    '<td><span class="lumen-pay-badge '+p+'">'+lumenOrderPayLabel(o.paymentMethod)+'</span></td>'+
+    '<td><span class="lumen-order-badge '+(st==='PAID'?'approved':st==='FAILED'?'failed':'pending')+'">'+lumenOrderStatusLabel(st)+'</span></td>'+
+    '<td><button type="button" class="lumen-order-open" data-order-open="'+esc(o.orderId)+'">Ver pedido</button></td></tr>';
+ }).join(''):'<tr><td colspan="7">Nenhum pedido encontrado para os filtros informados.</td></tr>';
+ $('lumenOrdersRows').querySelectorAll('[data-order-open]').forEach(b=>b.onclick=()=>lumenOrderDetail(b.dataset.orderOpen));
+}
+function lumenOrderDetail(id){
+ const o=lumenOrders.find(x=>x.orderId===id);if(!o)return;
+ $('lumenOrderDetailHeading').textContent='Pedido '+o.orderId;
+ const field=(label,value)=>'<div class="fieldbox"><small>'+esc(label)+'</small><b>'+esc(value||'Não informado')+'</b></div>';
+ $('lumenOrderDetailFields').innerHTML=[
+  field('Cliente',o.customerName),field('WhatsApp',o.customerPhone),
+  field('Revendedora',o.resellerName),field('Cidade',o.deliveryCity),
+  field('Forma de pagamento',lumenOrderPayLabel(o.paymentMethod)),
+  field('Situação financeira',lumenOrderStatusLabel(lumenOrderStatusKey(o))),
+  field('Modalidade',o.fulfillmentMode==='WHOLESALE'?'Atacado':o.fulfillmentMode==='RESALE'?'Mala direta':o.fulfillmentMode||'Venda direta'),
+  field('Valor dos produtos Lúmen',money(o.lumenTotal)),
+  field('Data',dt(o.createdAt))
+ ].join('');
+ $('lumenOrderDetailProducts').innerHTML='<h4>Produtos Lúmen do pedido</h4>'+(o.products||[]).map(p=>
+ '<div><span><strong>'+esc(p.name)+'</strong><small>'+esc(p.size?'Tamanho '+p.size+' · ':'')+esc(String(p.quantity))+' unidade(s)</small></span><b>'+money(Number(p.subtotal)||Number(p.unitPrice||0)*Number(p.quantity||1))+'</b></div>'
+ ).join('');
+ $('lumenOrderDetailModal').hidden=false;
+}
+$('openLumenOrders').onclick=lumenOrdersShow;
+$('lumenOrdersRefresh').onclick=lumenOrdersRequest;
+$('lumenOrdersSearch').oninput=lumenOrdersRender;
+$('lumenOrdersPaymentFilter').onchange=lumenOrdersRender;
+$('lumenOrdersStatusFilter').onchange=lumenOrdersRender;
+$('lumenOrderDetailClose').onclick=()=>{$('lumenOrderDetailModal').hidden=true};
+$('lumenOrderDetailModal').onclick=e=>{if(e.target===$('lumenOrderDetailModal'))$('lumenOrderDetailModal').hidden=true};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('lumenOrderDetailModal').hidden=true});
+function lumenOrdersReceive(data){
+ clearTimeout(lumenOrdersTimer);
+ lumenOrdersLoading=false;
+ if(!data?.ok){
+  $('lumenOrdersFeedback').textContent=data?.mensagem||'Falha ao buscar pedidos. Toque em Atualizar pedidos.';
+  return;
+ }
+ lumenOrdersLoaded=true;
+ lumenOrders=Array.isArray(data.items)?data.items:[];
+ lumenOrdersRender();
+}
+
 function notice(msg,ok=false){$('notice').textContent=msg;$('notice').className='notice on '+(ok?'ok':'err')}
 function clearNotice(){$('notice').className='notice';$('notice').textContent=''}
 
@@ -837,6 +985,7 @@ $('logout').onclick=()=>send('LOGOUT');
 
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_ADMIN_PANEL_PAGE')return;const d=m.payload||{};
  if(m.type==='DATA')render(d);
+ if(m.type==='ORDERS_RESULT')lumenOrdersReceive(d);
  if(m.type==='ERROR')notice(d.message||m.message||'Não foi possível carregar.',false);
  if(m.type==='BLING_SEARCH_RESULT'){
     if(String(d.requestId)!==String(blingRequestId))return;
