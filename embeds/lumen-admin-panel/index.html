@@ -208,7 +208,7 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 </style></head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
-<section class="quick"><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button></section>
+<section class="quick"><button class="card call" id="velumAtendimentoIaOpen" type="button" style="background:#153a67;color:#fff"><b>🤖 Atendimento IA</b><span style="color:#dce9fc">Conversas e atendimento humano</span></button><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button></section>
 
 <section class="card callbox" id="callBox">
 <h3>Chamar entregador</h3><p>Monte o trajeto em etapas. O endereço da LÚMEN vem preenchido por padrão e continua editável.</p>
@@ -904,5 +904,14 @@ const readyRetry=setInterval(()=>{
 <a id="velumAppDownload" href="https://app.vaidevelum.com/download/" target="_top" rel="noopener" aria-label="Baixar aplicativo VELUM"><span class="vad-dot">↓</span><span>Baixar app VELUM</span></a>
 <script id="velumAppDownloadScript">
 (()=>{const el=document.getElementById('velumAppDownload');if(!el)return;if(/VELUMNative\/1\.0/i.test(navigator.userAgent||''))el.remove()})();
+</script>
+
+<script>
+(function(){
+  document.addEventListener('click',function(event){
+    if(!event.target.closest('#velumAtendimentoIaOpen')) return;
+    parent.postMessage({source: 'LUMEN_ADMIN_PANEL',type: 'OPEN_IA',payload: {}}, '*');
+  });
+})();
 </script>
 </body></html>

@@ -167,7 +167,7 @@
 @media(max-width:650px){.delivery-detail-grid{grid-template-columns:1fr}.delivery-overview-filter{width:100%}.delivery-overview-filter select{flex:1;min-width:120px}}
 </style>
 </head><body>
-<section class="login hidden" id="loginView" aria-hidden="true" style="display:none!important"><input id="email" type="email" hidden><input id="password" type="password" hidden><button id="loginBtn" hidden>ENTRAR</button><div id="loginError" hidden></div></section> <section class="app hidden" id="appView"><header class="topbar"><div class="topin"><div><div class="topbrand">VE<span>LUM</span> ADMIN</div><div class="topsub">Gerenciamento de cadastros</div></div><button class="logout" id="logout">Sair</button></div></header><main class="wrap"><div class="hero"><div><h1 id="title">Lojas Parceiras</h1><p id="subtitle">Gerencie os cadastros e a disponibilidade das lojas.</p></div><div class="hero-actions"><button class="hero-call" id="newDriverCallBtn">🛵 CHAMAR ENTREGADOR</button><button class="hero-call" type="button" id="newPickupBtn" style="background:#0F3665;border:2px solid #ff7a00">📦 GERAR RETIRADA</button><div class="summary"><span class="badge">Total <b id="sumTotal">0</b></span><span class="badge"><span id="adminActiveLabel">Ativos</span> <b id="sumActive">0</b></span><span class="badge"><span id="adminInactiveLabel">Inativos</span> <b id="sumInactive">0</b></span></div></div></div>
+<section class="login hidden" id="loginView" aria-hidden="true" style="display:none!important"><input id="email" type="email" hidden><input id="password" type="password" hidden><button id="loginBtn" hidden>ENTRAR</button><div id="loginError" hidden></div></section> <section class="app hidden" id="appView"><header class="topbar"><div class="topin"><div><div class="topbrand">VE<span>LUM</span> ADMIN</div><div class="topsub">Gerenciamento de cadastros</div></div><button class="logout" id="logout">Sair</button></div></header><main class="wrap"><div class="hero"><div><h1 id="title">Lojas Parceiras</h1><p id="subtitle">Gerencie os cadastros e a disponibilidade das lojas.</p></div><div class="hero-actions"><button class="hero-call" id="velumAtendimentoIaOpen" type="button" style="background:#153a67" aria-label="Abrir Atendimento IA">🤖 ATENDIMENTO IA</button><button class="hero-call" id="newDriverCallBtn">🛵 CHAMAR ENTREGADOR</button><button class="hero-call" type="button" id="newPickupBtn" style="background:#0F3665;border:2px solid #ff7a00">📦 GERAR RETIRADA</button><div class="summary"><span class="badge">Total <b id="sumTotal">0</b></span><span class="badge"><span id="adminActiveLabel">Ativos</span> <b id="sumActive">0</b></span><span class="badge"><span id="adminInactiveLabel">Inativos</span> <b id="sumInactive">0</b></span></div></div></div>
 <div class="tabs"><button type="button" class="tab" data-entity="credit">💳 Crédito<small>Limites e cobranças</small></button><button type="button" class="tab" data-entity="receivables">📋 Contas a receber<small>Saldos, prazos e fichas</small></button><button class="tab active" data-entity="sellers">🏬 Lojas Parceiras<small>Cadastro das lojas fornecedoras</small></button><button class="tab" data-entity="resellers">🛍️ Revendedoras<small>Sacoleiras e vitrines de revenda</small></button><button class="tab" data-entity="drivers">🛵 Entregadores<small>Cadastros da rede logística</small></button><button class="tab" data-entity="deliveries">📍 Acompanhar entregas<small>Visão geral de todas as etapas</small></button><button class="tab" data-entity="freights">🚚 Fretes<small>Taxas por CEP e entrega local</small></button><button class="tab" type="button" onclick="nativeMembersOpen()">👥 Gerenciar membros Wix<small>Consultar, criar, editar e excluir cadastros</small></button><button class="tab" type="button" onclick="shareVelumApp()">📲 Compartilhar aplicativo<small>Enviar o link do APK pelas redes sociais</small></button></div>
 
 <section id="creditPanel" class="credit-panel hidden" aria-label="Crédito VELUM">
@@ -1303,4 +1303,13 @@ window.VelumLabel={page,print,attachRows,normalize};
     document.getElementById('velumNextExisting').onclick=()=>{panel.style.display='none';const tab=document.querySelector('[data-entity="deliveries"]');tab?.click();document.getElementById('labelBatchTools')?.scrollIntoView({behavior:'smooth',block:'center'});};
   };
 })();
-</script></body></html>
+</script>
+<script>
+(function(){
+  document.addEventListener('click',function(event){
+    if(!event.target.closest('#velumAtendimentoIaOpen')) return;
+    parent.postMessage({source: 'VELUM_ADMIN_PORTAL',type: 'OPEN_IA',payload: {}}, '*');
+  });
+})();
+</script>
+</body></html>
