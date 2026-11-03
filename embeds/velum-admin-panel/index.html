@@ -90,9 +90,37 @@
 .credit-billing-settings input[readonly]{background:#f4f7fa;color:#4a627c}
 .credit-message{margin-top:12px}
 @media(max-width:600px){.credit-window{padding:14px}.credit-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.credit-hero>div:last-child{grid-column:1/-1}.credit-hero strong{font-size:20px}.credit-table-heading .credit-small{width:100%}.credit-bulk-tools{width:100%}.credit-bulk-tools button{flex:1}.credit-table-toolbar{align-items:stretch}.credit-editor-panel .credit-form,.credit-billing-settings .credit-form{grid-template-columns:1fr}.credit-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-</style></head><body>
+</style><style id="receivableLidiaStyles">
+.receivable-panel{min-width:0;display:grid;gap:16px}.receivable-section{min-width:0;background:#fff;border-radius:18px;border:1px solid #dfe7f0;padding:clamp(13px,3vw,20px)}
+.receivable-title{display:flex;flex-wrap:wrap;align-items:start;justify-content:space-between;gap:12px}.receivable-title h2{color:#0f3665;font-size:20px;margin:0 0 6px}.receivable-title p{color:#72849a;font-size:12px;line-height:1.5;margin:0 0 12px}
+.receivable-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 16px}
+.receivable-stats>div{border:1px solid #dce7f1;border-radius:12px;padding:13px;min-width:0;background:#f6f9fd}
+.receivable-stats>div small{font-size:11px;color:#5e7690;display:block}.receivable-stats>div strong{font-size:clamp(15px,2.4vw,21px);color:#0f3665;display:block;margin-top:7px;overflow-wrap:anywhere}
+.receivable-filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(155px,1fr);gap:11px;margin-bottom:10px}
+.receivable-filters label{display:grid;gap:6px;font-size:11px;font-weight:850;color:#0f3665;min-width:0}
+.receivable-filters input,.receivable-filters select{border:1px solid #d6e2ed;border-radius:10px;padding:11px;font:inherit;font-size:13px;background:#fff;width:100%;min-width:0}
+.receivable-table-wrap{overflow-x:auto;width:100%;border:1px solid #e1e9f2;border-radius:12px;margin:12px 0}
+.receivable-table{min-width:680px;width:100%;border-collapse:collapse;font-size:12px}
+.receivable-table th{background:#eff4f9;font-size:11px;color:#1b416b;text-align:left;padding:13px 11px;white-space:nowrap}
+.receivable-table td{border-top:1px solid #e5edf4;color:#273f5c;padding:13px 11px;vertical-align:middle}
+.receivable-table tbody tr:nth-child(even){background:#fafbfd}
+.receivable-name{border:0;background:none;padding:0;color:#0f3665;cursor:pointer;font-size:13px;font-weight:900;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.receivable-table td small{display:block;color:#738499;font-size:10px;margin-top:5px}
+.receivable-badge{display:inline-block;border-radius:999px;font-size:11px;font-weight:850;padding:6px 10px;white-space:nowrap}
+.receivable-badge.DUE_SOON{background:#e6f5ed;color:#116945}
+.receivable-badge.OVERDUE{background:#fff0ed;color:#ad3429}
+.receivable-badge.POSTPONED{background:#fff4da;color:#98600c}
+.receivable-open{border:0;background:#0f3665;color:#fff;font-size:11px;font-weight:900;padding:10px 13px;border-radius:9px;cursor:pointer}
+.receivable-ficha-info{border:1px solid #dbe6ef;border-radius:12px;background:#f7faff;padding:12px;margin:12px 0;display:grid;gap:7px}
+.receivable-ficha-info p{font-size:12px;color:#324d69;margin:0;line-height:1.5;overflow-wrap:anywhere}
+.receivable-ficha-status{font-weight:900;color:#0f3665}
+.receivable-requests{margin-top:15px;border-top:1px solid #dee8f2;padding-top:13px}
+.receivable-requests h3{margin:0 0 8px;color:#0f3665;font-size:14px}
+@media(max-width:660px){.receivable-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.receivable-filters{grid-template-columns:minmax(0,1fr)}.receivable-title .credit-small{width:100%}}
+</style>
+</head><body>
 <section class="login hidden" id="loginView" aria-hidden="true" style="display:none!important"><input id="email" type="email" hidden><input id="password" type="password" hidden><button id="loginBtn" hidden>ENTRAR</button><div id="loginError" hidden></div></section> <section class="app hidden" id="appView"><header class="topbar"><div class="topin"><div><div class="topbrand">VE<span>LUM</span> ADMIN</div><div class="topsub">Gerenciamento de cadastros</div></div><button class="logout" id="logout">Sair</button></div></header><main class="wrap"><div class="hero"><div><h1 id="title">Lojas Parceiras</h1><p id="subtitle">Gerencie os cadastros e a disponibilidade das lojas.</p></div><div class="hero-actions"><button class="hero-call" id="newDriverCallBtn">🛵 CHAMAR ENTREGADOR</button><button class="hero-call" type="button" id="newPickupBtn" style="background:#0F3665;border:2px solid #ff7a00">?? GERAR RETIRADA</button><div class="summary"><span class="badge">Total <b id="sumTotal">0</b></span><span class="badge">Ativos <b id="sumActive">0</b></span><span class="badge">Inativos <b id="sumInactive">0</b></span></div></div></div>
-<div class="tabs"><button type="button" class="tab" data-entity="credit">💳 Crédito<small>Limites e cobranças</small></button><button class="tab active" data-entity="sellers">🏬 Lojas Parceiras<small>Cadastro das lojas fornecedoras</small></button><button class="tab" data-entity="resellers">🛍️ Revendedoras<small>Sacoleiras e vitrines de revenda</small></button><button class="tab" data-entity="drivers">🛵 Entregadores<small>Cadastros da rede logística</small></button><button class="tab" data-entity="pending">⏳ Corridas pendentes<small>Aguardando aceite ou em logística interna</small></button><button class="tab" data-entity="deliveries">📍 Acompanhar entregas<small>Somente corridas já aceitas</small></button><button class="tab" data-entity="external">📦 Rastreios externos<small>Correios, Jadlog e outras transportadoras</small></button><button class="tab" data-entity="freights">🚚 Fretes<small>Taxas por CEP e entrega local</small></button><button class="tab" type="button" onclick="nativeMembersOpen()">?? Gerenciar membros Wix<small>Consultar, criar, editar e excluir cadastros</small></button><button class="tab" type="button" onclick="shareVelumApp()">?? Compartilhar aplicativo<small>Enviar o link do APK pelas redes sociais</small></button></div>
+<div class="tabs"><button type="button" class="tab" data-entity="credit">💳 Crédito<small>Limites e cobranças</small></button><button type="button" class="tab" data-entity="receivables">📋 Contas a receber<small>Saldos, prazos e fichas</small></button><button class="tab active" data-entity="sellers">🏬 Lojas Parceiras<small>Cadastro das lojas fornecedoras</small></button><button class="tab" data-entity="resellers">🛍️ Revendedoras<small>Sacoleiras e vitrines de revenda</small></button><button class="tab" data-entity="drivers">🛵 Entregadores<small>Cadastros da rede logística</small></button><button class="tab" data-entity="pending">⏳ Corridas pendentes<small>Aguardando aceite ou em logística interna</small></button><button class="tab" data-entity="deliveries">📍 Acompanhar entregas<small>Somente corridas já aceitas</small></button><button class="tab" data-entity="external">📦 Rastreios externos<small>Correios, Jadlog e outras transportadoras</small></button><button class="tab" data-entity="freights">🚚 Fretes<small>Taxas por CEP e entrega local</small></button><button class="tab" type="button" onclick="nativeMembersOpen()">?? Gerenciar membros Wix<small>Consultar, criar, editar e excluir cadastros</small></button><button class="tab" type="button" onclick="shareVelumApp()">?? Compartilhar aplicativo<small>Enviar o link do APK pelas redes sociais</small></button></div>
 
 <section id="creditPanel" class="credit-panel hidden" aria-label="Crédito VELUM">
  <section class="credit-box">
@@ -114,6 +142,19 @@
   </details>
  </section>
  <section class="credit-box"><h2>Solicitações aguardando análise</h2><div id="creditRequestList" class="credit-list"><p>Carregando solicitações...</p></div></section>
+</section>
+<section id="receivablesPanel" class="receivable-panel hidden" aria-label="Contas a receber VELUM">
+ <div class="receivable-section">
+  <div class="receivable-title"><div><h2>📋 Contas a receber</h2><p>Valores utilizados do Crédito VELUM que ainda não foram quitados. Dados do histórico financeiro real.</p></div><button type="button" class="credit-small" id="receivableRefresh">↻ Atualizar</button></div>
+  <div class="receivable-stats" id="receivableStats"><div><small>Total a receber</small><strong>—</strong></div><div><small>A vencer</small><strong>—</strong></div><div><small>Atrasado</small><strong>—</strong></div><div><small>Adiado</small><strong>—</strong></div></div>
+  <div class="receivable-filters"><label>Pesquisar cliente ou revendedora<input id="receivableSearch" type="search" placeholder="Nome, loja, e-mail ou WhatsApp"></label><label>Status<select id="receivableStatusFilter"><option value="ALL">Todos os pendentes</option><option value="DUE_SOON">A vencer</option><option value="OVERDUE">Atrasado</option><option value="POSTPONED">Adiado</option></select></label></div>
+  <p id="receivableNotice" class="credit-hint" role="status">Carregando contas a receber...</p>
+  <div class="receivable-table-wrap"><table class="receivable-table">
+    <thead><tr><th>Cliente / revendedora</th><th>Total a receber</th><th>Data do pagamento</th><th>Status</th><th>Ação</th></tr></thead>
+    <tbody id="receivableRows"><tr><td colspan="5">Consultando valores em aberto...</td></tr></tbody>
+  </table></div>
+  <p class="credit-hint">O status <strong>Adiado</strong> só é usado quando o vencimento de um saldo em aberto foi prorrogado. Após a nova data, passa para <strong>Atrasado</strong> se houver saldo pendente.</p>
+ </div>
 </section>
 <div id="entityPanel"><div class="toolbar"><input class="search" id="search" placeholder="Buscar por nome, cidade, WhatsApp..."><button class="refresh" id="refresh">Atualizar</button><div class="label-batch-tools hidden" id="labelBatchTools"><button class="batch-btn batch-select" id="labelBatchSelect" type="button">SELECIONAR TODAS</button><button class="batch-btn batch-print" id="labelBatchPrint" type="button" disabled>IMPRIMIR ETIQUETAS (0)</button></div></div><div class="cards" id="cards"></div></div>
 <div id="externalPanel" class="hidden"><div class="external-panel"><section class="external-form"><h2>Adicionar rastreio externo</h2><p>Use para pedidos enviados por Correios, Jadlog ou outra transportadora. Não cria corrida VELUM.</p><div class="external-grid"><div class="field"><label>CLIENTE</label><input id="extCustomerName" placeholder="Nome da cliente"></div><div class="field"><label>WHATSAPP</label><input id="extCustomerPhone" inputmode="tel" placeholder="(88) 99999-9999"></div><div class="field"><label>TRANSPORTADORA</label><input id="extCarrier" placeholder="Correios, Jadlog..."></div><div class="field"><label>CÓDIGO DE RASTREIO</label><input id="extCode" placeholder="Código / objeto"></div><div class="field full"><label>LINK DE RASTREIO</label><input id="extUrl" placeholder="https://..."></div><div class="field full"><label>REFERÊNCIA / PEDIDO (OPCIONAL)</label><input id="extReference" placeholder="Ex.: Pedido #1234"></div></div><button class="external-send" id="extSend">SALVAR E ENVIAR NO WHATSAPP</button></section><section class="external-history"><h2>Rastreios enviados</h2><p>Histórico desta administração, separado das corridas VELUM.</p><div id="extHistory"></div></section></div></div>
@@ -145,11 +186,13 @@
   <div><small>Limite utilizado</small><strong id="creditStatUsed">—</strong></div>
  </div>
  <div class="credit-due-line" id="creditDueSummary">Consultando situação financeira...</div>
+ <div class="receivable-ficha-info" id="receivableFichaInfo"><p>Carregando informações de cobrança...</p></div>
  <section id="creditHistorySection" class="credit-history-section">
   <h3>Histórico de utilização do limite</h3><p class="credit-hint">Movimentações registradas pela administração. Compras fora do módulo de crédito não são lançadas automaticamente.</p>
   <div class="credit-history" id="creditHistory">Consultando histórico...</div>
  </section>
- <section id="creditIndividualActions" class="credit-individual-actions">
+  <div id="receivableFichaRequests" class="receivable-requests" hidden><h3>Solicitações de crédito</h3><div id="receivableFichaRequestItems"></div></div>
+  <section id="creditIndividualActions" class="credit-individual-actions">
   <h3>Ações financeiras</h3>
   <div class="credit-acts credit-action-grid">
    <button type="button" data-credit-editor="GRANT">Ajustar limite</button>
@@ -199,7 +242,7 @@
 <div class="toast" id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);let token='',current='sellers',rows=[],visibleRows=[],freights=[],editingFreight='',callDriverId='',callDriverName='',callQuotedFee=null,trackingWindows={},suggestTimers={},suggestSeq={pickup:0,delivery:0},logisticsStages=[],dispatchDeliveryId='',dispatchDrivers=[],adminPoll=null,editingDeliveryId='';const selectedLabels=new Set();
-const cfg={credit:{title:'Crédito VELUM',subtitle:'Limites liberados, prazos e cobrança individual ou em lote.'},sellers:{title:'Lojas Parceiras',subtitle:'Gerencie lojas fornecedoras, dados de contato e ativação.'},resellers:{title:'Revendedoras',subtitle:'Gerencie sacoleiras, vitrines e status de ativação.'},drivers:{title:'Entregadores',subtitle:'Gerencie entregadores, veículos e disponibilidade do cadastro.'},deliveries:{title:'Acompanhar entregas',subtitle:'Acompanhe em tempo real as corridas ativas da rede VELUM.'},external:{title:'Rastreios externos',subtitle:'Envie rastreios de Correios, Jadlog e outras transportadoras sem criar corrida VELUM.'},freights:{title:'Fretes',subtitle:'Configure taxas fixas por cidade, UF e faixa de CEP.'}};
+const cfg={credit:{title:'Crédito VELUM',subtitle:'Limites liberados, prazos e cobrança individual ou em lote.'},receivables:{title:'Contas a receber',subtitle:'Acompanhe saldos em aberto, vencimentos, atrasos, adiamentos e fichas financeiras.'},sellers:{title:'Lojas Parceiras',subtitle:'Gerencie lojas fornecedoras, dados de contato e ativação.'},resellers:{title:'Revendedoras',subtitle:'Gerencie sacoleiras, vitrines e status de ativação.'},drivers:{title:'Entregadores',subtitle:'Gerencie entregadores, veículos e disponibilidade do cadastro.'},deliveries:{title:'Acompanhar entregas',subtitle:'Acompanhe em tempo real as corridas ativas da rede VELUM.'},external:{title:'Rastreios externos',subtitle:'Envie rastreios de Correios, Jadlog e outras transportadoras sem criar corrida VELUM.'},freights:{title:'Fretes',subtitle:'Configure taxas fixas por cidade, UF e faixa de CEP.'}};
 function send(type,payload={}){parent.postMessage({source:'VELUM_ADMIN_PORTAL',type,payload},'*')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function toast(t){$('toast').textContent=t;$('toast').style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>$('toast').style.display='none',2700)}
@@ -396,6 +439,73 @@ function creditVisibleAccounts(){
  const q=String($('creditSearch').value||'').toLowerCase().trim();
  return creditAccounts.filter(w=>!q||[w.displayName,w.responsible,w.email,w.holderId,w.status,w.overdue?'vencido':'',w.active?'ativo':''].join(' ').toLowerCase().includes(q));
 }
+const RECEIVABLE_STATUS_LABEL={DUE_SOON:'A vencer',OVERDUE:'Atrasado',POSTPONED:'Adiado',SETTLED:'Quitado'};
+function receivableState(w){
+ if(Number(w?.usedCents||0)<=0)return 'SETTLED';
+ return ['DUE_SOON','OVERDUE','POSTPONED'].includes(w?.receivableStatus)?w.receivableStatus:
+  w?.overdue?'OVERDUE':w?.postponed?'POSTPONED':'DUE_SOON';
+}
+function renderReceivables(){
+ const rows=creditAccounts.filter(x=>Number(x.usedCents||0)>0);
+ const counters={DUE_SOON:0,OVERDUE:0,POSTPONED:0};
+ const sums={DUE_SOON:0,OVERDUE:0,POSTPONED:0};
+ for(const w of rows){
+  const state=receivableState(w);
+  counters[state]=(counters[state]||0)+1;
+  sums[state]=(sums[state]||0)+Number(w.usedCents||0);
+ }
+ const total=rows.reduce((sum,x)=>sum+Number(x.usedCents||0),0);
+ $('receivableStats').innerHTML=[
+  ['Total a receber',total,''],
+  ['A vencer',sums.DUE_SOON,counters.DUE_SOON+' cliente(s)'],
+  ['Atrasado',sums.OVERDUE,counters.OVERDUE+' cliente(s)'],
+  ['Adiado',sums.POSTPONED,counters.POSTPONED+' cliente(s)']
+ ].map(([name,value,extra])=>'<div><small>'+name+'</small><strong>'+creditMoney(value)+'</strong>'+ (extra?'<small>'+extra+'</small>':'')+'</div>').join('');
+ const term=$('receivableSearch').value.trim().toLowerCase();
+ const filter=$('receivableStatusFilter').value;
+ const visible=rows.filter(w=>{
+  const status=receivableState(w);
+  return (filter==='ALL'||status===filter)&&(!term||[w.displayName,w.responsible,w.email,w.holderId,w.whatsapp].join(' ').toLowerCase().includes(term));
+ }).sort((a,b)=>{
+  const order={OVERDUE:0,POSTPONED:1,DUE_SOON:2};
+  return (order[receivableState(a)]-order[receivableState(b)])||String(a.dueDate||'').localeCompare(String(b.dueDate||''));
+ });
+ $('receivableNotice').textContent=rows.length+' titular(es) com saldo em aberto • '+visible.length+' visível(is) nos filtros.';
+ $('receivableRows').innerHTML=visible.length?visible.map(w=>{
+  const k=creditHolderKey(w.holderType,w.holderId);
+  const label=receivableState(w),name=w.displayName||w.holderId;
+  return '<tr><td><button type="button" class="receivable-name" data-receivable-open="'+esc(k)+'">'+esc(name)+'</button>'+
+   '<small>'+(w.holderType==='RESELLER'?'Revendedora':'Cliente')+(w.responsible?' · '+esc(w.responsible):'')+'</small></td>'+
+   '<td><strong>'+creditMoney(w.usedCents)+'</strong></td>'+
+   '<td><strong>'+esc(creditDate(w.dueDate))+'</strong>'+
+    (label==='POSTPONED'&&w.originalDueDate?'<small>Anterior: '+esc(creditDate(w.originalDueDate))+'</small>':'')+'</td>'+
+   '<td><span class="receivable-badge '+label+'">'+RECEIVABLE_STATUS_LABEL[label]+'</span></td>'+
+   '<td><button type="button" class="receivable-open" data-receivable-open="'+esc(k)+'">Ficha financeira</button></td></tr>';
+ }).join(''):'<tr><td colspan="5">'+(rows.length?'Nenhum registro corresponde aos filtros.':'Nenhum saldo pendente. As contas com saldo quitado não aparecem nesta lista.')+'</td></tr>';
+ $('receivableRows').querySelectorAll('[data-receivable-open]').forEach(el=>el.onclick=()=>{
+  const value=el.dataset.receivableOpen,i=value.indexOf(':');
+  if(i>0)creditPick(value.slice(0,i),value.slice(i+1));
+ });
+}
+function renderReceivableFicha(d){
+ const holder=d.holder||{},w=d.wallet||{},status=receivableState(w),name=holder.displayName||creditCurrent?.id||'Titular';
+ const original=w.originalDueDate&&status==='POSTPONED'?'Vencimento anterior: '+creditDate(w.originalDueDate):'';
+ $('receivableFichaInfo').innerHTML=
+ '<p><b>Cliente / loja:</b> '+esc(name)+(holder.responsible?' • '+esc(holder.responsible):'')+'</p>'+
+ '<p><b>Contato:</b> '+esc(holder.email||'Não informado')+' · WhatsApp: '+esc(holder.whatsapp||'Não informado')+'</p>'+
+ '<p><b>Total a receber:</b> '+creditMoney(w.usedCents)+' · <b>Pagamento até:</b> '+esc(creditDate(w.dueDate))+'</p>'+
+ '<p><span class="receivable-ficha-status">Situação: '+RECEIVABLE_STATUS_LABEL[status]+'</span>'+(original?' · '+esc(original):'')+'</p>';
+ const requests=Array.isArray(d.requests)?d.requests:[];
+ $('receivableFichaRequests').hidden=!requests.length;
+ $('receivableFichaRequestItems').innerHTML=requests.map(r=>{
+  const label=({PENDING:'Em análise',APPROVED:'Aprovada',DECLINED:'Recusada'})[r.status]||r.status||'Sem status';
+  return '<div class="credit-event"><div><strong>'+esc(label)+'</strong><small>'+esc(creditDate(String(r.createdAt||'').slice(0,10)))+(r.reason?' • '+esc(r.reason):'')+'</small></div><span class="credit-event-amount">'+creditMoney(r.requestedCents)+'</span></div>';
+ }).join('');
+}
+$('receivableSearch').oninput=renderReceivables;
+$('receivableStatusFilter').onchange=renderReceivables;
+$('receivableRefresh').onclick=creditList;
+
 function creditList(){if(token)send('CREDIT_LIST',{token})}
 function creditPick(type,id){
  if(!id)return alert('Informe o identificador da revendedora ou o e-mail da cliente.');
@@ -468,6 +578,7 @@ function renderCreditOverview(d){
  if(!d.ok){$('creditSummary').textContent=d.mensagem||'Não foi possível consultar limites.';return}
  creditAccounts=Array.isArray(d.items)?d.items:[];
  creditRequests=Array.isArray(d.requests)?d.requests:[];
+ renderReceivables();
  const used=creditAccounts.reduce((s,w)=>s+Number(w.usedCents||0),0);
  $('creditSummary').textContent=creditAccounts.length+' limite(s) autorizado(s) · '+creditMoney(used)+' utilizado(s) · '+creditRequests.length+' solicitação(ões) em análise.';
  creditRenderTable();creditShowSelected();
@@ -481,6 +592,7 @@ function renderCreditOverview(d){
 function showCreditDetails(d){
  if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao carregar financeiro.';return}
  const w=d.wallet||{};creditCurrentWallet=w;creditHolderInfo=d.holder||{};
+ renderReceivableFicha(d);
  $('creditModalTitle').textContent='Financeiro · '+(creditHolderInfo.displayName||creditCurrent?.id||'Titular');
  $('creditModalDesc').textContent=w.exists?'Limites, utilização, vencimento e histórico':'Nenhum limite concedido para este titular';
  $('creditStatLimit').textContent=creditMoney(w.limitCents);
@@ -596,7 +708,7 @@ $('creditCopyPix').onclick=async()=>{
  catch(e){$('creditMessage').textContent='Não foi possível copiar automaticamente. Selecione a chave PIX acima.'}
 };
 
-function load(silent=false){if(!token)return showLogin();if(current==='credit'){creditList();return}if(current==='external'){renderExternalHistory();return}if(current==='freights'){send('LOAD_FREIGHT',{token});return}if(!silent)$('cards').innerHTML='<div class="loading">Carregando...</div>';send('LOAD',{token,entity:current})}
+function load(silent=false){if(!token)return showLogin();if(current==='credit'||current==='receivables'){creditList();return}if(current==='external'){renderExternalHistory();return}if(current==='freights'){send('LOAD_FREIGHT',{token});return}if(!silent)$('cards').innerHTML='<div class="loading">Carregando...</div>';send('LOAD',{token,entity:current})}
 function act(id,action){if(action==='DELETE'&&!confirm('Tem certeza que deseja excluir este cadastro? Esta ação não pode ser desfeita.'))return;send('ACTION',{token,entity:current,id,action});}function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 function clearFreight(){editingFreight='';['frLabel','frCity','frState','frStart','frEnd','frRate'].forEach(id=>$(id).value='');$('frDays').value='1';$('frPriority').value='100';$('frActive').checked=true;$('frSave').textContent='SALVAR TAXA'}
 function editFreight(id){const x=freights.find(i=>i.id===id);if(!x)return;editingFreight=id;$('frLabel').value=x.label||'';$('frCity').value=x.city||'';$('frState').value=x.state||'';$('frStart').value=x.zipStart||'';$('frEnd').value=x.zipEnd||'';$('frRate').value=String(x.rate??'').replace('.',',');$('frDays').value=x.estimatedDays??1;$('frPriority').value=x.priority??100;$('frActive').checked=x.active!==false;$('frSave').textContent='ATUALIZAR TAXA';window.scrollTo({top:0,behavior:'smooth'})}
@@ -747,7 +859,7 @@ $('loginBtn').onclick=()=>{const email=$('email').value.trim(),password=$('passw
 $('password').onkeydown=e=>{if(e.key==='Enter')$('loginBtn').click()};
 $('logout').onclick=()=>{send('LOGOUT',{token});showLogin()};
 $('refresh').onclick=load;$('search').oninput=render;$('frSave').onclick=saveFreight;$('frClear').onclick=clearFreight;$('newDriverCallBtn').onclick=()=>openDriverCall('','Todos os entregadores');$('newPickupBtn').onclick=()=>{$('pickupModal').classList.add('on')};document.addEventListener('DOMContentLoaded',()=>{$('pickupCancel').onclick=()=>{$('pickupModal').classList.remove('on')};$('pickupGenerate').onclick=()=>{const data={buyerName:$('pickupBuyer').value.trim(),buyerPhone:$('pickupPhone').value.trim(),notes:$('pickupNotes').value.trim()};if(!data.buyerName||!data.buyerPhone)return alert('Informe nome e telefone do comprador');$('pickupGenerate').disabled=true;send('CREATE_PICKUP',{token,data})};});$('labelBatchSelect').onclick=toggleVisibleLabels;$('labelBatchPrint').onclick=printSelectedLabels;
-document.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>{current=b.dataset.entity;selectedLabels.clear();document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x===b));$('title').textContent=cfg[current].title;$('subtitle').textContent=cfg[current].subtitle;$('search').value='';$('entityPanel').classList.toggle('hidden',current==='freights'||current==='external'||current==='credit');$('creditPanel').classList.toggle('hidden',current!=='credit');$('externalPanel').classList.toggle('hidden',current!=='external');$('freightPanel').classList.toggle('hidden',current!=='freights');load();scheduleAdminPoll()});
+document.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>{current=b.dataset.entity;selectedLabels.clear();document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x===b));$('title').textContent=cfg[current].title;$('subtitle').textContent=cfg[current].subtitle;$('search').value='';$('entityPanel').classList.toggle('hidden',current==='freights'||current==='external'||current==='credit'||current==='receivables');$('creditPanel').classList.toggle('hidden',current!=='credit');$('receivablesPanel').classList.toggle('hidden',current!=='receivables');$('externalPanel').classList.toggle('hidden',current!=='external');$('freightPanel').classList.toggle('hidden',current!=='freights');load();scheduleAdminPoll()});
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='VELUM_ADMIN_PORTAL_PAGE')return;const d=m.payload||{};if(m.type==='RESTORE_SESSION'){if(d.ok&&d.token){token=String(d.token);send('CHECK_SESSION',{token});}else showLogin('Sessão inválida.');return}if(m.type==='READY'){if(token)send('CHECK_SESSION',{token});else if(!window.__adminAwaitSession){window.__adminAwaitSession=setTimeout(()=>{if(!token)showLogin('Sua sessão não foi identificada. Entre pelo login principal do VELUM.');},14000)}}if(m.type==='LOGIN_RESULT'){clearTimeout(window.__adminLoginTimeout);$('loginBtn').disabled=false;$('loginBtn').textContent='ENTRAR';if(!d.ok)return showLogin(d.mensagem||'Acesso negado.');token=d.token;$('password').value='';showApp()}if(m.type==='SESSION_RESULT'){clearTimeout(window.__adminLoginTimeout);if(d.ok)showApp();else showLogin(d.mensagem||'Sessão expirada.')}if(m.type==='CREDIT_LIST_RESULT')renderCreditOverview(d);
 if(m.type==='CREDIT_DETAILS_RESULT')showCreditDetails(d);
 if(m.type==='CREDIT_ACTION_RESULT'){creditBusy=false;if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao salvar.';}else{showCreditDetails(d);$('creditEditorPanel').hidden=true;$('creditMessage').textContent='Operação registrada. Valores e histórico atualizados.';creditList()}}
