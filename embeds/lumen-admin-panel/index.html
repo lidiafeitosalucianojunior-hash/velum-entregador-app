@@ -315,6 +315,23 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 .driver-dispatch-message{font-size:11px;line-height:1.5;min-height:18px;color:#a33b3e;margin:9px 0 0}
 @media(max-width:650px){.ride-record-toolbar{margin:0 0 10px}.ride-record-next{font-size:12px;min-height:45px}.ride-record-actions{grid-column:2 / -1!important;max-width:100%}.ride-record-body{min-width:0}}
 </style>
+
+<style id="lumenCompactOrderSummaryV3">
+.lumen-order-overview-card{padding:12px 14px!important;margin:8px 0 12px!important;border-radius:13px!important}
+.lumen-order-overview-card h4{margin:0 0 8px!important;font-size:14px!important}
+.lumen-order-fields{display:block!important;margin:0!important}
+.lumen-order-compact-table{width:100%;border-collapse:collapse;table-layout:fixed;color:#193b60}
+.lumen-order-compact-table tr{border-bottom:1px solid #e7edf4}
+.lumen-order-compact-table tr:last-child{border-bottom:0}
+.lumen-order-compact-table th,.lumen-order-compact-table td{vertical-align:top;text-align:left;padding:7px 5px;font-size:12px;line-height:1.4;overflow-wrap:anywhere;word-break:normal}
+.lumen-order-compact-table th{width:36%;font-weight:750;color:#71829a;font-size:11px;padding-left:0}
+.lumen-order-compact-table td{font-weight:800;color:#203e66;padding-right:0}
+.lumen-order-compact-table .lumen-order-status-paid{color:#168351}
+.lumen-order-compact-table .lumen-order-sync-ok{color:#16724d}
+.lumen-order-compact-table .lumen-order-sync-warn{color:#a35312}
+@media(min-width:680px){.lumen-order-compact-table th{width:26%}.lumen-order-compact-table td{font-size:12px}}
+@media(max-width:400px){.lumen-order-overview-card{padding:11px!important}.lumen-order-compact-table th{width:34%;font-size:10px}.lumen-order-compact-table td{font-size:11px}.lumen-order-compact-table th,.lumen-order-compact-table td{padding-top:7px;padding-bottom:7px}}
+</style>
 </head>
 <body><div class="app">
 <div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
@@ -496,25 +513,38 @@ function lumenOrdersRender(){
  }).join(''):'<tr><td colspan="8">Nenhum pedido encontrado para os filtros informados.</td></tr>';
  $('lumenOrdersRows').querySelectorAll('[data-order-open]').forEach(b=>b.onclick=()=>lumenOrderDetail(b.dataset.orderOpen));
 }
+function lumenOrderStockText(o){
+ const status=String(o.wixStockStatus||'LEGACY_REVIEW').toUpperCase();
+ if(status==='SYNCED')return 'Baixa única registrada · Wix e VELUM atualizados';
+ if(status==='LEGACY_REVIEW')return 'Pedido anterior à integração · conferir baixa anterior';
+ if(status==='CATALOG_PENDING')return 'Baixa no Wix confirmada · catálogo VELUM pendente';
+ if(status==='REVIEW')return 'Revisão necessária · sem repetição automática';
+ if(status==='AWAITING_WIX')return 'Aguardando vínculo do pedido no Wix';
+ if(status==='UNTRACKED')return 'Produto sem controle de quantidade · conferir';
+ return 'Aguardando sincronização segura';
+}
 function lumenOrderDetail(id){
  const o=lumenOrders.find(x=>x.orderId===id);if(!o)return;
  $('lumenOrderDetailHeading').textContent='Pedido '+o.orderId;
- const field=(label,value)=>'<div class="fieldbox"><small>'+esc(label)+'</small><b>'+esc(value||'Não informado')+'</b></div>';
- $('lumenOrderDetailFields').innerHTML=[
-  field('Cliente',o.customerName),field('WhatsApp',o.customerPhone),
-  field('Revendedora',o.resellerName),field('Cidade',o.deliveryCity),
-  field('Entrega / retirada',o.shippingType==='PICKUP_LUMEN'?'Retirada na base Lúmen':
-    o.shippingType==='DELIVERY'?'Entrega para cliente':o.shippingType||'Conferir modalidade'),
-  field('Endereço da cliente',[o.deliveryAddress,o.deliveryCity,o.deliveryState,o.deliveryZipCode].filter(Boolean).join(' • ')),
-  field('Pagamento',lumenOrderPayLabel(o.paymentMethod)),
-  field('Situação financeira',lumenOrderStatusLabel(lumenOrderStatusKey(o))),
-  field('Modalidade',o.fulfillmentMode==='WHOLESALE'?'Atacado':o.fulfillmentMode==='RESALE'?'Mala direta':o.fulfillmentMode||'Venda direta'),
-  field('Valor dos produtos Lúmen',money(o.lumenTotal)),
-  field('Pedido no aplicativo Wix',o.wixOrderNumber?'Nº '+o.wixOrderNumber+
-    (o.wixSyncVersion==='20261103-address-credit-v2'?' • atualizado':' • atualizar status/endereço'):
-    (o.wixSyncStatus==='ERROR'?'Falha na sincronização':'Aguardando sincronização')),
-  field('Data',dt(o.createdAt))
- ].join('');
+ const row=(label,value,style='')=>'<tr><th scope="row">'+esc(label)+'</th><td'+(style?' class="'+style+'"':'')+'>'+esc(value??'Não informado')+'</td></tr>';
+ const delivery=[o.deliveryAddress,[o.deliveryCity,o.deliveryState].filter(Boolean).join(' - '),o.deliveryZipCode&&('CEP '+o.deliveryZipCode)].filter(Boolean).join(' · ');
+ const wixLinked=Boolean(o.wixOrderNumber);
+ const wixPaid=String(o.wixPaymentStatus||'').toUpperCase();
+ const syncText=wixLinked?'Pedido nº '+o.wixOrderNumber+' · '+(o.wixSyncStatus==='SYNCED'?'Sincronizado':'Verificar atualização')+
+  (wixPaid?(wixPaid==='PAID'?' · Pago no Wix':' · Pagamento Wix: '+wixPaid):''):
+  o.wixSyncStatus==='ERROR'?'Falha na sincronização':'Aguardando sincronização';
+ $('lumenOrderDetailFields').innerHTML='<table class="lumen-order-compact-table" aria-label="Informações resumidas do pedido"><tbody>'+
+  row('Cliente',o.customerName)+row('WhatsApp',o.customerPhone)+row('Revendedora',o.resellerName)+
+  row('Entrega / retirada',o.shippingType==='PICKUP_LUMEN'?'Retirada na base Lúmen':o.shippingType==='DELIVERY'?'Entrega para cliente':o.shippingType||'Conferir modalidade')+
+  row('Endereço da cliente',delivery||'Não informado')+
+  row('Pagamento',lumenOrderPayLabel(o.paymentMethod))+
+  row('Situação financeira',lumenOrderStatusLabel(lumenOrderStatusKey(o)),lumenOrderStatusKey(o)==='PAID'?'lumen-order-status-paid':'')+
+  row('Modalidade',o.fulfillmentMode==='WHOLESALE'?'Atacado':o.fulfillmentMode==='RESALE'?'Mala direta':o.fulfillmentMode||'Venda direta')+
+  row('Produtos Lúmen',money(o.lumenTotal))+
+  row('Wix Lúmen',syncText,wixLinked&&o.wixSyncStatus==='SYNCED'?'lumen-order-sync-ok':'lumen-order-sync-warn')+
+  row('Estoque Lúmen',lumenOrderStockText(o),o.wixStockStatus==='SYNCED'?'lumen-order-sync-ok':'lumen-order-sync-warn')+
+  row('Data',dt(o.createdAt))+
+  '</tbody></table>';
  lumenOrderRenderProducts(o);
  $('lumenOrderDetailModal').hidden=false;
 }
@@ -537,9 +567,11 @@ function lumenOrderRenderHelp(o){
  $('lumenOrderPickingProgress').textContent=count+' de '+total+' produtos separados'+(total&&count===total?' • Separação concluída':'');
  const sync=$('lumenOrderSync');
  const synced=!!o.wixOrderNumber && o.wixSyncVersion==='20261103-address-credit-v2';
- sync.disabled=synced || lumenOrderStatusKey(o)!=='PAID';
- sync.textContent=synced?'✓ Wix Lúmen nº '+o.wixOrderNumber:
-  (o.wixOrderNumber?'↻ Atualizar status e dados no Wix':'↻ Sincronizar pedido no Wix');
+ const stock=String(o.wixStockStatus||'LEGACY_REVIEW').toUpperCase();
+ const stockPending=['PENDING','AWAITING_WIX','CATALOG_PENDING'].includes(stock);
+ sync.disabled=(synced&&!stockPending)||lumenOrderStatusKey(o)!=='PAID';
+ sync.textContent=synced?(stockPending?'↻ Sincronizar estoque e pedido':'✓ Wix Lúmen nº '+o.wixOrderNumber):
+  (o.wixOrderNumber?'↻ Atualizar pedido existente no Wix':'↻ Sincronizar pedido no Wix');
  const call=$('lumenOrderCall');
  const linked=o.linkedDelivery;
  const paid=lumenOrderStatusKey(o)==='PAID';
@@ -741,12 +773,19 @@ function lumenOrderSyncResult(data){
   o.wixOrderNumber=String(data.wixOrderNumber||'');
   o.wixSyncVersion='20261103-address-credit-v2';
   o.wixSyncError='';
+  o.wixStockStatus=data.stockStatus||o.wixStockStatus||'LEGACY_REVIEW';
+  o.wixStockError=data.stockMessage||'';
+  if(data.wixPaymentStatus)o.wixPaymentStatus=data.wixPaymentStatus;
   lumenOrdersRender();
   if(!$('lumenOrderDetailModal').hidden){
    const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
    if(id===o.orderId)lumenOrderDetail(id);
   }
-  $('lumenOrderHelp').textContent='Pedido confirmado no aplicativo Wix Lúmen'+(o.wixOrderNumber?' nº '+o.wixOrderNumber:'')+'.';
+  $('lumenOrderHelp').textContent='Pedido confirmado no Wix Lúmen'+(o.wixOrderNumber?' nº '+o.wixOrderNumber:'')+'. '+
+   (o.wixStockStatus==='SYNCED'?'Baixa única de estoque confirmada.':o.wixStockStatus==='LEGACY_REVIEW'?'Estoque antigo: verificar o histórico, sem baixa automática.':
+    o.wixStockStatus==='REVIEW'?'Estoque exige conferência e não será debitado novamente automaticamente.':
+    o.wixStockStatus==='CATALOG_PENDING'?'Estoque do Wix baixado. Atualização do catálogo VELUM pendente.':
+    'Sincronização de estoque pendente.');
   lumenOrdersRequest();
  }else{
   o.wixSyncStatus=data.status||'ERROR';
