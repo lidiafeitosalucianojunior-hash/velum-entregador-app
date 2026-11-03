@@ -1,0 +1,106 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Checkout</title>
+<style>
+:root{--n:#0F3665;--o:#FF7A00;--bg:#F4F7FB;--l:#E2E8F0;--m:#687789;--g:#159B63}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Arial,sans-serif;color:#18324d}button,input{font:inherit}.top{background:var(--n);color:#fff;padding:14px 22px}.topin{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between}.brand{font-size:23px;font-weight:950}.brand span{color:var(--o)}.back{border:1px solid #ffffff55;background:transparent;color:#fff;border-radius:10px;padding:9px 12px;font-weight:800}.wrap{max-width:1100px;margin:auto;padding:22px}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.panel{background:#fff;border:1px solid var(--l);border-radius:18px;padding:18px}.panel h2{margin:0 0 14px;color:var(--n)}.items{display:grid;gap:12px}.item{display:grid;grid-template-columns:70px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid #edf1f5;padding-bottom:12px}.item:last-child{border-bottom:0}.item img{width:70px;height:70px;object-fit:cover;border-radius:10px}.item h3{font-size:13px;margin:0 0 4px}.meta{font-size:10px;color:var(--m);line-height:1.45}.price{font-weight:900;color:var(--n)}.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:grid;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:10px;font-weight:800;color:var(--n)}.field input{height:44px;border:1px solid var(--l);border-radius:10px;padding:0 11px;outline:none}.field input:focus{border-color:var(--o)}.summary{position:sticky;top:18px}.line{display:flex;justify-content:space-between;padding:9px 0;font-size:12px}.line.total{border-top:1px solid var(--l);margin-top:5px;padding-top:14px;font-size:18px;font-weight:950}.finish,.calc{width:100%;border:0;border-radius:12px;font-weight:900;cursor:pointer}.finish{height:50px;background:var(--o);color:#fff}.calc{height:42px;background:#fff;border:1px solid var(--n);color:var(--n);margin-top:12px}.finish:disabled,.calc:disabled{opacity:.55}.note{background:#eef5fb;color:#45617c;border-radius:12px;padding:12px;font-size:10px;line-height:1.55;margin:12px 0}.shipopts{display:grid;gap:8px;margin-top:10px}.shipopt{border:1px solid var(--l);border-radius:11px;padding:10px;display:flex;justify-content:space-between;cursor:pointer}.shipopt.active{border-color:var(--o);background:#fff8ef}.toast{position:fixed;right:18px;bottom:18px;background:#17324d;color:#fff;padding:12px 15px;border-radius:11px;display:none;font-size:11px;z-index:50}.credit-payment-box{display:none;background:#f5f8fc;border:1px solid #dce6ef;border-radius:13px;padding:14px;margin:14px 0}
+.reseller-mode .credit-payment-box{display:block}
+.credit-payment-box h3{font-size:13px;color:var(--n);margin:0 0 10px}
+.credit-payment-options{display:grid;gap:8px}
+.credit-payment-choice{border:1px solid #d5e1eb;background:white;padding:12px;border-radius:11px;display:flex;gap:11px;align-items:center;text-align:left;cursor:pointer;width:100%;color:#163956}
+.credit-payment-choice.active{border-color:#FF7A00;background:#fff7ed;box-shadow:0 0 0 1px #FF7A00}
+.credit-payment-choice:disabled{opacity:.55;cursor:not-allowed}
+.credit-payment-choice input{accent-color:#FF7A00;width:17px;height:17px;pointer-events:none}
+.credit-payment-choice b{display:block;font-size:12px}.credit-payment-choice small{display:block;margin-top:4px;font-size:10px;color:#63768a;line-height:1.5}
+.credit-payment-note{font-size:11px;color:#60768d;line-height:1.5;margin:9px 0 0}
+.credit-payment-note.warn{color:#a24d27;background:#fff2e4;border-radius:8px;padding:9px}
+.reseller-only{display:none}.reseller-mode .reseller-only{display:block}.reseller-mode .standard-only{display:none!important}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.mode-card{border:1px solid var(--l);background:#fff;border-radius:14px;padding:14px;text-align:left;cursor:pointer;color:var(--n)}.mode-card.active{border-color:var(--o);background:#fff8ef;box-shadow:0 0 0 2px #ff7a0016}.mode-card b{font-size:13px}.mode-card small{display:block;color:var(--m);font-size:10px;line-height:1.5;margin-top:5px}.mode-detail{background:#f8fafc;border:1px solid var(--l);border-radius:12px;padding:12px;font-size:10px;line-height:1.55;margin:10px 0 14px}.address-block.hidden{display:none}.success{display:none;text-align:center;padding:35px 15px}.orderid{font-size:18px;font-weight:950;background:#f2f6fa;border-radius:12px;padding:12px;margin:12px auto;max-width:360px}@media(max-width:760px){.grid{grid-template-columns:1fr}.form,.mode-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.summary{position:static}.item{grid-template-columns:60px 1fr}.item img{width:60px;height:60px}.price{grid-column:2}}
+</style></head><body>
+<header class="top"><div class="topin"><div class="brand">VE<span>LUM</span></div><button class="back" id="back">← Voltar</button></div></header>
+<main class="wrap"><div id="checkout" class="grid"><div>
+<section class="panel"><h2>Produtos selecionados</h2><div class="items" id="items"></div></section>
+<section class="panel" style="margin-top:16px"><h2 id="dataTitle">Dados para entrega</h2>
+<div class="reseller-only"><div class="note"><strong>Compra da revendedora:</strong> você paga somente o valor base dos produtos. Seu lucro já ficou com você na venda feita para sua cliente. O frete não é cobrado neste checkout.</div>
+<div class="mode-grid"><button class="mode-card active" data-fulfillment="WHOLESALE"><b>Modo atacado</b><small>As lojas proprietárias armazenam seus produtos até você liberar o envio. Depois, todos podem seguir em um único volume para seu endereço ou para retirada na base Lúmen.</small></button><button class="mode-card" data-fulfillment="RESALE"><b>Modo revenda</b><small>A loja proprietária despacha o produto diretamente para sua cliente. O frete é calculado neste checkout antes do pagamento.</small></button></div>
+<div class="mode-detail" id="modeDetail">Modo atacado selecionado: os produtos ficam armazenados pelos proprietários até você liberar o envio.</div></div>
+<div class="form"><div class="field"><label id="nameLabel">Nome completo</label><input id="name"></div><div class="field"><label>E-mail para pagamento</label><input id="email" type="email"></div><div class="field"><label>WhatsApp</label><input id="phone"></div>
+<div class="address-block field" id="zipBlock"><label>CEP</label><input id="zip"></div><div class="address-block field full" id="addressBlock"><label>Endereço completo</label><input id="address" placeholder="Rua, número, complemento e bairro"></div><div class="address-block field" id="cityBlock"><label>Cidade</label><input id="city"></div><div class="address-block field" id="stateBlock"><label>UF</label><input id="state" maxlength="2"></div></div>
+<button class="calc" id="calcFreight">CALCULAR FRETE</button><div class="shipopts" id="shipopts"></div></section></div>
+<aside class="panel summary"><h2>Resumo</h2><div class="line"><span>Produtos</span><strong id="subtotal">R$ 0,00</strong></div><div class="line"><span>Frete</span><strong id="freight">A calcular</strong></div><div class="line total"><span>Total</span><strong id="total">R$ 0,00</strong></div><div class="note reseller-only" id="resellerFreightNote">No modo atacado, o frete é definido depois. No modo revenda, o frete é calculado e pago neste checkout.</div>
+<div class="credit-payment-box" id="paymentChoices">
+<h3>Forma de pagamento</h3>
+<div class="credit-payment-options">
+ <button type="button" id="payMercado" class="credit-payment-choice active" data-pay-method="MERCADO_PAGO" aria-pressed="true"><input type="radio" name="payVisual" checked tabindex="-1"><span><b>Mercado Pago</b><small>Cartão, PIX e demais opções disponíveis no pagamento seguro.</small></span></button>
+ <button type="button" id="payVelumCredit" class="credit-payment-choice" data-pay-method="VELUM_CREDIT" aria-pressed="false" disabled><input type="radio" name="payVisual" tabindex="-1"><span><b>💳 Crédito VELUM</b><small id="creditOptionDetail">Consultando sua carteira...</small></span></button>
+</div>
+<p id="creditPaymentNotice" class="credit-payment-note">O crédito é exclusivo para produtos Lúmen. Não pode pagar produtos parceiros nem frete.</p>
+</div>
+<button class="finish" id="finish">CONTINUAR PARA PAGAMENTO</button></aside></div>
+<section class="panel success" id="success"><h2>Pedido criado</h2><div class="orderid" id="orderId"></div><p id="successText"></p><button class="finish" id="home" style="max-width:320px">VOLTAR AO PAINEL</button></section></main><div class="toast" id="toast"></div>
+<script>
+const $=id=>document.getElementById(id),money=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+let cart=[],review=null,busy=false,isReseller=false,fulfillmentMode='WHOLESALE',selectedShippingId='';
+let paymentMethod='MERCADO_PAGO',creditWallet=null,creditAllLumen=false,currentFreight=null,checkoutAttemptId='';
+function newCheckoutAttempt(){
+ try{if(crypto?.randomUUID)return crypto.randomUUID()}catch(e){}
+ return String(Date.now())+'-'+Math.random().toString(36).slice(2,15)+'-'+Math.random().toString(36).slice(2,15);
+}
+function creditEligibility(){
+ if(!isReseller)return {ok:false,reason:'Opção exclusiva das revendedoras.'};
+ if(!creditAllLumen)return {ok:false,reason:'O Crédito VELUM é exclusivo para produtos Lúmen. Volte ao carrinho e finalize os itens Lúmen separadamente dos produtos das Lojas Parceiras.'};
+ if(!creditWallet)return {ok:false,reason:'Consultando a carteira VELUM...'};
+ if(!creditWallet.active)return {ok:false,reason:'Crédito suspenso, não aprovado ou fora da validade. Use Mercado Pago.'};
+ if(!review?.ok)return {ok:false,reason:'Conferindo produtos e total da compra...'};
+ const subtotalCents=Math.round(Number(review.subtotal||0)*100);
+ if(!(subtotalCents>0))return {ok:false,reason:'Não há valor de produtos para pagar com crédito.'};
+ if(Number(creditWallet.availableCents||0)<subtotalCents)return {ok:false,reason:'Saldo insuficiente: disponível '+money(Number(creditWallet.availableCents||0)/100)+'.'};
+ if(fulfillmentMode==='RESALE'&&selectedShippingId&&Number(currentFreight||0)>0)
+  return {ok:false,reason:'Este pedido possui frete cobrado. O Crédito VELUM cobre apenas produtos Lúmen; use Mercado Pago ou selecione a retirada gratuita.'};
+ return {ok:true,reason:'Disponível: '+money(Number(creditWallet.availableCents||0)/100)+' · Vencimento '+(creditWallet.dueDate||'conforme carteira')+'.'};
+}
+function updatePaymentOptions(){
+ if(!isReseller)return;
+ const eligible=creditEligibility(),creditBtn=$('payVelumCredit');
+ creditBtn.disabled=!eligible.ok;
+ $('creditOptionDetail').textContent=eligible.reason;
+ $('creditPaymentNotice').textContent=eligible.ok?'O limite cobre apenas os produtos Lúmen. O débito será registrado na sua carteira após a confirmação do pedido.':eligible.reason;
+ $('creditPaymentNotice').classList.toggle('warn',!eligible.ok);
+ if(!eligible.ok&&paymentMethod==='VELUM_CREDIT')paymentMethod='MERCADO_PAGO';
+ document.querySelectorAll('[data-pay-method]').forEach(btn=>{
+  const active=btn.dataset.payMethod===paymentMethod;
+  btn.classList.toggle('active',active);
+  btn.setAttribute('aria-pressed',String(active));
+  btn.querySelector('input').checked=active;
+ });
+ $('finish').textContent=paymentMethod==='VELUM_CREDIT'?'FINALIZAR COM CRÉDITO VELUM':'PAGAR VALOR BASE DOS PRODUTOS';
+}
+document.querySelectorAll('[data-pay-method]').forEach(btn=>btn.onclick=()=>{
+ if(!isReseller)return;
+ if(btn.dataset.payMethod==='VELUM_CREDIT'&&!creditEligibility().ok)return toast(creditEligibility().reason);
+ paymentMethod=btn.dataset.payMethod;updatePaymentOptions();
+});
+function send(type,payload={}){parent.postMessage({source:'VELUM_CHECKOUT_MARKETPLACE',type,payload},'*')}
+function toast(t){$('toast').textContent=t;$('toast').style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>$('toast').style.display='none',2800)}
+function loadCart(){if(isReseller)return;try{cart=JSON.parse(localStorage.getItem('velum_cart')||'[]')}catch{cart=[]}if(!Array.isArray(cart))cart=[];render();if(cart.length)send('REVIEW',{items:cart})}
+function render(){if(!cart.length){$('items').innerHTML='<div style="padding:30px;text-align:center;color:#687789">Carrinho vazio.</div>';$('finish').disabled=true;return}$('finish').disabled=false;$('items').innerHTML=cart.map(x=>'<article class="item"><div>'+(x.imagem?'<img src="'+x.imagem+'">':'📦')+'</div><div><h3>'+(x.nome||'Produto')+'</h3><div class="meta">'+(x.sellerName||x.loja||'')+(x.size?' • Numeração '+x.size:'')+(isReseller?' • valor base':'')+'</div></div><div class="price">'+money((x.preco||0)*(x.qty||1))+'</div></article>').join('')}
+function fillReview(d){review={...d,ok:true};updatePaymentOptions();$('subtotal').textContent=money(d.subtotal);$('total').textContent=money(d.total);if(isReseller&&fulfillmentMode==='WHOLESALE'){$('freight').textContent='Definido depois';$('total').textContent=money(d.subtotal)}else $('freight').textContent=d.freightPending?'A calcular':money(d.deliveryFee)}
+function applyFulfillment(mode){fulfillmentMode=mode;selectedShippingId='';currentFreight=null;$('shipopts').innerHTML='';document.querySelectorAll('[data-fulfillment]').forEach(x=>x.classList.toggle('active',x.dataset.fulfillment===mode));const wholesale=mode==='WHOLESALE';['zipBlock','addressBlock','cityBlock','stateBlock'].forEach(id=>$(id).classList.toggle('hidden',wholesale));$('calcFreight').style.display=wholesale?'none':'block';$('shipopts').style.display=wholesale?'none':'grid';$('nameLabel').textContent=wholesale?'Nome da revendedora':'Nome da cliente';$('freight').textContent=wholesale?'Definido depois':'A calcular';if(review)$('total').textContent=money(review.subtotal||0);$('modeDetail').textContent=wholesale?'Modo atacado: os produtos ficam armazenados pelos proprietários até você liberar o envio. Na liberação, você escolhe um único volume para seu endereço ou retirada na base Lúmen.':'Modo revenda: informe o endereço da cliente e calcule o frete agora. A opção escolhida entra no total deste pagamento.'}
+function refreshCreditAfterFulfillment(){updatePaymentOptions()}
+document.querySelectorAll('[data-fulfillment]').forEach(x=>x.onclick=()=>applyFulfillment(x.dataset.fulfillment));
+function payload(){return{paymentMethod:isReseller?paymentMethod:'MERCADO_PAGO',checkoutAttemptId:paymentMethod==='VELUM_CREDIT'?checkoutAttemptId:'',items:cart,fulfillmentMode:isReseller?fulfillmentMode:'',shippingId:selectedShippingId,customerName:$('name').value.trim(),customerEmail:$('email').value.trim(),customerPhone:$('phone').value.trim(),deliveryZipCode:$('zip').value.trim(),deliveryAddress:$('address').value.trim(),deliveryCity:$('city').value.trim(),deliveryState:$('state').value.trim().toUpperCase()}}
+$('calcFreight').onclick=()=>{const p=payload();if(!p.deliveryZipCode||!p.deliveryCity||!p.deliveryState)return toast('Informe CEP, cidade e UF.');$('calcFreight').disabled=true;$('calcFreight').textContent='CALCULANDO...';send('CALC_FREIGHT',{items:cart,deliveryZipCode:p.deliveryZipCode,deliveryCity:p.deliveryCity,deliveryState:p.deliveryState,includePickupLumen:isReseller&&fulfillmentMode==='RESALE'})};
+$('finish').onclick=()=>{
+ if(busy||!cart.length)return;
+ if(isReseller&&paymentMethod==='VELUM_CREDIT'&&!creditEligibility().ok)return toast(creditEligibility().reason);
+ if(isReseller&&paymentMethod==='VELUM_CREDIT'&&!checkoutAttemptId)checkoutAttemptId=newCheckoutAttempt();
+ const p=payload();if(!p.customerName||!p.customerEmail||!p.customerPhone)return toast('Preencha nome, e-mail e WhatsApp.');if(isReseller&&fulfillmentMode==='RESALE'&&(!p.deliveryZipCode||!p.deliveryAddress||!p.deliveryCity||!p.deliveryState))return toast('No modo revenda, preencha o endereço completo da cliente.');if(isReseller&&fulfillmentMode==='RESALE'&&!p.shippingId)return toast('Calcule o frete e escolha uma opção de entrega.');if(!isReseller&&(!p.deliveryZipCode||!p.deliveryAddress||!p.deliveryCity||!p.deliveryState))return toast('Preencha o endereço de entrega.');busy=true;$('finish').disabled=true;$('finish').textContent=paymentMethod==='VELUM_CREDIT'?'CONFIRMANDO CRÉDITO...':'CRIANDO PEDIDO...';send('CREATE_ORDER',p)};
+$('back').onclick=()=>send('NAV',{url:isReseller?'/painel-revendedora':'/'});$('home').onclick=()=>send('NAV',{url:isReseller?'/painel-revendedora':'/'});
+window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='VELUM_CHECKOUT_PAGE')return;
+if(m.type==='RESELLER_INIT'){const d=m.payload||{};if(!d.ok)return toast(d.mensagem||'Não foi possível carregar os produtos.');isReseller=true;document.body.classList.add('reseller-mode');cart=Array.isArray(d.items)?d.items:[];
+ creditAllLumen=cart.length>0&&cart.every(x=>String(x.origem||'').toLowerCase()==='lumen'&&String(x.sellerId||'').toUpperCase()==='LUMEN');
+ send('GET_CREDIT_WALLET');if(cart[0]?.customerName)$('name').value=cart[0].customerName;if(cart[0]?.customerWhatsApp)$('phone').value=cart[0].customerWhatsApp;const prescribed=cart.length&&cart.every(x=>String(x.deliveryMode||'WHOLESALE').toUpperCase()==='RESALE')?'RESALE':'WHOLESALE';$('dataTitle').textContent=prescribed==='RESALE'?'Mala direta para a cliente':'Modo atacado';$('finish').textContent='PAGAR VALOR BASE DOS PRODUTOS';applyFulfillment(prescribed);document.querySelectorAll('[data-fulfillment]').forEach(b=>{b.disabled=true;b.style.opacity=b.dataset.fulfillment===prescribed?'1':'.45'});render();updatePaymentOptions();if(cart.length)send('REVIEW',{items:cart});return}
+if(m.type==='CREDIT_WALLET_RESULT'){creditWallet=m.payload?.ok?m.payload.wallet:null;updatePaymentOptions()}
+if(m.type==='REVIEW_RESULT'){if(m.payload?.ok)fillReview(m.payload);else toast(m.payload?.mensagem||'Não foi possível revisar o pedido.')}
+if(m.type==='FREIGHT_RESULT'){$('calcFreight').disabled=false;$('calcFreight').textContent='CALCULAR FRETE';let opts=Array.isArray(m.payload?.options)?m.payload.options:[];if(isReseller&&fulfillmentMode==='RESALE'&&!opts.some(x=>x.id==='PICKUP_LUMEN'))opts=[...opts,{id:'PICKUP_LUMEN',type:'PICKUP_LUMEN',service:'Retirada na base Lúmen',amount:0}];$('shipopts').innerHTML=opts.map(x=>'<div class="shipopt" data-ship="'+x.id+'"><span>'+x.service+'</span><strong>'+money(x.amount)+'</strong></div>').join('');document.querySelectorAll('[data-ship]').forEach(el=>el.onclick=()=>{selectedShippingId=el.dataset.ship;document.querySelectorAll('.shipopt').forEach(x=>x.classList.toggle('active',x===el));const op=opts.find(x=>x.id===selectedShippingId);currentFreight=Number(op?.amount||0);updatePaymentOptions();$('freight').textContent=money(op?.amount);$('total').textContent=money((review?.subtotal||0)+(op?.amount||0))})}
+if(m.type==='ORDER_RESULT'){busy=false;$('finish').disabled=false;updatePaymentOptions();if(!isReseller)$('finish').textContent='CONTINUAR PARA PAGAMENTO';if(!m.payload?.ok){if(paymentMethod==='VELUM_CREDIT')checkoutAttemptId='';return toast(m.payload?.mensagem||'Não foi possível criar o pedido.');}
+ if(m.payload?.paymentMethod==='VELUM_CREDIT'){checkoutAttemptId='';}if(m.payload?.paymentUrl){$('finish').disabled=true;$('finish').textContent='ABRINDO PAGAMENTO...';return}$('checkout').style.display='none';$('success').style.display='block';$('orderId').textContent=m.payload.orderId||'Pedido';$('successText').textContent=m.payload.mensagem||'Pedido registrado.'}
+if(m.type==='PAYMENT_RETURN'){const d=m.payload||{};if(d.paid){if(!isReseller)localStorage.removeItem('velum_cart');$('checkout').style.display='none';$('success').style.display='block';$('orderId').textContent=d.orderId||'Pedido';$('successText').textContent=isReseller?'Pagamento aprovado. A logística será definida depois no seu painel.':'Pagamento aprovado.'}}});
+send('READY');setTimeout(()=>{if(!isReseller)loadCart()},900);
+</script></body></html>
