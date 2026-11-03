@@ -46,19 +46,74 @@
 .admin-cart-item .money-row span{background:#eef3f8;padding:6px;border-radius:8px}
 .admin-cart-item .money-row .profit{background:#e9f6ed;color:#187347}
 @media(max-width:600px){.admin-reseller-fields{grid-template-columns:1fr}.admin-cart-header{flex-direction:column;align-items:stretch}.admin-cart-toolbar{flex-direction:column;align-items:stretch}.admin-cart-item{grid-template-columns:65px minmax(0,1fr)}.admin-cart-item img{width:65px;height:75px}.admin-reseller-modal-acts>*{flex:1}}
+</style><style id="creditTableRedesign">
+.credit-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}.credit-panel>.credit-box{min-width:0;max-width:100%;overflow:hidden}.credit-panel[hidden],.credit-acts[hidden],.credit-editor-panel[hidden],.credit-history-section[hidden],.credit-individual-actions[hidden],.credit-hero[hidden],.credit-billing-settings[hidden],.credit-review[hidden]{display:none!important}
+.credit-table-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.credit-table-heading h2{margin:0 0 8px}.credit-table-heading p{margin:0 0 14px;font-size:12px}
+.credit-table-toolbar{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:10px 0}
+.credit-search-label{display:grid;gap:5px;flex:1;min-width:200px;font-size:11px;font-weight:800;color:#11375e}
+.credit-search-label input{width:100%;padding:11px;border:1px solid #d5dfeb;border-radius:10px;font-size:13px}
+.credit-bulk-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.credit-bulk-tools span{font-size:12px;color:#506782}
+.credit-table-scroll{width:100%;overflow-x:auto;border:1px solid #e1e7ef;border-radius:12px;margin-top:14px}
+.credit-table{border-collapse:collapse;width:100%;min-width:660px;font-size:12px}
+.credit-table th{background:#edf3f9;color:#143862;font-size:11px;text-align:left;padding:13px 11px;white-space:nowrap}
+.credit-table td{border-top:1px solid #e3ebf4;padding:11px;vertical-align:middle;color:#1d3855}
+.credit-table tbody tr:nth-child(even){background:#fafbfd}
+.credit-table td b{font-size:13px;color:#12345a}
+.credit-table td small{display:block;color:#74849a;margin-top:4px;font-size:10px}
+.credit-table td .credit-status{display:inline-block;padding:4px 7px;border-radius:5px;margin-top:5px;background:#e5f6ec}
+.credit-table td .credit-status.off{background:#fbe9eb}.credit-table td .credit-status.over{background:#fff2de}
+.credit-table input[type=checkbox]{width:18px;height:18px;accent-color:#0f3665;cursor:pointer}
+.credit-table .credit-small{min-height:36px;padding:8px 15px}
+.credit-add-box{background:#f7f9fc;border:1px solid #e0e8f0;border-radius:12px;padding:13px;margin-top:15px}
+.credit-add-box summary{color:#0f3665;font-size:12px;font-weight:850;cursor:pointer}
+.credit-add-box p,.credit-add-box label{font-size:11px;color:#60748c}
+.credit-add-box .credit-form{margin-top:12px}
+.credit-window{width:min(780px,100%);max-height:min(92dvh,940px);overflow:auto}
+.credit-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.credit-hero>div{background:linear-gradient(140deg,#0f3665,#09294c);border-radius:13px;padding:15px;color:#fff;min-width:0}
+.credit-hero small{display:block;color:#cbdced;font-size:11px}.credit-hero strong{display:block;font-size:clamp(16px,2.6vw,24px);margin-top:8px;word-break:break-word}
+.credit-due-line{background:#f2f6fb;border-radius:10px;padding:12px;color:#304d6d;font-size:12px;line-height:1.5;margin-bottom:16px}
+.credit-history-section{margin:16px 0;border:1px solid #dce7ef;border-radius:13px;padding:15px}
+.credit-history-section h3,.credit-individual-actions h3,.credit-editor-panel h3,.credit-billing-settings h3{color:#0f3665;margin:0 0 9px;font-size:15px}
+.credit-history{max-height:255px;overflow:auto}
+.credit-event{display:grid;grid-template-columns:minmax(130px,1fr) auto;gap:8px;align-items:start;border-bottom:1px solid #e6edf4;padding:12px 0;font-size:12px}
+.credit-event strong{color:#14375e}.credit-event small{display:block;color:#70859c;margin-top:4px}.credit-event .credit-event-amount{font-weight:900;color:#143b68}
+.credit-individual-actions,.credit-billing-settings{padding:15px 0;border-top:1px solid #e0e8f1}
+.credit-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.credit-action-grid button{min-height:43px;text-align:center}
+.credit-editor-panel{background:#f4f7fb;border:1px solid #d9e4ee;border-radius:13px;padding:14px;margin:15px 0}
+.credit-editor-panel .credit-form{margin-top:11px}
+.credit-editor-panel .credit-acts button{min-height:40px}
+.credit-billing-settings .credit-form{margin-top:11px}
+.credit-billing-settings input[readonly]{background:#f4f7fa;color:#4a627c}
+.credit-message{margin-top:12px}
+@media(max-width:600px){.credit-window{padding:14px}.credit-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.credit-hero>div:last-child{grid-column:1/-1}.credit-hero strong{font-size:20px}.credit-table-heading .credit-small{width:100%}.credit-bulk-tools{width:100%}.credit-bulk-tools button{flex:1}.credit-table-toolbar{align-items:stretch}.credit-editor-panel .credit-form,.credit-billing-settings .credit-form{grid-template-columns:1fr}.credit-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body>
 <section class="login hidden" id="loginView" aria-hidden="true" style="display:none!important"><input id="email" type="email" hidden><input id="password" type="password" hidden><button id="loginBtn" hidden>ENTRAR</button><div id="loginError" hidden></div></section> <section class="app hidden" id="appView"><header class="topbar"><div class="topin"><div><div class="topbrand">VE<span>LUM</span> ADMIN</div><div class="topsub">Gerenciamento de cadastros</div></div><button class="logout" id="logout">Sair</button></div></header><main class="wrap"><div class="hero"><div><h1 id="title">Lojas Parceiras</h1><p id="subtitle">Gerencie os cadastros e a disponibilidade das lojas.</p></div><div class="hero-actions"><button class="hero-call" id="newDriverCallBtn">🛵 CHAMAR ENTREGADOR</button><button class="hero-call" type="button" id="newPickupBtn" style="background:#0F3665;border:2px solid #ff7a00">?? GERAR RETIRADA</button><div class="summary"><span class="badge">Total <b id="sumTotal">0</b></span><span class="badge">Ativos <b id="sumActive">0</b></span><span class="badge">Inativos <b id="sumInactive">0</b></span></div></div></div>
 <div class="tabs"><button type="button" class="tab" data-entity="credit">💳 Crédito<small>Limites e cobranças</small></button><button class="tab active" data-entity="sellers">🏬 Lojas Parceiras<small>Cadastro das lojas fornecedoras</small></button><button class="tab" data-entity="resellers">🛍️ Revendedoras<small>Sacoleiras e vitrines de revenda</small></button><button class="tab" data-entity="drivers">🛵 Entregadores<small>Cadastros da rede logística</small></button><button class="tab" data-entity="pending">⏳ Corridas pendentes<small>Aguardando aceite ou em logística interna</small></button><button class="tab" data-entity="deliveries">📍 Acompanhar entregas<small>Somente corridas já aceitas</small></button><button class="tab" data-entity="external">📦 Rastreios externos<small>Correios, Jadlog e outras transportadoras</small></button><button class="tab" data-entity="freights">🚚 Fretes<small>Taxas por CEP e entrega local</small></button><button class="tab" type="button" onclick="nativeMembersOpen()">?? Gerenciar membros Wix<small>Consultar, criar, editar e excluir cadastros</small></button><button class="tab" type="button" onclick="shareVelumApp()">?? Compartilhar aplicativo<small>Enviar o link do APK pelas redes sociais</small></button></div>
 
 <section id="creditPanel" class="credit-panel hidden" aria-label="Crédito VELUM">
- <section class="credit-box"><h2>💳 Crédito VELUM — gestão exclusiva da Lídia</h2>
- <p>Selecione uma revendedora no card Financeiro ou informe o e-mail de uma cliente. Somente titulares aprovados recebem limite. Lançamentos de uso e pagamento são administrativos; o checkout Mercado Pago continua independente.</p>
- <div class="credit-form"><label class="field">Tipo<select id="creditHolderType"><option value="RESELLER">Revendedora</option><option value="CUSTOMER">Cliente (e-mail)</option></select></label><label class="field">Identificador<input id="creditHolderId" placeholder="ID ou e-mail cadastrado"></label><div class="field"><label>Consultar titular</label><button class="credit-small" type="button" id="creditOpen">Abrir financeiro</button></div></div>
- <div class="credit-bulk-import"><label for="creditBulkClients" style="font-size:12px;font-weight:800;color:#0f3665">Adicionar clientes por e-mail ao lote</label><textarea id="creditBulkClients" rows="3" placeholder="Uma cliente por linha ou separe por vírgula."></textarea><div><button class="credit-small" type="button" id="creditBulkAddClients">Selecionar clientes do texto</button></div><small id="creditBulkSelectedCount">Nenhum titular selecionado em lote.</small></div><div class="credit-acts"><button type="button" id="creditRefresh">Atualizar contas</button><button type="button" id="creditBulkOpen">Gerenciar selecionados em lote</button></div>
- <div id="creditSummary" class="credit-hint"></div>
+ <section class="credit-box">
+  <div class="credit-table-heading"><div><h2>💳 Controle de crédito</h2><p>Consulte os limites e os vencimentos de revendedoras e clientes autorizados. Nenhum crédito é liberado automaticamente.</p></div>
+  <button type="button" id="creditRefresh" class="credit-small">↻ Atualizar</button></div>
+  <div class="credit-table-toolbar">
+    <label for="creditSearch" class="credit-search-label">Buscar cliente ou revendedora<input id="creditSearch" type="search" placeholder="Pesquisar nome, e-mail ou situação"></label>
+    <div class="credit-bulk-tools"><span id="creditBulkSelectedCount">0 selecionado(s)</span><button type="button" id="creditBulkOpen" class="credit-small">Editar selecionados em lote</button></div>
+  </div>
+  <div id="creditSummary" class="credit-hint" role="status">Carregando limites...</div>
+  <div class="credit-table-scroll"><table class="credit-table">
+    <thead><tr><th><input type="checkbox" id="creditSelectAll" aria-label="Selecionar todos os clientes visíveis"></th><th>Cliente / revendedora</th><th>Limite disponível</th><th>Limite utilizado</th><th>Data do pagamento</th><th>Ação</th></tr></thead>
+    <tbody id="creditAccountList"><tr><td colspan="6">Carregando contas...</td></tr></tbody>
+   </table></div>
+  <details class="credit-add-box"><summary>+ Liberar crédito para nova pessoa ou importar clientes em lote</summary>
+   <p>Revendedoras: informe o identificador do cadastro. Clientes: informe o e-mail utilizado na VELUM.</p>
+   <div class="credit-form"><label class="field">Tipo<select id="creditHolderType"><option value="RESELLER">Revendedora</option><option value="CUSTOMER">Cliente (e-mail)</option></select></label><label class="field">Identificador<input id="creditHolderId" placeholder="ID ou e-mail da cliente"></label><div class="field"><label>Abrir financeiro</label><button type="button" class="credit-small" id="creditOpen">Consultar</button></div></div>
+   <div class="credit-bulk-import"><label for="creditBulkClients">Adicionar clientes por e-mail ao lote</label><textarea id="creditBulkClients" rows="3" placeholder="Uma cliente por linha, ou separadas por vírgula"></textarea><button type="button" class="credit-small" id="creditBulkAddClients">Selecionar clientes informadas</button></div>
+  </details>
  </section>
- <section class="credit-box"><h2>Contas e limites concedidos</h2><div id="creditAccountList" class="credit-list"><div class="loading">Carregando contas...</div></div></section>
- <section class="credit-box"><h2>Solicitações aguardando análise</h2><div id="creditRequestList" class="credit-list"></div></section>
+ <section class="credit-box"><h2>Solicitações aguardando análise</h2><div id="creditRequestList" class="credit-list"><p>Carregando solicitações...</p></div></section>
 </section>
 <div id="entityPanel"><div class="toolbar"><input class="search" id="search" placeholder="Buscar por nome, cidade, WhatsApp..."><button class="refresh" id="refresh">Atualizar</button><div class="label-batch-tools hidden" id="labelBatchTools"><button class="batch-btn batch-select" id="labelBatchSelect" type="button">SELECIONAR TODAS</button><button class="batch-btn batch-print" id="labelBatchPrint" type="button" disabled>IMPRIMIR ETIQUETAS (0)</button></div></div><div class="cards" id="cards"></div></div>
 <div id="externalPanel" class="hidden"><div class="external-panel"><section class="external-form"><h2>Adicionar rastreio externo</h2><p>Use para pedidos enviados por Correios, Jadlog ou outra transportadora. Não cria corrida VELUM.</p><div class="external-grid"><div class="field"><label>CLIENTE</label><input id="extCustomerName" placeholder="Nome da cliente"></div><div class="field"><label>WHATSAPP</label><input id="extCustomerPhone" inputmode="tel" placeholder="(88) 99999-9999"></div><div class="field"><label>TRANSPORTADORA</label><input id="extCarrier" placeholder="Correios, Jadlog..."></div><div class="field"><label>CÓDIGO DE RASTREIO</label><input id="extCode" placeholder="Código / objeto"></div><div class="field full"><label>LINK DE RASTREIO</label><input id="extUrl" placeholder="https://..."></div><div class="field full"><label>REFERÊNCIA / PEDIDO (OPCIONAL)</label><input id="extReference" placeholder="Ex.: Pedido #1234"></div></div><button class="external-send" id="extSend">SALVAR E ENVIAR NO WHATSAPP</button></section><section class="external-history"><h2>Rastreios enviados</h2><p>Histórico desta administração, separado das corridas VELUM.</p><div id="extHistory"></div></section></div></div>
@@ -81,37 +136,65 @@
 </div></div>
 <div class="modal" id="dispatchModal"><div class="modal-card" style="width:min(560px,100%)"><div class="modal-head"><div><h2>Chamar outro entregador</h2><p>Escolha um entregador específico ou envie a corrida para todos.</p></div><button class="modal-close" id="dispatchClose">Fechar</button></div><button class="dispatch-all" id="dispatchAll">DISPARAR PARA TODOS</button><div class="dispatch-list" id="dispatchList"><div class="loading">Carregando entregadores...</div></div></div></div>
 
-<div id="creditModal" class="credit-modal" role="dialog" aria-modal="true" aria-label="Financeiro de crédito VELUM"><section class="credit-window">
- <div class="modal-head"><div><h2 id="creditModalTitle">Crédito VELUM</h2><p class="credit-hint" id="creditModalDesc">Gestão de limite e vencimento</p></div><button class="modal-close" id="creditClose" type="button">Fechar</button></div>
- <div class="credit-current" id="creditWalletSummary">Carregando situação financeira...</div>
- <div class="credit-form">
-  <label class="field">Limite de crédito (R$)<input id="creditLimit" type="number" min="0.01" step="0.01" placeholder="Ex.: 500"></label>
-  <label class="field">Válido desde<input id="creditFrom" type="date"></label>
-  <label class="field">Válido até<input id="creditUntil" type="date"></label>
-  <label class="field">Pagar até<input id="creditDue" type="date"></label>
-  <label class="field">Valor de uso ou pagamento (R$)<input id="creditAmount" type="number" min="0.01" step="0.01"></label>
-  <label class="field">Pedido / comprovante único<input id="creditReference" placeholder="Ex.: PEDIDO-123"></label>
-  <label class="field">WhatsApp para cobrança<input id="creditPhone" type="tel" placeholder="DDD + número"></label>
-  <label class="field">Chave PIX para cobrança<input id="creditPix" placeholder="Informe dados oficiais"></label>
-  <label class="field">Observação<input id="creditNotes" placeholder="Opcional"></label>
+<div id="creditModal" class="credit-modal" role="dialog" aria-modal="true" aria-label="Financeiro de crédito VELUM">
+<section class="credit-window">
+ <div class="modal-head"><div><h2 id="creditModalTitle">Financeiro VELUM</h2><p class="credit-hint" id="creditModalDesc">Limite e histórico de movimentações</p></div><button type="button" class="modal-close" id="creditClose">Fechar</button></div>
+ <div class="credit-hero" id="creditWalletSummary">
+  <div><small>Limite liberado</small><strong id="creditStatLimit">—</strong></div>
+  <div><small>Limite disponível</small><strong id="creditStatAvailable">—</strong></div>
+  <div><small>Limite utilizado</small><strong id="creditStatUsed">—</strong></div>
  </div>
- <div class="credit-acts">
-  <button type="button" data-credit-action="GRANT">Liberar / alterar limite</button>
-  <button type="button" data-credit-action="DATES">Ajustar prazos</button>
-  <button type="button" data-credit-action="SUSPEND" class="warn">Suspender</button>
-  <button type="button" data-credit-action="RESUME">Reativar</button>
-  <button type="button" data-credit-action="USE">Registrar utilização</button>
-  <button type="button" data-credit-action="PAYMENT">Confirmar pagamento</button>
-  <button type="button" id="creditReminder">Lembrete WhatsApp</button>
-  <button type="button" id="creditBilling">Enviar dados cobrança</button>
- </div>
- <div class="credit-acts" id="creditReviewActions"><button type="button" id="creditReviewApprove">Aprovar solicitação após liberar</button><button type="button" class="warn" id="creditReviewDecline">Recusar solicitação</button></div><div class="credit-acts" id="creditBulkActions" hidden>
-  <button type="button" data-credit-bulk="GRANT">Liberar em lote</button>
-  <button type="button" data-credit-bulk="DATES">Prazos em lote</button>
-  <button type="button" data-credit-bulk="SUSPEND" class="warn">Suspender em lote</button>
- </div>
- <div class="credit-message" id="creditMessage" role="status"></div>
- <h3 style="color:#0f3665">Histórico de movimentações</h3><div class="credit-history" id="creditHistory">Selecione um titular.</div>
+ <div class="credit-due-line" id="creditDueSummary">Consultando situação financeira...</div>
+ <section id="creditHistorySection" class="credit-history-section">
+  <h3>Histórico de utilização do limite</h3><p class="credit-hint">Movimentações registradas pela administração. Compras fora do módulo de crédito não são lançadas automaticamente.</p>
+  <div class="credit-history" id="creditHistory">Consultando histórico...</div>
+ </section>
+ <section id="creditIndividualActions" class="credit-individual-actions">
+  <h3>Ações financeiras</h3>
+  <div class="credit-acts credit-action-grid">
+   <button type="button" data-credit-editor="GRANT">Ajustar limite</button>
+   <button type="button" data-credit-editor="DATES">Ajustar prazos</button>
+   <button type="button" id="creditReminder">Enviar lembrete</button>
+   <button type="button" id="creditBilling">Enviar cobrança</button>
+   <button type="button" data-credit-editor="SUSPEND" class="warn">Suspender limite</button>
+   <button type="button" data-credit-editor="RESUME">Reativar limite</button>
+   <button type="button" data-credit-editor="USE">Registrar utilização</button>
+   <button type="button" data-credit-editor="PAYMENT">Registrar pagamento</button>
+  </div>
+ </section>
+ <section class="credit-individual-actions" id="creditBulkActions" hidden>
+  <h3>Edição em lote</h3><p class="credit-hint">Somente as contas marcadas na tabela serão alteradas. O resultado será apresentado individualmente.</p>
+  <div class="credit-acts credit-action-grid">
+   <button type="button" data-credit-bulk="GRANT">Ajustar limites em lote</button>
+   <button type="button" data-credit-bulk="DATES">Alterar datas de pagamento</button>
+   <button type="button" data-credit-bulk="SUSPEND" class="warn">Suspender selecionados</button>
+  </div>
+ </section>
+ <section id="creditEditorPanel" class="credit-editor-panel" hidden>
+  <h3 id="creditEditorTitle">Editar</h3><p id="creditEditorHint" class="credit-hint"></p>
+  <div class="credit-form">
+   <label class="field" data-credit-field="limit">Limite total (R$)<input id="creditLimit" type="number" min="0.01" step="0.01" placeholder="Ex.: 500,00"></label>
+   <label class="field" data-credit-field="validFrom">Válido desde<input id="creditFrom" type="date"></label>
+   <label class="field" data-credit-field="validUntil">Válido até<input id="creditUntil" type="date"></label>
+   <label class="field" data-credit-field="dueDate">Data do pagamento<input id="creditDue" type="date"></label>
+   <label class="field" data-credit-field="amount">Valor utilizado / recebido (R$)<input id="creditAmount" type="number" min="0.01" step="0.01"></label>
+   <label class="field" data-credit-field="reference">Referência única do pedido ou comprovante<input id="creditReference" placeholder="Ex.: PEDIDO-0123"></label>
+   <label class="field" data-credit-field="notes">Observação (opcional)<input id="creditNotes" placeholder="Motivo ou detalhes da operação"></label>
+  </div>
+  <div class="credit-acts"><button type="button" id="creditEditorSave">Confirmar alteração</button><button type="button" id="creditEditorCancel" class="warn">Cancelar</button></div>
+ </section>
+ <section class="credit-billing-settings" id="creditBillingSettings">
+  <h3>Dados de cobrança</h3>
+  <div class="credit-form">
+   <label class="field">WhatsApp da cliente / revendedora<input id="creditPhone" type="tel" placeholder="Número com DDD"></label>
+   <label class="field">Chave PIX padrão · CPF<input id="creditPix" type="text" value="005.589.713-42" readonly></label>
+   <label class="field">Titular do PIX<input id="creditPixOwner" type="text" value="Maria Lidia Feitosa Sales" readonly></label>
+  </div>
+  <div class="credit-acts"><button type="button" id="creditCopyPix">Copiar chave PIX</button></div>
+  <p class="credit-hint">O WhatsApp é aberto com a mensagem pronta. Confirme o envio no aplicativo. Pagamentos devem ser registrados após confirmação do recebimento.</p>
+ </section>
+ <div class="credit-acts" id="creditReviewActions" hidden><button type="button" id="creditReviewApprove">Aprovar solicitação após liberar limite</button><button type="button" id="creditReviewDecline" class="warn">Recusar solicitação</button></div>
+ <div class="credit-message" id="creditMessage" role="status" aria-live="polite"></div>
 </section></div>
 <div class="toast" id="toast"></div>
 <script>
@@ -298,93 +381,220 @@ $('dispatchAll').onclick=()=>{if(dispatchDeliveryId)send('DISPATCH_PENDING',{tok
 function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden');load() }
 function showLogin(msg=''){token='';$('appView').classList.add('hidden');$('loginView').classList.add('hidden');send('NEED_LOGIN',{message:msg||'Sessão administrativa não encontrada'});}
 
-let creditCurrent=null,creditCurrentWallet=null,creditAccounts=[],creditRequests=[],creditBusy=false,creditBulkMode=false;
+let creditCurrent=null,creditCurrentWallet=null,creditAccounts=[],creditRequests=[],creditBusy=false,creditBulkMode=false,creditEditorAction='';
+let creditHolderInfo={};
 const creditSelected=new Set();
-function creditShowSelected(){const el=$('creditBulkSelectedCount');if(el)el.textContent=creditSelected.size+' titular(es) selecionado(s) para lote.'}
-$('creditBulkAddClients').onclick=()=>{const values=$('creditBulkClients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);const invalid=values.filter(x=>!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x));if(invalid.length)return alert('Revise os e-mails inválidos: '+invalid.slice(0,4).join(', '));values.forEach(email=>creditSelected.add('CUSTOMER:'+email));creditShowSelected();$('creditBulkClients').value='';creditList()};
-function creditMoney(c){return (Number(c||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
-function creditHolderKey(t,id){return String(t)+':'+String(t==='CUSTOMER'?id.toLowerCase():id)}
-function creditPick(t,id){creditCurrent={type:t,id:id};creditCurrentWallet=null;creditBulkMode=false;$('creditPhone').value=t==='RESELLER'?(rows.find(r=>r.type==='reseller'&&r.id===id)?.whatsapp||''):'';$('creditPix').value='';creditOpenModal();send('CREDIT_DETAILS',{token,holderType:t,holderId:id})}
+const CREDIT_PIX_KEY='005.589.713-42',CREDIT_PIX_OWNER='Maria Lidia Feitosa Sales';
+const creditMoney=c=>(Number(c||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const creditDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))?String(s).slice(8,10)+'/'+String(s).slice(5,7)+'/'+String(s).slice(0,4):'Não definida';
+const creditHolderKey=(t,id)=>String(t).toUpperCase()+':'+String(t==='CUSTOMER'?id.toLowerCase():id);
+const creditWords={USE:'Utilização de crédito',PAYMENT:'Pagamento confirmado',GRANT:'Limite liberado / ajustado',DATES:'Prazos alterados',SUSPEND:'Limite suspenso',RESUME:'Limite reativado'};
+function creditShowSelected(){
+ const el=$('creditBulkSelectedCount');if(el)el.textContent=creditSelected.size+' selecionado(s)';
+}
+function creditVisibleAccounts(){
+ const q=String($('creditSearch').value||'').toLowerCase().trim();
+ return creditAccounts.filter(w=>!q||[w.displayName,w.responsible,w.email,w.holderId,w.status,w.overdue?'vencido':'',w.active?'ativo':''].join(' ').toLowerCase().includes(q));
+}
+function creditList(){if(token)send('CREDIT_LIST',{token})}
+function creditPick(type,id){
+ if(!id)return alert('Informe o identificador da revendedora ou o e-mail da cliente.');
+ creditCurrent={type,id};creditCurrentWallet=null;creditBulkMode=false;creditHolderInfo={};
+ const stored=creditAccounts.find(w=>creditHolderKey(w.holderType,w.holderId)===creditHolderKey(type,id));
+ const card=rows.find(r=>r.type==='reseller'&&r.id===id);
+ creditOpenModal();
+ $('creditModalTitle').textContent='Financeiro · '+(stored?.displayName||card?.name||id);
+ $('creditPhone').value=stored?.whatsapp||card?.whatsapp||'';
+ send('CREDIT_DETAILS',{token,holderType:type,holderId:id});
+}
 function creditOpenModal(){
- $('creditModal').classList.add('open');$('creditMessage').textContent='';
- $('creditModalTitle').textContent=creditBulkMode?'Operações em lote':'Crédito: '+creditCurrent.id;
- $('creditModalDesc').textContent=creditBulkMode?creditSelected.size+' selecionado(s)':'Concessão manual de limite e controle financeiro';
+ $('creditModal').classList.add('open');
+ $('creditMessage').textContent='';
+ $('creditEditorPanel').hidden=true;creditEditorAction='';
  $('creditBulkActions').hidden=!creditBulkMode;
- $('creditReviewActions').hidden=creditBulkMode||!creditRequests.some(r=>r.holderKey===creditHolderKey(creditCurrent?.type||'',creditCurrent?.id||''));
- document.querySelectorAll('[data-credit-action]').forEach(b=>b.hidden=creditBulkMode);
- $('creditWalletSummary').textContent=creditBulkMode?'As operações serão aplicadas somente aos titulares selecionados.':'Consultando limite...';
- $('creditHistory').textContent='';$('creditLimit').value='';$('creditAmount').value='';$('creditReference').value='';
+ $('creditIndividualActions').hidden=creditBulkMode;
+ $('creditBillingSettings').hidden=creditBulkMode;
+ $('creditHistorySection').hidden=creditBulkMode;
+ $('creditWalletSummary').hidden=creditBulkMode;
+ $('creditReviewActions').hidden=true;
+ $('creditModalTitle').textContent=creditBulkMode?'Editar selecionados em lote':'Financeiro VELUM';
+ $('creditModalDesc').textContent=creditBulkMode?creditSelected.size+' titular(es) selecionado(s).':'Limite, utilização e vencimento';
+ $('creditDueSummary').textContent=creditBulkMode?'Escolha uma ação abaixo. As alterações serão aplicadas apenas às contas marcadas.':'Carregando situação...';
+ ['creditLimit','creditFrom','creditUntil','creditDue','creditAmount','creditReference','creditNotes'].forEach(id=>$(id).value='');
+ $('creditPix').value=CREDIT_PIX_KEY;
+ $('creditPixOwner').value=CREDIT_PIX_OWNER;
+ $('creditPhone').value='';
+ $('creditHistory').textContent='Carregando histórico...';
+ $('creditStatLimit').textContent='—';$('creditStatAvailable').textContent='—';$('creditStatUsed').textContent='—';
 }
-function creditList(){if(!token)return;send('CREDIT_LIST',{token})}
-function renderCreditOverview(d){
- if(!d.ok){$('creditSummary').textContent=d.mensagem||'Não foi possível carregar crédito.';return}
- creditAccounts=d.items||[];creditRequests=d.requests||[];
- const total=creditAccounts.length,pending=creditRequests.length;
- $('creditSummary').textContent=total+' conta(s) • '+pending+' solicitação(ões) aguardando análise';
- $('creditAccountList').innerHTML=total?creditAccounts.map(w=>{
-   const k=creditHolderKey(w.holderType,w.holderId);
-   return '<div class="credit-row"><input type="checkbox" data-credit-check="'+esc(k)+'" '+(creditSelected.has(k)?'checked':'')+' aria-label="Selecionar titular"><div><b>'+esc(w.holderId)+'</b><small>'+esc(w.holderType)+' • Limite '+creditMoney(w.limitCents)+' • Utilizado '+creditMoney(w.usedCents)+' • Disponível '+creditMoney(w.availableCents)+'</small><small class="credit-status '+(w.overdue?'over':w.active?'':'off')+'">'+(w.overdue?'Vencido':w.active?'Ativo':'Suspenso ou fora da validade')+' • '+esc(w.validFrom)+' a '+esc(w.validUntil)+' • Pagar até '+esc(w.dueDate)+'</small></div><button type="button" class="credit-small" data-credit-open="'+esc(k)+'">Financeiro</button></div>'
- }).join(''):'<p>Nenhum limite liberado. Nenhuma pessoa recebe crédito automaticamente.</p>';
- $('creditRequestList').innerHTML=pending?creditRequests.map(r=>'<div class="credit-row"><span>⏳</span><div><b>'+esc(r.holderId)+'</b><small>Solicitou '+creditMoney(r.requestedCents)+' • '+esc(r.reason||'Sem observação')+'</small></div><button type="button" class="credit-small" data-credit-open="'+esc(r.holderKey)+'">Analisar</button></div>').join(''):'<p>Sem solicitações pendentes.</p>';
- document.querySelectorAll('[data-credit-open]').forEach(b=>b.onclick=()=>{const k=b.dataset.creditOpen,i=k.indexOf(':');creditPick(k.slice(0,i),k.slice(i+1))});
- document.querySelectorAll('[data-credit-check]').forEach(b=>b.onchange=()=>{b.checked?creditSelected.add(b.dataset.creditCheck):creditSelected.delete(b.dataset.creditCheck);creditShowSelected()});
+function creditBulkOpen(){
+ if(!creditSelected.size)return alert('Marque as caixas das clientes na tabela.');
+ if(creditSelected.size>100)return alert('Selecione no máximo 100 titulares por lote.');
+ creditBulkMode=true;creditCurrent=null;creditCurrentWallet=null;
+ creditOpenModal();
 }
-function showCreditDetails(d){
- if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao consultar limite.';return}
- creditCurrentWallet=d.wallet||null;
- const w=d.wallet||{};
- $('creditWalletSummary').textContent=w.exists?'Limite '+creditMoney(w.limitCents)+' • Utilizado '+creditMoney(w.usedCents)+' • Disponível '+creditMoney(w.availableCents)+' • '+(w.overdue?'VENCIDO':w.active?'ATIVO':'INATIVO'):'Nenhum limite concedido. A liberação é exclusiva da administração.';
- $('creditLimit').value=w.exists?Number(w.limitCents)/100:'';
- $('creditFrom').value=w.validFrom||new Date().toISOString().slice(0,10);
- $('creditUntil').value=w.validUntil||'';
- $('creditDue').value=w.dueDate||'';
- $('creditHistory').innerHTML=(d.history||[]).map(x=>'<div>'+esc(x.createdAt)+' · '+esc(x.type)+' · '+creditMoney(x.amountCents)+' · '+esc(x.reference||x.notes||'—')+'</div>').join('')||'Sem movimentações financeiras.';
-}
-function creditData(){return {limitCents:Math.round(Number($('creditLimit').value)*100),amountCents:Math.round(Number($('creditAmount').value)*100),validFrom:$('creditFrom').value,validUntil:$('creditUntil').value,dueDate:$('creditDue').value,reference:$('creditReference').value.trim(),notes:$('creditNotes').value.trim()}}
-function creditOperate(action){
- if(creditBusy||!creditCurrent)return;
- const data=creditData();
- if(['PAYMENT','USE'].includes(action)&&(!data.reference||!(data.amountCents>0)))return alert('Informe valor e referência única do comprovante ou pedido.');
- if(['GRANT','DATES'].includes(action)&&(!data.validFrom||!data.validUntil||!data.dueDate))return alert('Preencha as três datas no calendário.');
- if(!confirm('Confirma a operação '+action+' para '+creditCurrent.id+'?'))return;
- creditBusy=true;$('creditMessage').textContent='Salvando operação...';
- send('CREDIT_ACTION',{token,action,holderType:creditCurrent.type,holderId:creditCurrent.id,data});
-}
-function creditBulk(action){
- if(creditBusy||!creditSelected.size)return alert('Selecione titulares nas contas ou nos cards das revendedoras.');
- const targets=[...creditSelected].map(k=>{const i=k.indexOf(':');return {type:k.slice(0,i),id:k.slice(i+1)}});
- if(['DATES','GRANT'].includes(action)&&(!creditData().validFrom||!creditData().validUntil||!creditData().dueDate))return alert('Defina as datas no calendário.');
- if(!confirm(action+' para '+targets.length+' selecionado(s)? Cada resultado será informado.'))return;
- creditBusy=true;$('creditMessage').textContent='Processando lote...';
- send('CREDIT_BULK',{token,action,targets,data:creditData()});
-}
-function creditWhatsapp(kind){
- const raw=$('creditPhone').value.replace(/\D/g,'');
- if(raw.length<10)return alert('Informe WhatsApp com DDD para enviar a mensagem.');
- const w=creditCurrentWallet||{};if(!(Number(w.usedCents)>0))return alert('Este titular não possui saldo em aberto para cobrança.');
- const due=w.dueDate||$('creditDue').value;
- const msg=kind==='reminder'?'Olá! Lembrete VELUM: saldo utilizado '+creditMoney(w.usedCents)+' com vencimento '+due+'. Se já realizou pagamento, desconsidere.':'Olá! Dados para pagamento VELUM: valor '+creditMoney(w.usedCents)+'; vencimento '+due+'; chave PIX: '+$('creditPix').value.trim()+'. Envie seu comprovante para confirmação.';
- if(kind!=='reminder'&&!$('creditPix').value.trim())return alert('Informe a chave PIX oficial antes de enviar.');
- window.open('https://wa.me/'+(raw.startsWith('55')?raw:'55'+raw)+'?text='+encodeURIComponent(msg),'_blank','noopener');
-}
-$('creditOpen').onclick=()=>creditPick($('creditHolderType').value,$('creditHolderId').value.trim());
-$('creditRefresh').onclick=creditList;
-$('creditBulkOpen').onclick=()=>{if(!creditSelected.size)return alert('Marque titulares antes de aplicar em lote.');creditBulkMode=true;creditCurrent=null;creditOpenModal()};
-$('creditClose').onclick=()=>$('creditModal').classList.remove('open');
-document.querySelectorAll('[data-credit-action]').forEach(b=>b.onclick=()=>creditOperate(b.dataset.creditAction));
-document.querySelectorAll('[data-credit-bulk]').forEach(b=>b.onclick=()=>creditBulk(b.dataset.creditBulk));
 function creditReview(decision){
- const k=creditHolderKey(creditCurrent?.type||'',creditCurrent?.id||'');
- const req=creditRequests.find(r=>r.holderKey===k);
- if(!req)return alert('Nenhuma solicitação pendente deste titular.');
- if(decision==='APPROVED'&&!creditCurrentWallet?.exists)return alert('Libere o limite antes de aprovar.');
- if(!confirm(decision==='APPROVED'?'Confirmar aprovação da solicitação?':'Recusar esta solicitação?'))return;
+ if(!creditCurrent||creditBusy)return;
+ const k=creditHolderKey(creditCurrent.type,creditCurrent.id),req=creditRequests.find(r=>r.holderKey===k);
+ if(!req)return alert('Não há solicitação pendente para esta pessoa.');
+ if(decision==='APPROVED'&&!creditCurrentWallet?.exists)return alert('Libere o limite antes de aprovar a solicitação.');
+ if(!confirm(decision==='APPROVED'?'Aprovar esta solicitação?':'Recusar a solicitação?'))return;
  creditBusy=true;$('creditMessage').textContent='Atualizando solicitação...';
  send('CREDIT_ACTION',{token,action:'REQUEST_REVIEW',holderType:creditCurrent.type,holderId:creditCurrent.id,data:{requestId:req.id,decision}});
 }
+function creditRenderTable(){
+ const list=creditVisibleAccounts(),tbody=$('creditAccountList');
+ tbody.innerHTML=list.length?list.map(w=>{
+  const k=creditHolderKey(w.holderType,w.holderId),status=w.overdue?'Vencido':w.active?'Ativo':w.status==='SUSPENDED'?'Suspenso':'Indisponível';
+  return '<tr><td><input type="checkbox" data-credit-check="'+esc(k)+'" '+(creditSelected.has(k)?'checked':'')+' aria-label="Selecionar '+esc(w.displayName||w.holderId)+'"></td>'+
+   '<td><b>'+esc(w.displayName||w.holderId)+'</b><small>'+esc(w.holderType==='RESELLER'?'Revendedora':'Cliente')+(w.responsible?' • '+esc(w.responsible):'')+'</small>'+
+   (w.holderType==='CUSTOMER'?'<small>'+esc(w.holderId)+'</small>':'')+'</td>'+
+   '<td><strong>'+creditMoney(w.availableCents)+'</strong><small>Limite total: '+creditMoney(w.limitCents)+'</small></td>'+
+   '<td><strong>'+creditMoney(w.usedCents)+'</strong></td>'+
+   '<td>'+esc(creditDate(w.dueDate))+'<small class="credit-status '+(w.overdue?'over':w.active?'':'off')+'">'+esc(status)+'</small></td>'+
+   '<td><button type="button" class="credit-small" data-credit-open="'+esc(k)+'">Editar</button></td></tr>';
+ }).join(''):'<tr><td colspan="6">'+(creditAccounts.length?'Nenhum resultado para a pesquisa.':'Nenhum limite concedido. Utilize o campo de liberação abaixo para adicionar uma pessoa.')+'</td></tr>';
+ const all=list.length>0&&list.every(w=>creditSelected.has(creditHolderKey(w.holderType,w.holderId)));
+ const select=$('creditSelectAll');select.checked=all;select.indeterminate=!all&&list.some(w=>creditSelected.has(creditHolderKey(w.holderType,w.holderId)));
+ tbody.querySelectorAll('[data-credit-check]').forEach(el=>el.onchange=()=>{
+  el.checked?creditSelected.add(el.dataset.creditCheck):creditSelected.delete(el.dataset.creditCheck);
+  creditShowSelected();creditRenderTable();
+ });
+ tbody.querySelectorAll('[data-credit-open]').forEach(el=>el.onclick=()=>{
+  const key=el.dataset.creditOpen,i=key.indexOf(':');creditPick(key.slice(0,i),key.slice(i+1));
+ });
+}
+function renderCreditOverview(d){
+ if(!d.ok){$('creditSummary').textContent=d.mensagem||'Não foi possível consultar limites.';return}
+ creditAccounts=Array.isArray(d.items)?d.items:[];
+ creditRequests=Array.isArray(d.requests)?d.requests:[];
+ const used=creditAccounts.reduce((s,w)=>s+Number(w.usedCents||0),0);
+ $('creditSummary').textContent=creditAccounts.length+' limite(s) autorizado(s) · '+creditMoney(used)+' utilizado(s) · '+creditRequests.length+' solicitação(ões) em análise.';
+ creditRenderTable();creditShowSelected();
+ $('creditRequestList').innerHTML=creditRequests.length?creditRequests.map(r=>
+  '<div class="credit-row"><span>⏳</span><div><b>'+esc(r.displayName||r.holderId)+'</b><small>'+esc(r.holderType==='RESELLER'?'Revendedora':'Cliente')+' · Solicitação: '+creditMoney(r.requestedCents)+'</small><small>'+esc(r.reason||'Sem observação')+'</small></div><button type="button" class="credit-small" data-credit-open="'+esc(r.holderKey)+'">Analisar</button></div>'
+ ).join(''):'<p>Nenhuma solicitação pendente.</p>';
+ $('creditRequestList').querySelectorAll('[data-credit-open]').forEach(el=>el.onclick=()=>{
+  const k=el.dataset.creditOpen,i=k.indexOf(':');creditPick(k.slice(0,i),k.slice(i+1));
+ });
+}
+function showCreditDetails(d){
+ if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao carregar financeiro.';return}
+ const w=d.wallet||{};creditCurrentWallet=w;creditHolderInfo=d.holder||{};
+ $('creditModalTitle').textContent='Financeiro · '+(creditHolderInfo.displayName||creditCurrent?.id||'Titular');
+ $('creditModalDesc').textContent=w.exists?'Limites, utilização, vencimento e histórico':'Nenhum limite concedido para este titular';
+ $('creditStatLimit').textContent=creditMoney(w.limitCents);
+ $('creditStatAvailable').textContent=creditMoney(w.availableCents);
+ $('creditStatUsed').textContent=creditMoney(w.usedCents);
+ $('creditDueSummary').textContent='Situação: '+(w.overdue?'PAGAMENTO VENCIDO':w.status==='SUSPENDED'?'SUSPENSO':w.active?'ATIVO':'INDISPONÍVEL')+
+   ' · Validade: '+creditDate(w.validFrom)+' a '+creditDate(w.validUntil)+' · Pagamento até: '+creditDate(w.dueDate);
+ $('creditLimit').value=w.exists?(Number(w.limitCents)/100).toFixed(2):'';
+ $('creditFrom').value=w.validFrom||'';
+ $('creditUntil').value=w.validUntil||'';
+ $('creditDue').value=w.dueDate||'';
+ $('creditPhone').value=creditHolderInfo.whatsapp||$('creditPhone').value;
+ const history=Array.isArray(d.history)?d.history:[];
+ $('creditHistory').innerHTML=history.length?history.map(x=>{
+  const title=creditWords[x.type]||x.type;
+  const isMoney=['USE','PAYMENT','GRANT'].includes(x.type);
+  const amount=isMoney?creditMoney(x.amountCents):'';
+  return '<div class="credit-event"><div><strong>'+esc(title)+'</strong><small>'+esc(new Date(x.createdAt).toLocaleString('pt-BR'))+(x.reference?' · '+esc(x.reference):'')+'</small>'+
+   (x.notes?'<small>'+esc(x.notes)+'</small>':'')+'</div><span class="credit-event-amount">'+amount+'</span></div>';
+ }).join(''):'<p>Nenhuma utilização registrada para este limite.</p>';
+ $('creditReviewActions').hidden=!creditRequests.some(r=>r.holderKey===creditHolderKey(creditCurrent?.type,creditCurrent?.id));
+}
+function creditEditor(action){
+ if(creditBusy)return;
+ if(action==='SUSPEND'||action==='RESUME'){creditOperate(action);return}
+ if(creditBulkMode&&['USE','PAYMENT','RESUME'].includes(action))return;
+ creditEditorAction=action;
+ const label={GRANT:creditBulkMode?'Ajustar limites em lote':'Ajustar limite',DATES:creditBulkMode?'Ajustar vencimentos em lote':'Ajustar prazos',USE:'Registrar utilização de crédito',PAYMENT:'Confirmar pagamento recebido'}[action]||'Editar crédito';
+ $('creditEditorTitle').textContent=label;
+ $('creditEditorHint').textContent=creditBulkMode?(action==='DATES'?'Informe a nova data do pagamento. Deixe a validade em branco para conservar a data individual de cada pessoa.':'Preencha o novo limite e as três datas que serão aplicados às pessoas selecionadas.'):
+  action==='DATES'?'Atualize as datas desejadas. Os valores não serão alterados.':
+  action==='GRANT'?'O limite total não pode ser menor que o valor utilizado.':
+  'Informe valor e referência única de pedido ou comprovante. O lançamento é manual.';
+ const visible=action==='GRANT'?['limit','validFrom','validUntil','dueDate','notes']:action==='DATES'?['validFrom','validUntil','dueDate','notes']:['amount','reference','notes'];
+ document.querySelectorAll('[data-credit-field]').forEach(el=>{el.hidden=!visible.includes(el.dataset.creditField);el.style.display=visible.includes(el.dataset.creditField)?'grid':'none'});
+ if(creditBulkMode){['creditFrom','creditUntil','creditDue','creditLimit'].forEach(x=>$(x).value='')}
+ $('creditEditorPanel').hidden=false;
+ $('creditEditorSave').textContent='Confirmar '+(creditBulkMode?'alteração em lote':'alteração');
+ $('creditEditorPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function creditData(){
+ return {limitCents:Math.round(Number($('creditLimit').value)*100),
+ amountCents:Math.round(Number($('creditAmount').value)*100),
+ validFrom:$('creditFrom').value,validUntil:$('creditUntil').value,dueDate:$('creditDue').value,
+ reference:$('creditReference').value.trim(),notes:$('creditNotes').value.trim()};
+}
+function creditOperate(action){
+ if(creditBusy||!creditCurrent)return;
+ const data=creditData();
+ if(['USE','PAYMENT'].includes(action)&&(!(data.amountCents>0)||!data.reference))return alert('Preencha o valor e uma referência única.');
+ if(action==='GRANT'&&(!(data.limitCents>0)||!data.validFrom||!data.validUntil||!data.dueDate))return alert('Defina limite e todas as datas.');
+ if(action==='DATES'&&!data.dueDate&&!data.validFrom&&!data.validUntil)return alert('Informe pelo menos uma nova data.');
+ if(!confirm('Confirmar '+(creditEditorAction||action)+' para '+(creditHolderInfo.displayName||creditCurrent.id)+'?'))return;
+ creditBusy=true;$('creditMessage').textContent='Salvando alteração...';
+ send('CREDIT_ACTION',{token,action,holderType:creditCurrent.type,holderId:creditCurrent.id,data});
+}
+function creditBulk(action){
+ if(creditBusy)return;
+ const targets=[...creditSelected].map(k=>{const i=k.indexOf(':');return {type:k.slice(0,i),id:k.slice(i+1)}});
+ if(!targets.length||targets.length>100)return alert('Selecione de 1 a 100 clientes.');
+ const data=creditData();
+ if(action==='GRANT'&&(!(data.limitCents>0)||!data.validFrom||!data.validUntil||!data.dueDate))return alert('Informe limite e validade completa para o lote.');
+ if(action==='DATES'&&!data.dueDate&&!data.validFrom&&!data.validUntil)return alert('Informe pelo menos a data de pagamento.');
+ if(!confirm('Aplicar '+(action==='SUSPEND'?'suspensão':action==='DATES'?'ajuste de prazos':'ajuste de limite')+' às '+targets.length+' pessoas selecionadas?'))return;
+ creditBusy=true;$('creditMessage').textContent='Processando '+targets.length+' titular(es)...';
+ send('CREDIT_BULK',{token,action,targets,data});
+}
+function creditWhatsapp(kind){
+ if(creditBulkMode)return;
+ const raw=$('creditPhone').value.replace(/\D/g,'');
+ if(raw.length<10||raw.length>13)return alert('Informe WhatsApp com DDD antes de abrir a mensagem.');
+ const w=creditCurrentWallet||{};
+ if(!(Number(w.usedCents)>0))return alert('Não há saldo utilizado para cobrar ou lembrar.');
+ const name=creditHolderInfo.displayName||'cliente';
+ const start='Olá, '+name+'! ';
+ const due=creditDate(w.dueDate);
+ const payment='PIX VELUM\nChave CPF: '+CREDIT_PIX_KEY+'\nTitular: '+CREDIT_PIX_OWNER;
+ const msg=kind==='reminder'
+ ? start+'Lembrete do seu crédito VELUM: valor utilizado '+creditMoney(w.usedCents)+' com vencimento em '+due+'. Se já pagou, desconsidere. Caso precise dos dados de pagamento, nos avise.'
+ : start+'Segue cobrança do crédito VELUM. Saldo utilizado: '+creditMoney(w.usedCents)+'. Vencimento: '+due+'.\n\n'+payment+'\n\nApós o pagamento, envie o comprovante para confirmação. Se já pagou, desconsidere.';
+ window.open('https://wa.me/'+(raw.startsWith('55')?raw:'55'+raw)+'?text='+encodeURIComponent(msg),'_blank','noopener,noreferrer');
+ $('creditMessage').textContent='WhatsApp aberto com a mensagem pronta. O envio precisa ser confirmado por você.';
+}
+$('creditSearch').oninput=creditRenderTable;
+$('creditSelectAll').onchange=e=>{
+ const list=creditVisibleAccounts();
+ list.forEach(w=>{const k=creditHolderKey(w.holderType,w.holderId);e.target.checked?creditSelected.add(k):creditSelected.delete(k)});
+ creditRenderTable();creditShowSelected();
+};
+$('creditBulkAddClients').onclick=()=>{
+ const values=$('creditBulkClients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+ const invalid=values.filter(x=>!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x));
+ if(invalid.length)return alert('Confira os e-mails inválidos: '+invalid.slice(0,3).join(', '));
+ values.forEach(email=>creditSelected.add('CUSTOMER:'+email));
+ $('creditBulkClients').value='';creditRenderTable();creditShowSelected();
+};
+$('creditOpen').onclick=()=>creditPick($('creditHolderType').value,$('creditHolderId').value.trim());
+$('creditRefresh').onclick=creditList;
+$('creditBulkOpen').onclick=creditBulkOpen;
+$('creditClose').onclick=()=>{$('creditModal').classList.remove('open');$('creditEditorPanel').hidden=true};
+document.querySelectorAll('[data-credit-editor]').forEach(btn=>btn.onclick=()=>creditEditor(btn.dataset.creditEditor));
+document.querySelectorAll('[data-credit-bulk]').forEach(btn=>btn.onclick=()=>{
+ if(btn.dataset.creditBulk==='SUSPEND')creditBulk('SUSPEND');else creditEditor(btn.dataset.creditBulk);
+});
+$('creditEditorSave').onclick=()=>creditBulkMode?creditBulk(creditEditorAction):creditOperate(creditEditorAction);
+$('creditEditorCancel').onclick=()=>{$('creditEditorPanel').hidden=true;creditEditorAction=''};
 $('creditReviewApprove').onclick=()=>creditReview('APPROVED');
 $('creditReviewDecline').onclick=()=>creditReview('DECLINED');
-$('creditReminder').onclick=()=>creditWhatsapp('reminder');$('creditBilling').onclick=()=>creditWhatsapp('billing');
+$('creditReminder').onclick=()=>creditWhatsapp('reminder');
+$('creditBilling').onclick=()=>creditWhatsapp('billing');
+$('creditCopyPix').onclick=async()=>{
+ try{await navigator.clipboard.writeText(CREDIT_PIX_KEY);$('creditMessage').textContent='Chave PIX copiada.'}
+ catch(e){$('creditMessage').textContent='Não foi possível copiar automaticamente. Selecione a chave PIX acima.'}
+};
 
 function load(silent=false){if(!token)return showLogin();if(current==='credit'){creditList();return}if(current==='external'){renderExternalHistory();return}if(current==='freights'){send('LOAD_FREIGHT',{token});return}if(!silent)$('cards').innerHTML='<div class="loading">Carregando...</div>';send('LOAD',{token,entity:current})}
 function act(id,action){if(action==='DELETE'&&!confirm('Tem certeza que deseja excluir este cadastro? Esta ação não pode ser desfeita.'))return;send('ACTION',{token,entity:current,id,action});}function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
@@ -540,7 +750,7 @@ $('refresh').onclick=load;$('search').oninput=render;$('frSave').onclick=saveFre
 document.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>{current=b.dataset.entity;selectedLabels.clear();document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x===b));$('title').textContent=cfg[current].title;$('subtitle').textContent=cfg[current].subtitle;$('search').value='';$('entityPanel').classList.toggle('hidden',current==='freights'||current==='external'||current==='credit');$('creditPanel').classList.toggle('hidden',current!=='credit');$('externalPanel').classList.toggle('hidden',current!=='external');$('freightPanel').classList.toggle('hidden',current!=='freights');load();scheduleAdminPoll()});
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='VELUM_ADMIN_PORTAL_PAGE')return;const d=m.payload||{};if(m.type==='RESTORE_SESSION'){if(d.ok&&d.token){token=String(d.token);send('CHECK_SESSION',{token});}else showLogin('Sessão inválida.');return}if(m.type==='READY'){if(token)send('CHECK_SESSION',{token});else if(!window.__adminAwaitSession){window.__adminAwaitSession=setTimeout(()=>{if(!token)showLogin('Sua sessão não foi identificada. Entre pelo login principal do VELUM.');},14000)}}if(m.type==='LOGIN_RESULT'){clearTimeout(window.__adminLoginTimeout);$('loginBtn').disabled=false;$('loginBtn').textContent='ENTRAR';if(!d.ok)return showLogin(d.mensagem||'Acesso negado.');token=d.token;$('password').value='';showApp()}if(m.type==='SESSION_RESULT'){clearTimeout(window.__adminLoginTimeout);if(d.ok)showApp();else showLogin(d.mensagem||'Sessão expirada.')}if(m.type==='CREDIT_LIST_RESULT')renderCreditOverview(d);
 if(m.type==='CREDIT_DETAILS_RESULT')showCreditDetails(d);
-if(m.type==='CREDIT_ACTION_RESULT'){creditBusy=false;if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao salvar.';}else{showCreditDetails(d);$('creditMessage').textContent='Operação registrada.';creditList()}}
+if(m.type==='CREDIT_ACTION_RESULT'){creditBusy=false;if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao salvar.';}else{showCreditDetails(d);$('creditEditorPanel').hidden=true;$('creditMessage').textContent='Operação registrada. Valores e histórico atualizados.';creditList()}}
 if(m.type==='CREDIT_BULK_RESULT'){creditBusy=false;$('creditMessage').textContent=d.ok?d.success+' sucesso(s), '+d.failed+' falha(s). '+(d.results||[]).filter(x=>!x.ok).map(x=>x.key+': '+x.mensagem).join('; '):(d.mensagem||'Erro no lote');creditList()}
 if(m.type==='DATA_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);toast(d.mensagem||'Não foi possível carregar.');rows=[]}else rows=Array.isArray(d.items)?d.items:[];const s=d.summary||{};$('sumTotal').textContent=s.total||0;$('sumActive').textContent=s.active||0;$('sumInactive').textContent=s.inactive||0;render()}if(m.type==='ACTION_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);return toast(d.mensagem||'Não foi possível executar a ação.')}toast(d.mensagem||'Alteração realizada.');load()}if(m.type==='FREIGHT_DATA'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);toast(d.mensagem||'Não foi possível carregar os fretes.')}freights=Array.isArray(d.items)?d.items:[];$('sumTotal').textContent=freights.length;$('sumActive').textContent=freights.filter(x=>x.active).length;$('sumInactive').textContent=freights.filter(x=>!x.active).length;renderFreights()}if(m.type==='FREIGHT_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);return toast(d.mensagem||'Não foi possível salvar o frete.')}toast(d.mensagem||'Frete atualizado.');clearFreight();load()}if(m.type==='SUGGEST_ADDRESS_RESULT'){renderSuggestions(String(d.target||'delivery'),d.items||[])}if(m.type==='DRIVER_CALL_CALCULATE_RESULT'){$('callCalculate').disabled=false;$('callCalculate').textContent=editingDeliveryId?'RECALCULAR FRETE':'CALCULAR FRETE';if(!d.ok){callQuotedFee=null;$('callSend').disabled=true;$('callQuote').classList.remove('show');$('callStatus').textContent=d.mensagem||'Não foi possível calcular o frete.';return}callQuotedFee=Number(d.deliveryFee)||0;$('callQuoteValue').textContent=money(($('callCustomerPickupAtCenter').checked||$('callCustomerPickupAtStore').checked)?Number(d.customerPickupCharge??$('callCustomerPickupExtraFee').value??0):callQuotedFee);$('callQuote').classList.add('show');$('callSend').disabled=false;if(!editingDeliveryId)$('callSend').textContent='GERAR ETIQUETA';$('callStatus').textContent=editingDeliveryId?'Frete recalculado. Salve as alterações.':'Frete calculado. Agora gere a etiqueta; o entregador ainda não será chamado.'}if(m.type==='UPDATE_PENDING_RESULT'){$('callCalculate').disabled=false;$('callSend').disabled=false;$('callSend').textContent='SALVAR ALTERAÇÕES';if(!d.ok){$('callStatus').textContent=d.mensagem||'Não foi possível editar a corrida.';return}toast(d.mensagem||'Corrida atualizada.');closeDriverCall();load()}if(m.type==='CANCEL_PENDING_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível cancelar a corrida.');toast(d.mensagem||'Corrida cancelada.');load()}if(m.type==='DRIVER_CALL_RESULT'){$('callCalculate').disabled=false;$('callSend').textContent='GERAR ETIQUETA';if(!d.ok){$('callSend').disabled=false;$('callStatus').textContent=d.mensagem||'Não foi possível criar a corrida.';return}toast(d.mensagem||'Corrida criada e etiqueta pronta.');showLabelNextActions(d);$('callStatus').textContent=d.internalLogistics?'Processo criado. A etiqueta já pode ser impressa antes do chamado final.':'Etiqueta pronta. Imprima antes de chamar o entregador.';setTimeout(()=>{closeDriverCall();current='pending';document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x.dataset.entity==='pending'));$('title').textContent=cfg.pending.title;$('subtitle').textContent=cfg.pending.subtitle;$('search').value='';load();scheduleAdminPoll()},700)}if(m.type==='DISPATCH_DRIVERS_RESULT'){if(!d.ok){toast(d.mensagem||'Não foi possível carregar os entregadores.');return}dispatchDrivers=Array.isArray(d.items)?d.items:[];renderDispatchDrivers()}if(m.type==='DISPATCH_PENDING_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível enviar o chamado.');toast(d.mensagem||'Chamado enviado.');closeDispatchModal();load()}if(m.type==='ADMIN_LOGISTICS_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível atualizar a logística.');toast(d.mensagem||'Logística atualizada.');load()}if(m.type==='RESET_RESELLER_PASSWORD_RESULT'){alert(d.mensagem||(d.ok?'Solicitacao de redefinicao enviada.':'Nao foi possivel iniciar a redefinicao.'));}if(m.type==='NATIVE_MEMBERS_RESULT'){nativeMembersResult(d)}if(m.type==='CREATE_PICKUP_RESULT'){$('pickupGenerate').disabled=false;if(!d.ok)return alert(d.mensagem||'Falha ao gerar retirada');$('pickupResult').style.display='block';$('pickupResult').textContent='Retirada '+d.id+' criada. Link da etiqueta e comprovante: '+d.receiptUrl;$('pickupLink').href=d.receiptUrl;$('pickupLink').style.display='inline-block'}if(m.type==='RESELLER_CART_RESULT'){renderResellerCart(d)}if(m.type==='RESELLER_DETAILS_RESULT'){
   if(!d.ok){const label=resellerEditMode==='DESIGN'?'resellerSettingsStatus':'resellerEditorStatus';$(label).textContent=d.mensagem||'Não foi possível consultar dados.';resellerDetailsPending=false}
