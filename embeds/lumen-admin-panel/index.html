@@ -206,7 +206,39 @@ body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
 }
 body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 
-</style><style id="lumenMarketplaceOrdersStyles">
+</style>
+<style id="lumenOrderPickingStyles">
+.lumen-order-sheet{width:min(790px,100%);padding:clamp(12px,3vw,20px)}
+.lumen-order-sheet-head{position:sticky;top:-20px;z-index:2;background:#fff;padding:10px 0 13px;align-items:center}
+.lumen-order-overview-card{background:#fff;border:1px solid #d9e4f0;border-radius:15px;padding:clamp(13px,3vw,18px);margin:16px 0}
+.lumen-order-overview-card h4{color:#0f3665;font-size:15px;margin:0 0 12px}
+.lumen-order-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin:0}
+.lumen-order-fields .fieldbox{border:0;border-radius:0;padding:0;min-width:0;overflow-wrap:anywhere}
+.lumen-order-fields .fieldbox small{font-size:11px;color:#74849a;margin:0 0 4px}
+.lumen-order-fields .fieldbox b{font-size:13px;line-height:1.45;font-weight:850}
+.lumen-order-products{padding:14px;margin:14px 0}
+.lumen-order-products h4{font-size:15px;color:#0f3665}
+.lumen-picking-progress{font-size:12px;font-weight:850;color:#174976;padding:6px 0 11px;line-height:1.5}
+.lumen-picked-item{display:grid!important;grid-template-columns:25px 66px minmax(0,1fr) auto;align-items:center;gap:10px;padding:13px 2px!important;border-top:1px solid #e7ebf1}
+.lumen-picked-item input[type=checkbox]{width:21px;height:21px;accent-color:#178751;cursor:pointer}
+.lumen-picked-item img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e4e9ef;background:#eef3f7}
+.lumen-picked-item .item-fallback{width:64px;height:64px;border-radius:10px;background:#eff3f7;color:#8193a7;display:grid;place-items:center;font-size:11px;text-align:center}
+.lumen-picked-item .item-text{min-width:0;display:flex;flex-direction:column;gap:5px;line-height:1.35}
+.lumen-picked-item .item-text strong{font-size:12px;color:#123b69;overflow-wrap:anywhere}
+.lumen-picked-item .item-text small{font-size:11px;color:#6b7b90}
+.lumen-picked-item .item-price{font-size:12px;color:#143960;font-weight:900;white-space:nowrap}
+.lumen-picked-item.done .item-text strong{text-decoration:line-through;color:#6b7d8d}
+.lumen-order-bottom-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}
+.lumen-order-bottom-actions button{border:0;border-radius:12px;padding:14px 10px;min-height:49px;font-weight:850;font-size:12px;cursor:pointer;line-height:1.4}
+#lumenOrderPrint{background:#0f3665;color:#fff}
+#lumenOrderCall{background:#ff7a00;color:#fff}
+#lumenOrderCall:disabled{background:#e8edf2;color:#718092;cursor:not-allowed}
+.lumen-order-help{font-size:11px;color:#667b92;margin:9px 0;line-height:1.5;overflow-wrap:anywhere}
+.lumen-order-error{color:#b03746;font-weight:800}
+@media(max-width:600px){.lumen-order-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.lumen-picked-item{grid-template-columns:24px 56px minmax(0,1fr)!important;gap:8px}.lumen-picked-item img,.lumen-picked-item .item-fallback{height:56px;width:56px}.lumen-picked-item .item-price{grid-column:3;text-align:left;font-size:11px}.lumen-order-bottom-actions{grid-template-columns:minmax(0,1fr)}.lumen-order-sheet{max-height:90dvh}}
+@media(max-width:355px){.lumen-order-fields{grid-template-columns:minmax(0,1fr)}}
+</style>
+<style id="lumenMarketplaceOrdersStyles">
 .lumen-orders-button{margin-top:12px!important;border:1px solid #ffd6a8!important;background:#fff7ed!important;color:#0f3665!important}
 .lumen-orders-panel[hidden]{display:none!important}
 .lumen-orders-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(125px,1fr) minmax(130px,1fr);gap:10px;margin:12px 0}
@@ -311,8 +343,15 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 <div id="lumenOrderDetailModal" class="lumen-order-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="lumenOrderDetailHeading">
  <section class="lumen-order-sheet">
   <div class="lumen-order-sheet-head"><h3 id="lumenOrderDetailHeading">Pedido Lúmen</h3><button id="lumenOrderDetailClose" type="button">Fechar</button></div>
-  <div id="lumenOrderDetailFields" class="lumen-order-fields"></div>
+  <section id="lumenOrderSummaryCard" class="lumen-order-overview-card" aria-label="Resumo do pedido">
+   <h4>Informações do pedido</h4><div id="lumenOrderDetailFields" class="lumen-order-fields"></div>
+  </section>
   <div id="lumenOrderDetailProducts" class="lumen-order-products"></div>
+  <div class="lumen-order-bottom-actions">
+   <button type="button" id="lumenOrderPrint">🖨️ Imprimir etiqueta</button>
+   <button type="button" id="lumenOrderCall">🛵 Chamar entregador</button>
+  </div>
+  <p id="lumenOrderHelp" class="lumen-order-help" role="status"></p>
  </section>
 </div>
 
@@ -403,17 +442,143 @@ function lumenOrderDetail(id){
  $('lumenOrderDetailFields').innerHTML=[
   field('Cliente',o.customerName),field('WhatsApp',o.customerPhone),
   field('Revendedora',o.resellerName),field('Cidade',o.deliveryCity),
-  field('Forma de pagamento',lumenOrderPayLabel(o.paymentMethod)),
+  field('Pagamento',lumenOrderPayLabel(o.paymentMethod)),
   field('Situação financeira',lumenOrderStatusLabel(lumenOrderStatusKey(o))),
   field('Modalidade',o.fulfillmentMode==='WHOLESALE'?'Atacado':o.fulfillmentMode==='RESALE'?'Mala direta':o.fulfillmentMode||'Venda direta'),
   field('Valor dos produtos Lúmen',money(o.lumenTotal)),
   field('Data',dt(o.createdAt))
  ].join('');
- $('lumenOrderDetailProducts').innerHTML='<h4>Produtos Lúmen do pedido</h4>'+(o.products||[]).map(p=>
- '<div><span><strong>'+esc(p.name)+'</strong><small>'+esc(p.size?'Tamanho '+p.size+' · ':'')+esc(String(p.quantity))+' unidade(s)</small></span><b>'+money(Number(p.subtotal)||Number(p.unitPrice||0)*Number(p.quantity||1))+'</b></div>'
- ).join('');
+ lumenOrderRenderProducts(o);
  $('lumenOrderDetailModal').hidden=false;
 }
+function lumenOrderImage(raw){
+ const value=String(raw||'').trim();
+ if(/^https:\/\//i.test(value))return value;
+ if(value.startsWith('wix:image://v1/')){
+  const media=value.slice('wix:image://v1/'.length).split('/')[0];
+  if(/^[a-zA-Z0-9_~.\-]+$/.test(media))return 'https://static.wixstatic.com/media/'+media;
+ }
+ return '';
+}
+function lumenOrderPickedCount(o){return (o.products||[]).filter(x=>x.picked===true).length}
+function lumenOrderEditableDelivery(o){return ['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(o.linkedDelivery?.status)}
+function lumenOrderReady(o){
+ return lumenOrderStatusKey(o)==='PAID'&&(o.products||[]).length>0&&lumenOrderPickedCount(o)===(o.products||[]).length;
+}
+function lumenOrderRenderHelp(o){
+ const count=lumenOrderPickedCount(o),total=(o.products||[]).length;
+ $('lumenOrderPickingProgress').textContent=count+' de '+total+' produtos separados'+(total&&count===total?' • Separação concluída':'');
+ const call=$('lumenOrderCall');
+ const linked=o.linkedDelivery;
+ const paid=lumenOrderStatusKey(o)==='PAID';
+ const allPicked=total>0&&count===total;
+ const actionable=!linked||lumenOrderEditableDelivery(o);
+ call.disabled=!(paid&&allPicked&&actionable);
+ call.textContent=linked&&linked.status==='WAITING_DRIVER'?'🛵 Chamar novamente':linked&&linked.status==='READY_TO_DISPATCH'?'🛵 Chamar entregador':linked?'🛵 Chamar entregador':'🛵 Chamar entregador';
+ let msg='';
+ if(!paid)msg='Aguarde o pagamento ser confirmado antes de chamar um motorista.';
+ else if(!allPicked)msg='Marque todos os produtos como separados para liberar o chamado.';
+ else if(linked&&linked.status==='LOGISTICS_READY_FOR_DRIVER')msg='Existe uma rota logística pronta. Use Acompanhar entregas para avançar o chamado.';
+ else if(linked&&!actionable)msg='Este pedido já tem uma corrida: '+linked.deliveryId+' ('+linked.status+'). Acompanhe na lista de corridas.';
+ else if(linked)msg='Corrida '+linked.deliveryId+' vinculada ao pedido. A etiqueta de transporte está disponível.';
+ else msg='O botão abrirá a criação de corrida com os dados deste pedido. Confira a rota e o frete antes de confirmar.';
+ $('lumenOrderHelp').textContent=msg;
+ $('lumenOrderHelp').classList.toggle('lumen-order-error',!paid);
+}
+function lumenOrderRenderProducts(o){
+ const items=o.products||[];
+ $('lumenOrderDetailProducts').innerHTML='<h4>Produtos Lúmen — separação</h4>'+
+  '<div id="lumenOrderPickingProgress" class="lumen-picking-progress" role="status"></div>'+
+  items.map(p=>{
+   const src=lumenOrderImage(p.image);
+   const img=src?'<img src="'+esc(src)+'" alt="'+esc(p.name||'Produto')+'" loading="lazy"">':
+    '<div class="item-fallback">Sem foto</div>';
+   return '<label class="lumen-picked-item'+(p.picked?' done':'')+'">'+
+    '<input type="checkbox" data-lumen-pick="'+esc(p.itemId)+'" aria-label="Produto separado: '+esc(p.name)+'" '+(p.picked?'checked':'')+'>'+
+    img+'<span class="item-text"><strong>'+esc(p.name||'Produto Lúmen')+'</strong>'+
+    '<small>'+esc(p.size?'Tamanho '+p.size+' • ':'')+esc(p.quantity)+' unidade(s)</small>'+
+    '<small>'+(p.picked?'✓ Separado':'Pendente de separação')+'</small></span>'+
+    '<span class="item-price">'+money(Number(p.subtotal)||Number(p.unitPrice||0)*Number(p.quantity||1))+'</span></label>';
+  }).join('');
+ $('lumenOrderDetailProducts').querySelectorAll('[data-lumen-pick]').forEach(box=>box.onchange=()=>{
+  const item=o.products.find(x=>x.itemId===box.dataset.lumenPick);
+  if(!item){box.checked=!box.checked;return}
+  const wanted=box.checked;box.disabled=true;
+  $('lumenOrderHelp').textContent='Salvando conferência do produto...';
+  send('ORDER_PICK_ITEM',{orderId:o.orderId,itemId:item.itemId,picked:wanted});
+ });
+ lumenOrderRenderHelp(o);
+}
+function lumenOrderPickedResult(result){
+ const o=lumenOrders.find(x=>x.orderId===result.orderId);
+ if(!o)return;
+ const item=(o.products||[]).find(x=>x.itemId===result.itemId);
+ if(!result.ok){
+  const input=$('lumenOrderDetailProducts').querySelector('[data-lumen-pick="'+CSS.escape(String(result.itemId||''))+'"]');
+  if(input&&item){input.checked=!!item.picked;input.disabled=false}
+  $('lumenOrderHelp').textContent=result.mensagem||'Não foi possível salvar a separação. Tente novamente.';
+  $('lumenOrderHelp').classList.add('lumen-order-error');
+  return;
+ }
+ if(item){item.picked=result.picked===true;item.pickedAt=result.pickedAt||''}
+ if(!$('lumenOrderDetailModal').hidden&&$('lumenOrderDetailHeading').textContent.endsWith(o.orderId)){
+  const sheet=$('lumenOrderDetailModal').querySelector('.lumen-order-sheet');
+  const oldScroll=sheet.scrollTop;
+  lumenOrderRenderProducts(o);
+  sheet.scrollTop=oldScroll;
+ }
+}
+function lumenOrderPrintLabel(){
+ const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
+ const o=lumenOrders.find(x=>x.orderId===id);if(!o)return;
+ const ride=o.linkedDelivery&&typeof rideById==='function'?rideById(o.linkedDelivery.deliveryId):null;
+ if(ride){printLabels([ride]);return}
+ const win=window.open('','_blank');
+ if(!win){$('lumenOrderHelp').textContent='Permita a abertura de janelas para imprimir.';return}
+ const lines=(o.products||[]).map(p=>'<tr><td>'+esc(p.name)+'<small>'+esc(p.size?'Tamanho '+p.size:'')+'</small></td>'+
+   '<td>'+esc(p.quantity)+'</td><td>'+(p.picked?'✓':'□')+'</td></tr>').join('');
+ const barcode='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=4&padding=2&text='+encodeURIComponent('VELUM:PEDIDO:'+o.orderId);
+ const doc='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Etiqueta de separação '+esc(o.orderId)+'</title>'+
+  '<style>@page{size:100mm 150mm;margin:0}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#112f57;padding:5mm;margin:0;width:100mm}header{border-bottom:3px solid #ff7a00;padding-bottom:3mm}h1{font-size:17pt;margin:0}h2{font-size:12pt;margin:4mm 0}p{font-size:10pt;line-height:1.45;margin:2mm 0}small{font-size:8pt;color:#5b6c80;display:block;margin-top:1mm}table{width:100%;border-collapse:collapse;margin-top:4mm}td,th{border-bottom:1px solid #d3dce8;padding:2mm;text-align:left;font-size:9pt}img{width:25mm;height:25mm;object-fit:contain}.footer{text-align:center;margin-top:4mm}.tag{font-size:10pt;background:#e9f0f8;padding:2mm;border-radius:2mm}@media print{body{width:100mm}}</style></head><body>'+
+  '<header><h1>VELUM <span style="color:#ff7a00">| LÚMEN</span></h1><p>Etiqueta de separação • '+esc(o.orderId)+'</p></header>'+
+  '<h2>'+esc(o.customerName||'Cliente')+'</h2><p>Revendedora: '+esc(o.resellerName||'Compra direta')+'</p>'+
+  '<p>WhatsApp: '+esc(o.customerPhone||'Não informado')+'</p><p>Modalidade: '+esc(o.fulfillmentMode==='WHOLESALE'?'Atacado':o.fulfillmentMode==='RESALE'?'Mala direta':'Compra direta')+'</p>'+
+  '<table><thead><tr><th>Produto</th><th>Qtd.</th><th>OK</th></tr></thead><tbody>'+lines+'</tbody></table>'+
+  '<div class="footer"><img src="'+barcode+'" alt="QR do pedido"><p class="tag">'+esc(o.orderId)+'</p>'+
+  '<small>Identificação interna do pedido. A etiqueta oficial de transporte será gerada após cadastrar a corrida.</small></div></body></html>';
+ win.document.open();win.document.write(doc);win.document.close();
+ setTimeout(()=>{try{win.focus();win.print()}catch(_){ }},650);
+}
+function lumenOrderCallDriver(){
+ const id=$('lumenOrderDetailHeading').textContent.replace(/^Pedido /,'');
+ const o=lumenOrders.find(x=>x.orderId===id);if(!o)return;
+ if(!lumenOrderReady(o)){lumenOrderRenderHelp(o);return}
+ if(o.linkedDelivery){
+  const code=o.linkedDelivery.status;
+  if(code==='READY_TO_DISPATCH')send('DISPATCH_PREPARED',{deliveryId:o.linkedDelivery.deliveryId});
+  else if(code==='WAITING_DRIVER')send('RECALL_DELIVERY',{deliveryId:o.linkedDelivery.deliveryId});
+  else $('lumenOrderHelp').textContent='Avance a etapa no painel de corridas antes de chamar.';
+  return;
+ }
+ $('lumenOrderDetailModal').hidden=true;
+ selectedBlingOrderId='';selectedBlingOrderNumber=o.orderId;
+ $('customerName').value=o.customerName||'';
+ $('customerPhone').value=o.customerPhone||'';
+ $('deliveryAddress').value=o.deliveryAddress||'';
+ $('deliveryCity').value=o.deliveryCity||'';
+ $('deliveryState').value=o.deliveryState||'';
+ $('deliveryZipCode').value=o.deliveryZipCode||'';
+ $('instructions').value='Pedido VELUM '+o.orderId+' • Produtos Lúmen';
+ $('blingSearch').value=o.orderId;
+ $('blingSearchStatus').textContent='Pedido VELUM '+o.orderId+' vinculado. Revise endereço, frete e paradas antes de gerar a etiqueta.';
+ $('storePickupMode').checked=false;
+ applyStorePickupMode();
+ $('callBox').classList.add('on');
+ $('callBox').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('lumenOrderPrint').onclick=lumenOrderPrintLabel;
+$('lumenOrderCall').onclick=lumenOrderCallDriver;
+
 $('openLumenOrders').onclick=lumenOrdersShow;
 $('lumenOrdersRefresh').onclick=lumenOrdersRequest;
 $('lumenOrdersSearch').oninput=lumenOrdersRender;
@@ -985,6 +1150,12 @@ $('logout').onclick=()=>send('LOGOUT');
 
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_ADMIN_PANEL_PAGE')return;const d=m.payload||{};
  if(m.type==='DATA')render(d);
+ if(m.type==='ORDER_PICK_RESULT')lumenOrderPickedResult(d);
+ if(m.type==='CREATE_RESULT'&&d.ok&&lumenOrdersLoaded)lumenOrdersRequest();
+ if(m.type==='ACTION_RESULT'&&d.ok&&['DISPATCH_PREPARED','RECALL'].includes(d.action)){
+  if(!$('lumenOrderDetailModal').hidden)$('lumenOrderHelp').textContent=d.mensagem||'Chamado registrado. Atualizando a corrida...';
+  if(lumenOrdersLoaded)lumenOrdersRequest();
+ }
  if(m.type==='ORDERS_RESULT')lumenOrdersReceive(d);
  if(m.type==='ERROR')notice(d.message||m.message||'Não foi possível carregar.',false);
  if(m.type==='BLING_SEARCH_RESULT'){
