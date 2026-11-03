@@ -118,9 +118,57 @@
 .receivable-requests h3{margin:0 0 8px;color:#0f3665;font-size:14px}
 @media(max-width:660px){.receivable-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.receivable-filters{grid-template-columns:minmax(0,1fr)}.receivable-title .credit-small{width:100%}}
 </style>
+
+<style id="lidiaDeliveryOverviewStyles">
+.delivery-overview-cards{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px;width:100%;min-width:0}
+.delivery-group{background:white;border:1px solid #dfe7f0;border-radius:17px;padding:clamp(11px,3vw,18px);min-width:0;box-shadow:0 4px 20px #0f36650a}
+.delivery-group-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.delivery-group-title h2{margin:0;color:#103765;font-size:clamp(16px,2.4vw,20px)}
+.delivery-group-title span{font-size:11px;font-weight:800;color:#466584;border-radius:100px;background:#eef3f9;padding:6px 10px;white-space:nowrap}
+.delivery-sender-label{font-size:12px;font-weight:900;color:#163d6c;margin:15px 0 8px;padding:8px 10px;background:#f4f7fc;border-radius:9px;overflow-wrap:anywhere}
+.delivery-table-scroll{width:100%;overflow-x:auto;border:1px solid #e1eaf1;border-radius:11px}
+.delivery-table{border-collapse:collapse;width:100%;min-width:710px;font-size:12px}
+.delivery-table th{text-align:left;background:#edf3f9;color:#214268;font-size:11px;padding:12px 9px;white-space:nowrap}
+.delivery-table td{padding:11px 9px;border-top:1px solid #e5edf4;vertical-align:middle;color:#243d5a}
+.delivery-table tbody tr:nth-child(even){background:#fafbfd}
+.delivery-table strong{font-size:12px;color:#123862}
+.delivery-table small{display:block;color:#7b899b;font-size:10px;margin-top:3px}
+.delivery-row-action{border:0;border-radius:9px;background:#0f3665;color:#fff;padding:10px 14px;cursor:pointer;font-size:11px;font-weight:850;white-space:nowrap}
+.delivery-row-select{width:18px;height:18px;accent-color:#0f3665;cursor:pointer}
+.delivery-overview-filter{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.delivery-overview-filter select{border:1px solid #dfe7ef;border-radius:10px;padding:10px 11px;font-size:12px;color:#12345a;background:white;min-width:130px}
+.delivery-status-pill{display:inline-block;max-width:190px;border-radius:100px;font-size:10px;line-height:1.3;font-weight:900;padding:7px 10px;white-space:normal}
+.delivery-status-pill.phase-wait{background:#fff0d4;color:#93560c}
+.delivery-status-pill.phase-prep{background:#fff0e3;color:#b45d0f}
+.delivery-status-pill.phase-logistic{background:#f0eafc;color:#6b45a6}
+.delivery-status-pill.phase-route{background:#e7f2fd;color:#185b9b}
+.delivery-status-pill.phase-transit{background:#dff5fa;color:#086d81}
+.delivery-status-pill.phase-done{background:#e3f5eb;color:#17734b}
+.delivery-status-pill.phase-cancel{background:#fbe9eb;color:#af3346}
+.delivery-status-pill.phase-other{background:#eef1f5;color:#556779}
+.delivery-detail-overlay{position:fixed;inset:0;z-index:100001;background:#071b35b5;display:grid;place-items:center;padding:12px}
+.delivery-detail-overlay[hidden]{display:none!important}
+.delivery-detail-panel{background:white;color:#15395e;border-radius:20px;width:min(770px,100%);max-height:94dvh;overflow:auto;padding:clamp(16px,3vw,25px);box-shadow:0 18px 65px #05152766}
+.delivery-detail-head{display:flex;gap:12px;align-items:start;justify-content:space-between;border-bottom:1px solid #e1e9f2;padding-bottom:13px}
+.delivery-detail-head h2{margin:0 0 5px;color:#0f3665;font-size:21px;overflow-wrap:anywhere}
+.delivery-detail-head p{margin:0;font-size:11px;color:#74869a}
+.delivery-detail-close{border:0;border-radius:9px;padding:9px 13px;background:#eaf0f7;color:#103765;font-size:12px;font-weight:900;cursor:pointer}
+.delivery-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:13px 0}
+.delivery-detail-box{border:1px solid #e1e8f1;border-radius:12px;background:#f8fafc;padding:12px;min-width:0}
+.delivery-detail-box small{display:block;font-size:10px;color:#778ba0;font-weight:850;margin-bottom:5px}
+.delivery-detail-box strong{display:block;color:#183b67;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.delivery-detail-steps{background:#f6f8fc;border-radius:10px;padding:12px;font-size:11px;color:#385576;line-height:1.8}
+.delivery-detail-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:14px}
+.delivery-detail-actions button{border:1px solid #dde5ef;background:#eef3f9;border-radius:10px;padding:13px 10px;color:#163f6c;font-size:12px;font-weight:850;cursor:pointer}
+.delivery-detail-actions button.primary{background:#0f3665;color:white;border-color:#0f3665}
+.delivery-detail-actions button.orange{background:#ff7a00;color:white;border-color:#ff7a00}
+.delivery-detail-actions button.danger{background:#fff0f1;color:#b53745;border-color:#f5dce0}
+.delivery-empty{padding:16px;font-size:12px;color:#718198}
+@media(max-width:650px){.delivery-detail-grid{grid-template-columns:1fr}.delivery-overview-filter{width:100%}.delivery-overview-filter select{flex:1;min-width:120px}}
+</style>
 </head><body>
-<section class="login hidden" id="loginView" aria-hidden="true" style="display:none!important"><input id="email" type="email" hidden><input id="password" type="password" hidden><button id="loginBtn" hidden>ENTRAR</button><div id="loginError" hidden></div></section> <section class="app hidden" id="appView"><header class="topbar"><div class="topin"><div><div class="topbrand">VE<span>LUM</span> ADMIN</div><div class="topsub">Gerenciamento de cadastros</div></div><button class="logout" id="logout">Sair</button></div></header><main class="wrap"><div class="hero"><div><h1 id="title">Lojas Parceiras</h1><p id="subtitle">Gerencie os cadastros e a disponibilidade das lojas.</p></div><div class="hero-actions"><button class="hero-call" id="newDriverCallBtn">🛵 CHAMAR ENTREGADOR</button><button class="hero-call" type="button" id="newPickupBtn" style="background:#0F3665;border:2px solid #ff7a00">?? GERAR RETIRADA</button><div class="summary"><span class="badge">Total <b id="sumTotal">0</b></span><span class="badge">Ativos <b id="sumActive">0</b></span><span class="badge">Inativos <b id="sumInactive">0</b></span></div></div></div>
-<div class="tabs"><button type="button" class="tab" data-entity="credit">💳 Crédito<small>Limites e cobranças</small></button><button type="button" class="tab" data-entity="receivables">📋 Contas a receber<small>Saldos, prazos e fichas</small></button><button class="tab active" data-entity="sellers">🏬 Lojas Parceiras<small>Cadastro das lojas fornecedoras</small></button><button class="tab" data-entity="resellers">🛍️ Revendedoras<small>Sacoleiras e vitrines de revenda</small></button><button class="tab" data-entity="drivers">🛵 Entregadores<small>Cadastros da rede logística</small></button><button class="tab" data-entity="pending">⏳ Corridas pendentes<small>Aguardando aceite ou em logística interna</small></button><button class="tab" data-entity="deliveries">📍 Acompanhar entregas<small>Somente corridas já aceitas</small></button><button class="tab" data-entity="external">📦 Rastreios externos<small>Correios, Jadlog e outras transportadoras</small></button><button class="tab" data-entity="freights">🚚 Fretes<small>Taxas por CEP e entrega local</small></button><button class="tab" type="button" onclick="nativeMembersOpen()">?? Gerenciar membros Wix<small>Consultar, criar, editar e excluir cadastros</small></button><button class="tab" type="button" onclick="shareVelumApp()">?? Compartilhar aplicativo<small>Enviar o link do APK pelas redes sociais</small></button></div>
+<section class="login hidden" id="loginView" aria-hidden="true" style="display:none!important"><input id="email" type="email" hidden><input id="password" type="password" hidden><button id="loginBtn" hidden>ENTRAR</button><div id="loginError" hidden></div></section> <section class="app hidden" id="appView"><header class="topbar"><div class="topin"><div><div class="topbrand">VE<span>LUM</span> ADMIN</div><div class="topsub">Gerenciamento de cadastros</div></div><button class="logout" id="logout">Sair</button></div></header><main class="wrap"><div class="hero"><div><h1 id="title">Lojas Parceiras</h1><p id="subtitle">Gerencie os cadastros e a disponibilidade das lojas.</p></div><div class="hero-actions"><button class="hero-call" id="newDriverCallBtn">🛵 CHAMAR ENTREGADOR</button><button class="hero-call" type="button" id="newPickupBtn" style="background:#0F3665;border:2px solid #ff7a00">📦 GERAR RETIRADA</button><div class="summary"><span class="badge">Total <b id="sumTotal">0</b></span><span class="badge"><span id="adminActiveLabel">Ativos</span> <b id="sumActive">0</b></span><span class="badge"><span id="adminInactiveLabel">Inativos</span> <b id="sumInactive">0</b></span></div></div></div>
+<div class="tabs"><button type="button" class="tab" data-entity="credit">💳 Crédito<small>Limites e cobranças</small></button><button type="button" class="tab" data-entity="receivables">📋 Contas a receber<small>Saldos, prazos e fichas</small></button><button class="tab active" data-entity="sellers">🏬 Lojas Parceiras<small>Cadastro das lojas fornecedoras</small></button><button class="tab" data-entity="resellers">🛍️ Revendedoras<small>Sacoleiras e vitrines de revenda</small></button><button class="tab" data-entity="drivers">🛵 Entregadores<small>Cadastros da rede logística</small></button><button class="tab" data-entity="deliveries">📍 Acompanhar entregas<small>Visão geral de todas as etapas</small></button><button class="tab" data-entity="freights">🚚 Fretes<small>Taxas por CEP e entrega local</small></button><button class="tab" type="button" onclick="nativeMembersOpen()">👥 Gerenciar membros Wix<small>Consultar, criar, editar e excluir cadastros</small></button><button class="tab" type="button" onclick="shareVelumApp()">📲 Compartilhar aplicativo<small>Enviar o link do APK pelas redes sociais</small></button></div>
 
 <section id="creditPanel" class="credit-panel hidden" aria-label="Crédito VELUM">
  <section class="credit-box">
@@ -156,7 +204,7 @@
   <p class="credit-hint">O status <strong>Adiado</strong> só é usado quando o vencimento de um saldo em aberto foi prorrogado. Após a nova data, passa para <strong>Atrasado</strong> se houver saldo pendente.</p>
  </div>
 </section>
-<div id="entityPanel"><div class="toolbar"><input class="search" id="search" placeholder="Buscar por nome, cidade, WhatsApp..."><button class="refresh" id="refresh">Atualizar</button><div class="label-batch-tools hidden" id="labelBatchTools"><button class="batch-btn batch-select" id="labelBatchSelect" type="button">SELECIONAR TODAS</button><button class="batch-btn batch-print" id="labelBatchPrint" type="button" disabled>IMPRIMIR ETIQUETAS (0)</button></div></div><div class="cards" id="cards"></div></div>
+<div id="entityPanel"><div class="toolbar"><input class="search" id="search" placeholder="Buscar por nome, cidade, WhatsApp..."><button class="refresh" id="refresh">Atualizar</button><div id="deliveryOverviewFilters" class="delivery-overview-filter hidden"><select id="deliveryGroupFilter" aria-label="Filtrar por origem"><option value="ALL">Todas as origens</option><option value="RESELLER">Revendedoras</option><option value="SELLER">Lojas</option><option value="ADMIN">Administrativo</option></select><select id="deliveryPhaseFilter" aria-label="Filtrar por etapa"><option value="ALL">Todas as etapas</option><option value="ACTIVE">Em andamento</option><option value="DONE">Concluídas</option><option value="CANCELED">Canceladas</option></select></div><div class="label-batch-tools hidden" id="labelBatchTools"><button class="batch-btn batch-select" id="labelBatchSelect" type="button">SELECIONAR TODAS</button><button class="batch-btn batch-print" id="labelBatchPrint" type="button" disabled>IMPRIMIR ETIQUETAS (0)</button></div></div><div class="cards" id="cards"></div></div>
 <div id="externalPanel" class="hidden"><div class="external-panel"><section class="external-form"><h2>Adicionar rastreio externo</h2><p>Use para pedidos enviados por Correios, Jadlog ou outra transportadora. Não cria corrida VELUM.</p><div class="external-grid"><div class="field"><label>CLIENTE</label><input id="extCustomerName" placeholder="Nome da cliente"></div><div class="field"><label>WHATSAPP</label><input id="extCustomerPhone" inputmode="tel" placeholder="(88) 99999-9999"></div><div class="field"><label>TRANSPORTADORA</label><input id="extCarrier" placeholder="Correios, Jadlog..."></div><div class="field"><label>CÓDIGO DE RASTREIO</label><input id="extCode" placeholder="Código / objeto"></div><div class="field full"><label>LINK DE RASTREIO</label><input id="extUrl" placeholder="https://..."></div><div class="field full"><label>REFERÊNCIA / PEDIDO (OPCIONAL)</label><input id="extReference" placeholder="Ex.: Pedido #1234"></div></div><button class="external-send" id="extSend">SALVAR E ENVIAR NO WHATSAPP</button></section><section class="external-history"><h2>Rastreios enviados</h2><p>Histórico desta administração, separado das corridas VELUM.</p><div id="extHistory"></div></section></div></div>
 <div id="freightPanel" class="hidden"><div class="card" style="display:block;margin-bottom:14px"><div class="name">Nova taxa / editar taxa</div><div class="grid" style="margin-top:12px">
 <div class="field"><label>NOME DA REGRA</label><input id="frLabel" placeholder="Ex.: Cajazeiras - PB"></div><div class="field"><label>CIDADE</label><input id="frCity" placeholder="Cajazeiras"></div><div class="field"><label>UF</label><input id="frState" maxlength="2" placeholder="PB"></div><div class="field"><label>CEP INICIAL</label><input id="frStart" inputmode="numeric" placeholder="58900000"></div><div class="field"><label>CEP FINAL</label><input id="frEnd" inputmode="numeric" placeholder="58999999"></div><div class="field"><label>VALOR (R$)</label><input id="frRate" inputmode="decimal" placeholder="7,00"></div><div class="field"><label>PRAZO (DIAS)</label><input id="frDays" inputmode="numeric" value="1"></div><div class="field"><label>PRIORIDADE</label><input id="frPriority" inputmode="numeric" value="100"></div></div><label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:11px"><input id="frActive" type="checkbox" checked> Regra ativa</label><div style="display:flex;gap:8px"><button class="primary" id="frSave">SALVAR TAXA</button><button class="refresh" id="frClear" type="button">Limpar</button></div></div><div class="cards" id="freightCards"></div></div></main></section>
@@ -239,10 +287,20 @@
  <div class="credit-acts" id="creditReviewActions" hidden><button type="button" id="creditReviewApprove">Aprovar solicitação após liberar limite</button><button type="button" id="creditReviewDecline" class="warn">Recusar solicitação</button></div>
  <div class="credit-message" id="creditMessage" role="status" aria-live="polite"></div>
 </section></div>
+
+<div id="deliveryDetailModal" class="delivery-detail-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="deliveryDetailHeading">
+ <section class="delivery-detail-panel">
+  <header class="delivery-detail-head"><div><h2 id="deliveryDetailHeading">Detalhes da corrida</h2><p id="deliveryDetailReference">Consultando corrida...</p></div><button type="button" id="deliveryDetailClose" class="delivery-detail-close">Fechar</button></header>
+  <div id="deliveryDetailStatus" style="margin-top:13px"></div>
+  <div id="deliveryDetailFields" class="delivery-detail-grid"></div>
+  <div id="deliveryDetailStages"></div>
+  <div id="deliveryDetailActions" class="delivery-detail-actions"></div>
+ </section>
+</div>
 <div class="toast" id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);let token='',current='sellers',rows=[],visibleRows=[],freights=[],editingFreight='',callDriverId='',callDriverName='',callQuotedFee=null,trackingWindows={},suggestTimers={},suggestSeq={pickup:0,delivery:0},logisticsStages=[],dispatchDeliveryId='',dispatchDrivers=[],adminPoll=null,editingDeliveryId='';const selectedLabels=new Set();
-const cfg={credit:{title:'Crédito VELUM',subtitle:'Limites liberados, prazos e cobrança individual ou em lote.'},receivables:{title:'Contas a receber',subtitle:'Acompanhe saldos em aberto, vencimentos, atrasos, adiamentos e fichas financeiras.'},sellers:{title:'Lojas Parceiras',subtitle:'Gerencie lojas fornecedoras, dados de contato e ativação.'},resellers:{title:'Revendedoras',subtitle:'Gerencie sacoleiras, vitrines e status de ativação.'},drivers:{title:'Entregadores',subtitle:'Gerencie entregadores, veículos e disponibilidade do cadastro.'},deliveries:{title:'Acompanhar entregas',subtitle:'Acompanhe em tempo real as corridas ativas da rede VELUM.'},external:{title:'Rastreios externos',subtitle:'Envie rastreios de Correios, Jadlog e outras transportadoras sem criar corrida VELUM.'},freights:{title:'Fretes',subtitle:'Configure taxas fixas por cidade, UF e faixa de CEP.'}};
+const cfg={credit:{title:'Crédito VELUM',subtitle:'Limites liberados, prazos e cobrança individual ou em lote.'},receivables:{title:'Contas a receber',subtitle:'Acompanhe saldos em aberto, vencimentos, atrasos, adiamentos e fichas financeiras.'},sellers:{title:'Lojas Parceiras',subtitle:'Gerencie lojas fornecedoras, dados de contato e ativação.'},resellers:{title:'Revendedoras',subtitle:'Gerencie sacoleiras, vitrines e status de ativação.'},drivers:{title:'Entregadores',subtitle:'Gerencie entregadores, veículos e disponibilidade do cadastro.'},deliveries:{title:'Acompanhar entregas',subtitle:'Todas as entregas agrupadas por revendedora, loja parceira e administrativo.'},external:{title:'Rastreios externos',subtitle:'Envie rastreios de Correios, Jadlog e outras transportadoras sem criar corrida VELUM.'},freights:{title:'Fretes',subtitle:'Configure taxas fixas por cidade, UF e faixa de CEP.'}};
 function send(type,payload={}){parent.postMessage({source:'VELUM_ADMIN_PORTAL',type,payload},'*')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function toast(t){$('toast').textContent=t;$('toast').style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>$('toast').style.display='none',2700)}
@@ -291,6 +349,180 @@ function printSelectedLabels(){
  printAdminLabels(list);
 }
 
+const deliveryPhases={
+ READY_TO_DISPATCH:['Etiqueta pronta','phase-prep'],PREPARING:['Preparando','phase-prep'],LOGISTICS_PACKED:['Produto embalado','phase-prep'],
+ LOGISTICS_IN_TRANSIT:['Em logística interna','phase-logistic'],AT_LOGISTICS_CENTER:['No centro logístico','phase-logistic'],
+ LOGISTICS_READY_FOR_DRIVER:['Pronta para motorista','phase-logistic'],
+ WAITING_DRIVER:['Aguardando motorista','phase-wait'],DRIVER_ACCEPTED:['Motorista aceitou','phase-route'],
+ GOING_TO_STORE:['A caminho da retirada','phase-route'],AT_STORE:['No local da retirada','phase-route'],
+ COLLECTED:['Coletado','phase-route'],IN_TRANSIT:['Em trânsito','phase-transit'],
+ OUT_FOR_DELIVERY:['Saiu para entrega','phase-transit'],GOING_TO_DELIVERY:['Em rota de entrega','phase-transit'],
+ AT_DELIVERY:['No destino','phase-transit'],
+ DELIVERED:['Entregue','phase-done'],COMPLETED:['Concluída','phase-done'],
+ PICKED_UP:['Retirado','phase-done'],COMPLETED_PICKUP:['Retirada concluída','phase-done'],
+ CANCELED:['Cancelada','phase-cancel'],CANCELLED:['Cancelada','phase-cancel']
+};
+const deliveryGroupTypes=[['RESELLER','Revendedoras','🛍️'],['SELLER','Lojas','🏬'],['ADMIN','Administrativo','🏢']];
+const deliveryCompletedStates=new Set(['DELIVERED','COMPLETED','PICKED_UP','COMPLETED_PICKUP']);
+const deliveryCanceledStates=new Set(['CANCELED','CANCELLED']);
+const deliveryPendingStates=new Set(['READY_TO_DISPATCH','PREPARING','LOGISTICS_PACKED','LOGISTICS_IN_TRANSIT','AT_LOGISTICS_CENTER','LOGISTICS_READY_FOR_DRIVER','WAITING_DRIVER']);
+let deliveryModalId='';
+function deliveryStatusMeta(code){
+ const value=String(code||'').toUpperCase();
+ return deliveryPhases[value]||[value?value.replace(/_/g,' ').toLowerCase():'Situação não informada','phase-other'];
+}
+function deliveryStatusHtml(status){
+ const [label,style]=deliveryStatusMeta(status);
+ return '<span class="delivery-status-pill '+style+'">'+esc(label)+'</span>';
+}
+function deliveryGroupFor(x){
+ if(['RESELLER','SELLER','ADMIN'].includes(x.senderGroup))return x.senderGroup;
+ const t=String(x.callerType||'').toUpperCase();
+ return t==='RESELLER'||x.resellerId?'RESELLER':t==='SELLER'||t==='LUMEN'||x.sellerId?'SELLER':'ADMIN';
+}
+function deliverySenderFor(x){
+ return String(x.senderName||x.callerName||(deliveryGroupFor(x)==='ADMIN'?'VELUM Administrativo':deliveryGroupFor(x)==='SELLER'?'Loja parceira':'Revendedora')).trim();
+}
+function deliveryDriverFor(x){
+ return String(x.driverName||x.selectedDriverName||(x.driverId||x.selectedDriverId?'Motorista definido':'Aguardando motorista'));
+}
+function deliveryPhaseFilterMatch(x,filter){
+ const code=String(x.status||'').toUpperCase();
+ if(filter==='DONE')return deliveryCompletedStates.has(code);
+ if(filter==='CANCELED')return deliveryCanceledStates.has(code);
+ if(filter==='ACTIVE')return !deliveryCompletedStates.has(code)&&!deliveryCanceledStates.has(code);
+ return true;
+}
+function deliveryTimestamp(x){
+ const d=new Date(x.createdAt||0);
+ return Number.isFinite(d.getTime())?d.getTime():0;
+}
+function renderDeliveryOverview(){
+ const term=$('search').value.trim().toLocaleLowerCase('pt-BR');
+ const groupFilter=$('deliveryGroupFilter').value,phaseFilter=$('deliveryPhaseFilter').value;
+ const data=rows.filter(x=>x.type==='delivery');
+ const filtered=data.filter(x=>{
+  const group=deliveryGroupFor(x);
+  return (groupFilter==='ALL'||group===groupFilter)&&deliveryPhaseFilterMatch(x,phaseFilter)&&(!term||[
+   x.id,x.senderName,x.callerName,x.customerName,x.customerPhone,
+   x.deliveryCity,x.pickupCity,x.driverName,x.selectedDriverName,x.status
+  ].join(' ').toLocaleLowerCase('pt-BR').includes(term));
+ }).sort((a,b)=>deliveryTimestamp(b)-deliveryTimestamp(a));
+ visibleRows=filtered;
+ $('sumTotal').textContent=data.length;
+ $('sumActive').textContent=data.filter(x=>deliveryPhaseFilterMatch(x,'ACTIVE')).length;
+ $('sumInactive').textContent=data.filter(x=>!deliveryPhaseFilterMatch(x,'ACTIVE')).length;
+ $('cards').classList.add('delivery-overview-cards');
+ const groupMarkup=deliveryGroupTypes.filter(([group])=>groupFilter==='ALL'||groupFilter===group).map(([group,title,emoji])=>{
+  const list=filtered.filter(x=>deliveryGroupFor(x)===group);
+  const bySender=new Map();
+  for(const x of list){
+   const sender=deliverySenderFor(x);
+   if(!bySender.has(sender))bySender.set(sender,[]);
+   bySender.get(sender).push(x);
+  }
+  const tables=[...bySender].sort((a,b)=>a[0].localeCompare(b[0],'pt-BR')).map(([sender,items])=>{
+   const trs=items.map(x=>'<tr>'+
+    '<td><input type="checkbox" class="delivery-row-select" data-label-select="'+esc(x.id)+'" aria-label="Selecionar etiqueta da corrida '+esc(x.id)+'" '+(selectedLabels.has(String(x.id))?'checked':'')+'></td>'+
+    '<td><strong>'+esc(deliverySenderFor(x))+'</strong><small>'+esc(x.pickupCity||'Cidade não informada')+'</small></td>'+
+    '<td><strong>'+esc(x.customerName||'Destinatário não informado')+'</strong><small>'+esc(x.customerPhone||'')+'</small></td>'+
+    '<td>'+esc(x.deliveryCity||x.pickupCity||'—')+'</td>'+
+    '<td>'+esc(deliveryDriverFor(x))+'</td>'+
+    '<td>'+deliveryStatusHtml(x.status)+'</td>'+
+    '<td><button type="button" class="delivery-row-action" data-delivery-detail="'+esc(x.id)+'">Ações</button></td></tr>').join('');
+   return '<div class="delivery-sender-label">'+esc(sender)+' · '+items.length+' corrida(s)</div>'+
+    '<div class="delivery-table-scroll"><table class="delivery-table"><thead><tr><th>✓</th><th>Remetente</th><th>Destinatário</th><th>Cidade</th><th>Motorista</th><th>Status</th><th>Ação</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
+  }).join('');
+  return '<section class="delivery-group"><header class="delivery-group-title"><h2>'+emoji+' '+title+'</h2><span>'+list.length+' corrida(s)</span></header>'+
+   (list.length?tables:'<div class="delivery-empty">Nenhuma entrega encontrada neste grupo para o filtro selecionado.</div>')+'</section>';
+ }).join('');
+ $('cards').innerHTML=groupMarkup;
+ $('cards').querySelectorAll('[data-delivery-detail]').forEach(btn=>btn.onclick=()=>openDeliveryDetail(btn.dataset.deliveryDetail));
+ $('cards').querySelectorAll('[data-label-select]').forEach(box=>box.onchange=()=>{
+  const id=String(box.dataset.labelSelect);
+  box.checked?selectedLabels.add(id):selectedLabels.delete(id);
+  updateLabelBatchTools();
+ });
+ updateLabelBatchTools();
+}
+function closeDeliveryDetail(){
+ deliveryModalId='';
+ $('deliveryDetailModal').hidden=true;
+}
+function detailField(label,value){
+ return '<div class="delivery-detail-box"><small>'+esc(label)+'</small><strong>'+esc(value||'Não informado')+'</strong></div>';
+}
+function deliveryPendingAction(x){
+ const status=String(x.status||'').toUpperCase();
+ if(!x.internalLogistics)return null;
+ if(status==='PREPARING')return ['MARK_PACKED','Confirmar produto embalado'];
+ if(status==='LOGISTICS_PACKED'||status==='AT_LOGISTICS_CENTER')return ['SEND_TO_CENTER','Enviar ao próximo ponto'];
+ if(status==='LOGISTICS_IN_TRANSIT')return ['ARRIVE_CENTER','Confirmar chegada'];
+ if(status==='LOGISTICS_READY_FOR_DRIVER')return ['CALL_DRIVER','Chamar motorista'];
+ return null;
+}
+function deliveryDetailDo(action){
+ const x=rows.find(r=>r.type==='delivery'&&String(r.id)===String(deliveryModalId));
+ if(!x)return toast('Corrida não encontrada na lista. Atualize a página.');
+ if(action==='PRINT')return printAdminLabel(x);
+ if(action==='TRACK')return x.trackingUrl?window.open(x.trackingUrl,'_blank','noopener,noreferrer'):toast('Rastreio indisponível.');
+ if(action==='SHARE')return x.trackingUrl?window.open('https://wa.me/?text='+encodeURIComponent('Acompanhe sua entrega VELUM: '+x.trackingUrl),'_blank','noopener,noreferrer'):toast('Link de rastreio indisponível.');
+ if(action==='EDIT'){closeDeliveryDetail();return openEditPending(x.id)}
+ if(action==='CALL'){closeDeliveryDetail();return callPrepared(x.id)}
+ if(action==='RECALL'){closeDeliveryDetail();return recallPending(x.id)}
+ if(action==='CHOOSE'){closeDeliveryDetail();return openDispatchModal(x.id)}
+ if(action==='CANCEL'){closeDeliveryDetail();return cancelPending(x.id)}
+ if(action.startsWith('LOGISTICS:')){
+  const requested=action.split(':')[1],allowed=deliveryPendingAction(x);
+  if(!allowed||allowed[0]!==requested)return toast('Etapa não disponível nesta corrida.');
+  closeDeliveryDetail();
+  return doAdminLogistics(x.id,requested);
+ }
+}
+function openDeliveryDetail(id){
+ const x=rows.find(r=>r.type==='delivery'&&String(r.id)===String(id));
+ if(!x)return toast('Corrida não localizada. Atualize a lista.');
+ deliveryModalId=String(x.id);
+ $('deliveryDetailHeading').textContent='Corrida '+x.id;
+ $('deliveryDetailReference').textContent=deliverySenderFor(x)+' · '+(x.createdAt?new Date(x.createdAt).toLocaleString('pt-BR'):'Data não informada');
+ $('deliveryDetailStatus').innerHTML=deliveryStatusHtml(x.status);
+ const from=[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood,x.pickupCity,x.pickupState,x.pickupZipCode].filter(Boolean).join(', ');
+ const to=[x.deliveryAddress,x.deliveryCity,x.deliveryState,x.deliveryZipCode].filter(Boolean).join(', ');
+ const payment=x.deliveryPaymentMode==='PAY_AT_PICKUP'?'Remetente paga na retirada':x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'Destinatário paga na entrega':'Não informado';
+ $('deliveryDetailFields').innerHTML=[
+  detailField('Remetente',deliverySenderFor(x)),detailField('Destinatário',x.customerName),
+  detailField('Cidade',x.deliveryCity||x.pickupCity),detailField('Motorista',deliveryDriverFor(x)),
+  detailField('Retirada',from),detailField('Entrega',to),
+  detailField('WhatsApp da cliente',x.customerPhone),detailField('Pagamento do frete',payment),
+  detailField('Valor do frete',money(x.deliveryFee)),detailField('Observações',x.deliveryInstructions),
+  detailField('Pedido',x.orderId||x.sellerOrderId||x.id)
+ ].join('');
+ const stages=Array.isArray(x.logisticsStages)?x.logisticsStages:[];
+ $('deliveryDetailStages').innerHTML=stages.length?'<div class="delivery-detail-steps"><strong>Etapas da logística interna</strong>'+
+  stages.map((st,i)=>'<div>'+esc((i+1)+'. '+String(st.name||'Etapa'))+' · '+esc(st.status||'Pendente')+'</div>').join('')+'</div>':'';
+ const status=String(x.status||'').toUpperCase();
+ const pending=deliveryPendingStates.has(status);
+ const actions=[
+  ['PRINT','🖨️ Imprimir etiqueta','primary'],
+  ...(x.trackingUrl?[['TRACK','📍 Abrir rastreio',''],['SHARE','📲 Compartilhar rastreio','']]:[]),
+  ...(pending?[['EDIT','✏️ Editar corrida','']]:[]),
+  ...(status==='READY_TO_DISPATCH'?[['CALL','🛵 Chamar motorista','orange'],['CHOOSE','Escolher motorista','']]:[]),
+  ...(status==='WAITING_DRIVER'?[['RECALL','🛵 Chamar novamente','orange'],['CHOOSE','Chamar outro motorista','']]:[]),
+  ...(deliveryPendingAction(x)?[['LOGISTICS:'+deliveryPendingAction(x)[0],deliveryPendingAction(x)[1],'orange']]:[]),
+  ...(pending?[['CANCEL','Cancelar corrida','danger']]:[])
+ ];
+ $('deliveryDetailActions').innerHTML=actions.map(([action,label,cls])=>
+  '<button type="button" class="'+cls+'" data-delivery-detail-action="'+esc(action)+'">'+esc(label)+'</button>').join('');
+ $('deliveryDetailActions').querySelectorAll('[data-delivery-detail-action]').forEach(btn=>btn.onclick=()=>deliveryDetailDo(btn.dataset.deliveryDetailAction));
+ $('deliveryDetailModal').hidden=false;
+ $('deliveryDetailClose').focus();
+}
+$('deliveryDetailClose').onclick=closeDeliveryDetail;
+$('deliveryDetailModal').onclick=e=>{if(e.target===$('deliveryDetailModal'))closeDeliveryDetail()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('deliveryDetailModal').hidden)closeDeliveryDetail()});
+$('deliveryGroupFilter').onchange=()=>{if(current==='deliveries')renderDeliveryOverview()};
+$('deliveryPhaseFilter').onchange=()=>{if(current==='deliveries')renderDeliveryOverview()};
+
 function card(x){if(x.type==='delivery'){const payer=x.deliveryPaymentMode==='PAY_AT_PICKUP'?'Loja / revendedora paga na retirada':x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'Recebedor paga na entrega':'Pagamento não informado';const driverLabel=x.driverName||x.selectedDriverName||(x.driverId?'Entregador definido':'Aguardando entregador');const city=x.deliveryCity||x.pickupCity||'Cidade não informada';const headline=[x.customerName||'Cliente',driverLabel,city].join(' > ');const stages=Array.isArray(x.logisticsStages)?x.logisticsStages:[];let flow='';if(x.internalLogistics){const stageList=stages.map((st,i)=>(i+1)+'. '+esc(st.name||'Ponto')+' — '+esc(st.status||'PENDENTE')).join('<br>');let action='',label='';if(x.status==='PREPARING'){action='MARK_PACKED';label='PRODUTO CONFERIDO E EMBALADO'}else if(x.status==='LOGISTICS_PACKED'||x.status==='AT_LOGISTICS_CENTER'){action='SEND_TO_CENTER';label='ENVIAR AO PRÓXIMO PONTO'}else if(x.status==='LOGISTICS_IN_TRANSIT'){action='ARRIVE_CENTER';label='CONFIRMAR CHEGADA'}else if(x.status==='LOGISTICS_READY_FOR_DRIVER'){action='CALL_DRIVER';label='CHAMAR ENTREGADOR'}flow='<div class="logistics-flow"><b>Logística interna</b><span>'+stageList+'</span>'+(action?'<button class="logistics-action" data-logistics-action="'+action+'" data-delivery-id="'+esc(x.id)+'">'+label+'</button>':'')+'</div>'}return '<article class="card" style="grid-template-columns:1fr"><div><label class="label-select"><input type="checkbox" data-label-select="'+esc(x.id)+'" '+(selectedLabels.has(String(x.id))?'checked':'')+'> Selecionar etiqueta</label><div class="head"><div class="name">'+esc(headline)+'</div><span class="status on">'+esc(x.status==='READY_TO_DISPATCH'?'ETIQUETA PRONTA':(x.status||'EM CURSO'))+'</span></div><div class="meta"><div>📍 Retirada: '+esc(x.pickupAddress||'—')+'</div><div>📍 Entrega: '+esc(x.deliveryAddress||'—')+'</div><div>👤 Cliente: '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'</div><div>🛵 Entregador: '+esc(driverLabel)+'</div><div>💰 '+esc(payer)+' • '+money(x.deliveryFee)+'</div></div><div class="links">'+(x.trackingUrl?'<a href="'+esc(x.trackingUrl)+'" target="_blank" rel="noopener">Rastreio VELUM</a>':'')+'</div>'+flow+'<button class="print-label-btn" data-print-label="'+esc(x.id)+'">'+printerSvg()+'IMPRIMIR ETIQUETA</button>'+(current==='pending'?'<div class="pending-actions">'+(x.status==='READY_TO_DISPATCH'?'<button class="recall-btn" data-call-prepared="'+esc(x.id)+'">CHAMAR ENTREGADOR</button><button class="other-driver-btn" data-other-driver="'+esc(x.id)+'">ESCOLHER ENTREGADOR</button>':x.status==='WAITING_DRIVER'?'<button class="recall-btn" data-recall-delivery="'+esc(x.id)+'">CHAMAR NOVAMENTE</button><button class="other-driver-btn" data-other-driver="'+esc(x.id)+'">CHAMAR OUTRO ENTREGADOR</button>':'')+'<button class="edit-pending-btn" data-edit-pending="'+esc(x.id)+'">EDITAR CORRIDA</button><button class="cancel-pending-btn" data-cancel-pending="'+esc(x.id)+'">CANCELAR CORRIDA</button></div>':'')+'</div></article>'}const active=x.active===true;const extra=x.type==='driver'?(x.vehicleInfo?'<div>🚗 '+esc(x.vehicleInfo)+'</div>':''):(x.responsible?'<div>Responsável: '+esc(x.responsible)+'</div>':'');const noStore=x.type!=='driver'&&!x.storefrontUrl?'<div>🔗 Vitrine ainda não cadastrada</div>':'';const driverCall=x.type==='driver'&&active?'<button class="driver-call" data-call-driver="'+esc(x.id)+'" data-call-name="'+esc(x.name)+'">Chamar entregador</button>':'';return '<article class="card"><div class="photo">'+mediaHtml(x)+'</div><div><div class="head"><div class="name">'+esc(x.name)+'</div><span class="status '+(active?'on':'off')+'">'+(active?'ATIVO':'INATIVO')+'</span></div><div class="meta">'+extra+(address(x)?'<div>📍 '+esc(address(x))+'</div>':'<div>📍 Endereço não cadastrado</div>')+(x.whatsapp?'<div>📱 '+esc(x.whatsapp)+'</div>':'')+(x.instagram?'<div>Instagram: '+esc(x.instagram)+'</div>':'')+noStore+'</div><div class="links">'+links(x)+'</div></div><div class="actions">'+driverCall+'<button class="toggle '+(active?'on':'off')+'" data-action="'+(active?'DEACTIVATE':'ACTIVATE')+'" data-id="'+esc(x.id)+'">'+(active?'Desativar':'Ativar')+'</button>'+(x.type==='reseller'?'<button class="toggle off" data-credit-reseller="'+esc(x.id)+'">💳 Financeiro</button><button class="toggle off" data-edit-reseller="'+esc(x.id)+'">Editar dados</button><button class="toggle off" data-reseller-cart="'+esc(x.id)+'" title="Ver itens reais do carrinho">🛒 Carrinho</button><button class="toggle off" data-reseller-settings="'+esc(x.id)+'">⚙️ Ajustes</button>':'')+'<button class="delete" data-action="DELETE" data-id="'+esc(x.id)+'">Excluir</button></div></article>'}
 let resellerCartId='',resellerCartTimer=null;
 function cartEscape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -330,7 +562,7 @@ function nativeMembersRequest(action,data={}){document.getElementById('nativeMem
 function nativeMemberCreate(){const name=document.getElementById('nativeCreateName').value.trim(),email=document.getElementById('nativeCreateEmail').value.trim();if(!name||!email)return alert('Preencha nome e e-mail.');if(!confirm('Criar conta nativa Wix para '+email+'? Este passo nao cria automaticamente o perfil operacional.'))return;nativeMembersRequest('CREATE',{name,email})}
 let nativeMembersCache=[];
 function nativeMembersResult(d){const out=document.getElementById('nativeMembersStatus');out.textContent=d.mensagem||(d.ok?'Consulta concluida.':'Falha na consulta.');if(!d.ok)return;if(d.action!=='LIST'){nativeMembersRequest('LIST');return}nativeMembersCache=d.items||[];filterNativeMembers();}
-function filterNativeMembers(){const search=String(document.getElementById('nativeMembersSearch')?.value||'').trim().toLowerCase();const digits=search.replace(/\D/g,'');const result=nativeMembersCache.filter(m=>!search||[m.name,m.email,m.phone].some(v=>String(v||'').toLowerCase().includes(search))||(digits.length>=3&&String(m.phone||'').replace(/\D/g,'').includes(digits)));document.getElementById('nativeMembersCount').textContent=result.length+' de '+nativeMembersCache.length+' membros';const el=document.getElementById('nativeMemberRows');el.replaceChildren();if(!result.length)el.textContent='Nenhum membro encontrado';result.forEach(m=>{const row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #e3e9ef;display:grid;gap:9px;overflow-wrap:anywhere;min-width:0';const info=document.createElement('div');info.textContent=[m.name,m.email,m.phone,m.status].filter(Boolean).join(' ? ');const edit=document.createElement('button');edit.textContent='Editar nome';edit.onclick=()=>{const name=prompt('Nome do membro',m.name||'');if(name)nativeMembersRequest('EDIT',{id:m.id,name})};const del=document.createElement('button');del.textContent='Excluir membro Wix';del.style.color='#a91c1c';del.onclick=()=>{if(confirm('ATEN??O: excluir permanentemente '+m.email+'? Esta a??o N?O pode ser desfeita.'))nativeMembersRequest('DELETE',{id:m.id,confirm:true})};edit.style.cssText='background:#0F3665;color:#fff;border:0;border-radius:10px;padding:10px;font-weight:800';del.style.cssText='background:#fff0ee;color:#af2020;border:1px solid #f2cac3;border-radius:10px;padding:10px;font-weight:800';row.append(info,edit,del);el.append(row)})}
+function filterNativeMembers(){const search=String(document.getElementById('nativeMembersSearch')?.value||'').trim().toLowerCase();const digits=search.replace(/\D/g,'');const result=nativeMembersCache.filter(m=>!search||[m.name,m.email,m.phone].some(v=>String(v||'').toLowerCase().includes(search))||(digits.length>=3&&String(m.phone||'').replace(/\D/g,'').includes(digits)));document.getElementById('nativeMembersCount').textContent=result.length+' de '+nativeMembersCache.length+' membros';const el=document.getElementById('nativeMemberRows');el.replaceChildren();if(!result.length)el.textContent='Nenhum membro encontrado';result.forEach(m=>{const row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #e3e9ef;display:grid;gap:9px;overflow-wrap:anywhere;min-width:0';const info=document.createElement('div');info.textContent=[m.name,m.email,m.phone,m.status].filter(Boolean).join(' ? ');const edit=document.createElement('button');edit.textContent='Editar nome';edit.onclick=()=>{const name=prompt('Nome do membro',m.name||'');if(name)nativeMembersRequest('EDIT',{id:m.id,name})};const del=document.createElement('button');del.textContent='Excluir membro Wix';del.style.color='#a91c1c';del.onclick=()=>{if(confirm('ATENÇÃO: excluir permanentemente '+m.email+'? Esta ação NÃO pode ser desfeita.'))nativeMembersRequest('DELETE',{id:m.id,confirm:true})};edit.style.cssText='background:#0F3665;color:#fff;border:0;border-radius:10px;padding:10px;font-weight:800';del.style.cssText='background:#fff0ee;color:#af2020;border:1px solid #f2cac3;border-radius:10px;padding:10px;font-weight:800';row.append(info,edit,del);el.append(row)})}
 let resellerEditId='',resellerEditMode='',resellerDetailsPending=false;
 function openResellerEditor(id){openResellerDetail(id,'CONTACT')}
 function openResellerSettings(id){openResellerDetail(id,'DESIGN')}
@@ -385,14 +617,14 @@ function uploadResellerLogo(){
  reader.onerror=()=>{btn.disabled=false;btn.textContent='Enviar logomarca';$('resellerSettingsStatus').textContent='Falha ao ler imagem.'};
  reader.readAsDataURL(file);
 }
-function render(){const q=$('search').value.trim().toLowerCase();const f=rows.filter(x=>[x.name,x.responsible,x.city,x.state,x.whatsapp,x.instagram,x.vehicleInfo,x.status,x.pickupAddress,x.deliveryAddress,x.customerName,x.customerPhone].join(' ').toLowerCase().includes(q));visibleRows=f;$('cards').innerHTML=f.length?f.map(card).join(''):'<div class="empty">'+(current==='pending'?'Nenhuma corrida pendente.':current==='deliveries'?'Nenhuma corrida aceita em andamento.':'Nenhum cadastro encontrado.')+'</div>';document.querySelectorAll('[data-credit-reseller]').forEach(b=>b.onclick=()=>{const r=rows.find(x=>x.id===b.dataset.creditReseller);if(r){$('creditPhone').value=r.whatsapp||'';creditPick('RESELLER',r.id)}});
+function render(){if(current==='deliveries'){renderDeliveryOverview();return}const q=$('search').value.trim().toLowerCase();const f=rows.filter(x=>[x.name,x.responsible,x.city,x.state,x.whatsapp,x.instagram,x.vehicleInfo,x.status,x.pickupAddress,x.deliveryAddress,x.customerName,x.customerPhone].join(' ').toLowerCase().includes(q));visibleRows=f;$('cards').innerHTML=f.length?f.map(card).join(''):'<div class="empty">'+(current==='pending'?'Nenhuma corrida pendente.':current==='deliveries'?'Nenhuma corrida aceita em andamento.':'Nenhum cadastro encontrado.')+'</div>';document.querySelectorAll('[data-credit-reseller]').forEach(b=>b.onclick=()=>{const r=rows.find(x=>x.id===b.dataset.creditReseller);if(r){$('creditPhone').value=r.whatsapp||'';creditPick('RESELLER',r.id)}});
 document.querySelectorAll('[data-edit-reseller]').forEach(b=>b.onclick=()=>openResellerEditor(b.dataset.editReseller));document.querySelectorAll('[data-reseller-settings]').forEach(b=>b.onclick=()=>openResellerSettings(b.dataset.resellerSettings));document.querySelectorAll('[data-reseller-cart]').forEach(b=>b.onclick=()=>openResellerCart(b.dataset.resellerCart));document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.action));document.querySelectorAll('[data-call-driver]').forEach(b=>b.onclick=()=>openDriverCall(b.dataset.callDriver,b.dataset.callName));document.querySelectorAll('[data-logistics-action]').forEach(b=>b.onclick=()=>doAdminLogistics(b.dataset.deliveryId,b.dataset.logisticsAction));document.querySelectorAll('[data-call-prepared]').forEach(b=>b.onclick=()=>callPrepared(b.dataset.callPrepared));document.querySelectorAll('[data-recall-delivery]').forEach(b=>b.onclick=()=>recallPending(b.dataset.recallDelivery));document.querySelectorAll('[data-other-driver]').forEach(b=>b.onclick=()=>openDispatchModal(b.dataset.otherDriver));document.querySelectorAll('[data-edit-pending]').forEach(b=>b.onclick=()=>openEditPending(b.dataset.editPending));document.querySelectorAll('[data-cancel-pending]').forEach(b=>b.onclick=()=>cancelPending(b.dataset.cancelPending));document.querySelectorAll('[data-print-label]').forEach(b=>b.onclick=()=>printAdminLabel(rows.find(x=>String(x.id)===String(b.dataset.printLabel))));document.querySelectorAll('[data-label-select]').forEach(b=>b.onchange=()=>{const id=String(b.dataset.labelSelect);b.checked?selectedLabels.add(id):selectedLabels.delete(id);updateLabelBatchTools()});updateLabelBatchTools()}
 
 function scheduleAdminPoll(){
  clearInterval(adminPoll);adminPoll=null;
  if(current==='pending'||current==='deliveries')adminPoll=setInterval(()=>{
    if(!token||document.hidden)return;
-   if($('driverCallModal')?.classList.contains('on')||$('dispatchModal')?.classList.contains('on'))return;
+   if($('driverCallModal')?.classList.contains('on')||$('dispatchModal')?.classList.contains('on')||!$('deliveryDetailModal').hidden)return;
    load(true);
  },30000);
 }
@@ -859,7 +1091,7 @@ $('loginBtn').onclick=()=>{const email=$('email').value.trim(),password=$('passw
 $('password').onkeydown=e=>{if(e.key==='Enter')$('loginBtn').click()};
 $('logout').onclick=()=>{send('LOGOUT',{token});showLogin()};
 $('refresh').onclick=load;$('search').oninput=render;$('frSave').onclick=saveFreight;$('frClear').onclick=clearFreight;$('newDriverCallBtn').onclick=()=>openDriverCall('','Todos os entregadores');$('newPickupBtn').onclick=()=>{$('pickupModal').classList.add('on')};document.addEventListener('DOMContentLoaded',()=>{$('pickupCancel').onclick=()=>{$('pickupModal').classList.remove('on')};$('pickupGenerate').onclick=()=>{const data={buyerName:$('pickupBuyer').value.trim(),buyerPhone:$('pickupPhone').value.trim(),notes:$('pickupNotes').value.trim()};if(!data.buyerName||!data.buyerPhone)return alert('Informe nome e telefone do comprador');$('pickupGenerate').disabled=true;send('CREATE_PICKUP',{token,data})};});$('labelBatchSelect').onclick=toggleVisibleLabels;$('labelBatchPrint').onclick=printSelectedLabels;
-document.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>{current=b.dataset.entity;selectedLabels.clear();document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x===b));$('title').textContent=cfg[current].title;$('subtitle').textContent=cfg[current].subtitle;$('search').value='';$('entityPanel').classList.toggle('hidden',current==='freights'||current==='external'||current==='credit'||current==='receivables');$('creditPanel').classList.toggle('hidden',current!=='credit');$('receivablesPanel').classList.toggle('hidden',current!=='receivables');$('externalPanel').classList.toggle('hidden',current!=='external');$('freightPanel').classList.toggle('hidden',current!=='freights');load();scheduleAdminPoll()});
+document.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>{current=b.dataset.entity;selectedLabels.clear();document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x===b));$('title').textContent=cfg[current].title;$('subtitle').textContent=cfg[current].subtitle;$('search').value='';$('search').placeholder=current==='deliveries'?'Pesquisar remetente, destinatário, cidade, motorista ou status...':'Buscar por nome, cidade, WhatsApp...';$('adminActiveLabel').textContent=current==='deliveries'?'Em curso':'Ativos';$('adminInactiveLabel').textContent=current==='deliveries'?'Encerradas':'Inativos';$('entityPanel').classList.toggle('hidden',current==='freights'||current==='external'||current==='credit'||current==='receivables');$('deliveryOverviewFilters').classList.toggle('hidden',current!=='deliveries');$('cards').classList.toggle('delivery-overview-cards',current==='deliveries');$('creditPanel').classList.toggle('hidden',current!=='credit');$('receivablesPanel').classList.toggle('hidden',current!=='receivables');$('externalPanel').classList.toggle('hidden',current!=='external');$('freightPanel').classList.toggle('hidden',current!=='freights');load();scheduleAdminPoll()});
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='VELUM_ADMIN_PORTAL_PAGE')return;const d=m.payload||{};if(m.type==='RESTORE_SESSION'){if(d.ok&&d.token){token=String(d.token);send('CHECK_SESSION',{token});}else showLogin('Sessão inválida.');return}if(m.type==='READY'){if(token)send('CHECK_SESSION',{token});else if(!window.__adminAwaitSession){window.__adminAwaitSession=setTimeout(()=>{if(!token)showLogin('Sua sessão não foi identificada. Entre pelo login principal do VELUM.');},14000)}}if(m.type==='LOGIN_RESULT'){clearTimeout(window.__adminLoginTimeout);$('loginBtn').disabled=false;$('loginBtn').textContent='ENTRAR';if(!d.ok)return showLogin(d.mensagem||'Acesso negado.');token=d.token;$('password').value='';showApp()}if(m.type==='SESSION_RESULT'){clearTimeout(window.__adminLoginTimeout);if(d.ok)showApp();else showLogin(d.mensagem||'Sessão expirada.')}if(m.type==='CREDIT_LIST_RESULT')renderCreditOverview(d);
 if(m.type==='CREDIT_DETAILS_RESULT')showCreditDetails(d);
 if(m.type==='CREDIT_ACTION_RESULT'){creditBusy=false;if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao salvar.';}else{showCreditDetails(d);$('creditEditorPanel').hidden=true;$('creditMessage').textContent='Operação registrada. Valores e histórico atualizados.';creditList()}}
@@ -934,7 +1166,7 @@ const adminReadyTimer=setInterval(()=>{
 <div id="resellerCartModal" class="admin-cart-page" style="display:none" role="dialog" aria-modal="true" aria-label="Carrinho da revendedora">
 <section class="admin-cart-shell"><div class="admin-cart-header"><div><h2 id="resellerCartTitle">Meu carrinho</h2><p>Itens reais registrados na conta da revendedora — visualização administrativa, somente leitura.</p></div><button type="button" class="admin-cart-back" onclick="closeResellerCart()">← Voltar às revendedoras</button></div>
 <div class="admin-cart-toolbar"><span id="resellerCartUpdated" role="status">Carregando carrinho...</span><button type="button" onclick="requestResellerCart()">↻ Atualizar carrinho</button></div>
-<div id="resellerCartContent" class="admin-cart-list">Carregando produtos...</div></section></div><div id="nativeMemberModal" style="display:none;position:fixed;inset:0;z-index:99995;background:#061b35ce;place-items:center;padding:12px"><section style="background:white;color:#17314f;width:min(720px,100%);max-height:90dvh;overflow:auto;padding:clamp(14px,4vw,24px);border-radius:18px;border:2px solid #ff7a00;box-shadow:0 20px 60px #0004"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="color:#0F3665;font-size:clamp(20px,5vw,28px);margin:0">Gerenciar membros Wix</h2><button onclick="nativeMembersClose()">Fechar</button></div><p style="font-size:12px">A conta Wix ? diferente do cadastro operacional de entregador, revendedora ou loja parceira.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:9px"><input id="nativeCreateName" placeholder="Nome" style="padding:11px"><input id="nativeCreateEmail" type="email" placeholder="E-mail" style="padding:11px"></div><button onclick="nativeMemberCreate()" style="padding:12px;background:#FF7A00;color:white;border:0;border-radius:10px;margin-top:9px">Criar membro Wix</button><p id="nativeMembersStatus"></p><label style="display:block;margin-top:15px;font-weight:800;color:#0F3665">Buscar por nome, e-mail ou telefone</label><input id="nativeMembersSearch" oninput="filterNativeMembers()" type="search" placeholder="Digite nome, e-mail ou telefone" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:11px;margin:7px 0"><p id="nativeMembersCount" style="font-size:12px;color:#64748b"></p><div id="nativeMemberRows" style="max-height:43vh;overflow:auto"></div><button onclick="nativeMembersRequest('LIST')">Atualizar lista</button></section></div><div class="modal" id="pickupModal"><div class="modal-card" style="max-width:580px"><div class="modal-head"><div><h2>?? Gerar retirada no local</h2><p>N?o chama entregador. Gere a etiqueta com QR Code da retirada.</p></div><button class="modal-close" id="pickupCancel">Fechar</button></div><div class="call-grid"><div class="field"><label>NOME DO COMPRADOR</label><input id="pickupBuyer" placeholder="Nome completo"></div><div class="field"><label>TELEFONE DO COMPRADOR</label><input id="pickupPhone" type="tel" placeholder="WhatsApp com DDD"></div><div class="field full"><label>OBSERVA??ES E INSTRU??ES</label><textarea id="pickupNotes" rows="3" placeholder="Pedido, itens e instru??es"></textarea></div></div><button type="button" class="primary" id="pickupGenerate">GERAR ETIQUETA DA RETIRADA</button><p id="pickupResult" style="display:none;overflow-wrap:anywhere;padding:10px;color:#0F3665"></p><a id="pickupLink" href="#" target="_blank" rel="noopener" style="display:none;color:#0F3665;font-weight:900;margin:10px 0">Abrir etiqueta e QR Code</a></div></div><script>(function(){
+<div id="resellerCartContent" class="admin-cart-list">Carregando produtos...</div></section></div><div id="nativeMemberModal" style="display:none;position:fixed;inset:0;z-index:99995;background:#061b35ce;place-items:center;padding:12px"><section style="background:white;color:#17314f;width:min(720px,100%);max-height:90dvh;overflow:auto;padding:clamp(14px,4vw,24px);border-radius:18px;border:2px solid #ff7a00;box-shadow:0 20px 60px #0004"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="color:#0F3665;font-size:clamp(20px,5vw,28px);margin:0">Gerenciar membros Wix</h2><button onclick="nativeMembersClose()">Fechar</button></div><p style="font-size:12px">A conta Wix ? diferente do cadastro operacional de entregador, revendedora ou loja parceira.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:9px"><input id="nativeCreateName" placeholder="Nome" style="padding:11px"><input id="nativeCreateEmail" type="email" placeholder="E-mail" style="padding:11px"></div><button onclick="nativeMemberCreate()" style="padding:12px;background:#FF7A00;color:white;border:0;border-radius:10px;margin-top:9px">Criar membro Wix</button><p id="nativeMembersStatus"></p><label style="display:block;margin-top:15px;font-weight:800;color:#0F3665">Buscar por nome, e-mail ou telefone</label><input id="nativeMembersSearch" oninput="filterNativeMembers()" type="search" placeholder="Digite nome, e-mail ou telefone" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:11px;margin:7px 0"><p id="nativeMembersCount" style="font-size:12px;color:#64748b"></p><div id="nativeMemberRows" style="max-height:43vh;overflow:auto"></div><button onclick="nativeMembersRequest('LIST')">Atualizar lista</button></section></div><div class="modal" id="pickupModal"><div class="modal-card" style="max-width:580px"><div class="modal-head"><div><h2>📦 Gerar retirada no local</h2><p>Não chama entregador. Gere a etiqueta com QR Code da retirada.</p></div><button class="modal-close" id="pickupCancel">Fechar</button></div><div class="call-grid"><div class="field"><label>NOME DO COMPRADOR</label><input id="pickupBuyer" placeholder="Nome completo"></div><div class="field"><label>TELEFONE DO COMPRADOR</label><input id="pickupPhone" type="tel" placeholder="WhatsApp com DDD"></div><div class="field full"><label>OBSERVAÇÕES E INSTRUÇÕES</label><textarea id="pickupNotes" rows="3" placeholder="Pedido, itens e instruções"></textarea></div></div><button type="button" class="primary" id="pickupGenerate">GERAR ETIQUETA DA RETIRADA</button><p id="pickupResult" style="display:none;overflow-wrap:anywhere;padding:10px;color:#0F3665"></p><a id="pickupLink" href="#" target="_blank" rel="noopener" style="display:none;color:#0F3665;font-weight:900;margin:10px 0">Abrir etiqueta e QR Code</a></div></div><script>(function(){
 'use strict';
 function txt(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function value(x,...keys){for(const k of keys){const v=x?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return v;}return '';}
@@ -1068,7 +1300,7 @@ window.VelumLabel={page,print,attachRows,normalize};
     document.getElementById('velumNextClose').onclick=()=>panel.style.display='none';
     document.getElementById('velumNextPrint').onclick=()=>{const x=findCreated();if(x)window.VelumLabel.print(x);else alert('A etiqueta foi gerada. Atualize a lista e use Imprimir na corrida criada.');};
     document.getElementById('velumNextCreate').onclick=()=>{panel.style.display='none';document.getElementById('newDriverCallBtn')?.click()};
-    document.getElementById('velumNextExisting').onclick=()=>{panel.style.display='none';const tab=document.querySelector('[data-entity="pending"]');tab?.click();document.getElementById('labelBatchTools')?.scrollIntoView({behavior:'smooth',block:'center'});};
+    document.getElementById('velumNextExisting').onclick=()=>{panel.style.display='none';const tab=document.querySelector('[data-entity="deliveries"]');tab?.click();document.getElementById('labelBatchTools')?.scrollIntoView({behavior:'smooth',block:'center'});};
   };
 })();
 </script></body></html>
