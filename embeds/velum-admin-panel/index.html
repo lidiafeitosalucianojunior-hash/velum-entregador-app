@@ -86,6 +86,40 @@
 .credit-editor-panel{background:#f4f7fb;border:1px solid #d9e4ee;border-radius:13px;padding:14px;margin:15px 0}
 .credit-editor-panel .credit-form{margin-top:11px}
 .credit-editor-panel .credit-acts button{min-height:40px}
+#creditModal.credit-approve-mode #creditWalletSummary,
+#creditModal.credit-approve-mode #creditDueSummary,
+#creditModal.credit-approve-mode #receivableFichaInfo,
+#creditModal.credit-approve-mode #creditHistorySection,
+#creditModal.credit-approve-mode #receivableFichaRequests,
+#creditModal.credit-approve-mode #creditIndividualActions,
+#creditModal.credit-approve-mode #creditBulkActions,
+#creditModal.credit-approve-mode #creditEditorPanel,
+#creditModal.credit-approve-mode #creditBillingSettings,
+#creditModal.credit-approve-mode #creditReviewActions,
+#creditModal.credit-approve-mode #creditResellerCard{display:none!important}
+#creditApprovalPanel[hidden],#creditResellerCard[hidden]{display:none!important}
+#creditApprovalPanel{margin-top:18px;padding:18px;border:1px solid #d8e4ef;background:#f7f9fd;border-radius:15px}
+#creditApprovalPanel h3{font-size:17px;color:#0f3665;margin:0 0 7px}
+#creditApprovalPanel .credit-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+#creditApprovalPanel label{font-size:12px;font-weight:850;color:#183c64}
+#creditApprovalPanel input{width:100%;min-width:0;border:1px solid #ccd8e5;border-radius:10px;padding:12px;margin-top:7px;font:inherit;font-size:14px}
+#creditApprovalPanel .credit-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#creditResellerCard{margin:15px 0;border:1px solid #d9e5ef;border-radius:15px;background:#f8fbff;padding:16px}
+#creditResellerCard h3{font-size:16px;color:#0f3665;margin:0}
+.credit-reseller-card-head{display:flex;align-items:center;gap:13px;margin:0 0 13px}
+.credit-reseller-card-head img{width:66px;height:66px;object-fit:cover;border-radius:13px}
+.credit-reseller-card-head span{font-size:12px;color:#68809b}
+.credit-reseller-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.credit-reseller-details p{min-width:0;margin:0;padding:10px;background:#fff;border:1px solid #e2eaf3;border-radius:10px;font-size:12px;color:#254565;overflow-wrap:anywhere}
+.credit-reseller-details b{display:block;color:#0f3665;font-size:10px;margin-bottom:4px;text-transform:uppercase}
+.credit-reseller-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.credit-reseller-links a,.credit-reseller-links button{font-size:11px;font-weight:850;background:#0f3665;color:#fff;padding:10px 14px;border:0;border-radius:9px;text-decoration:none}
+.credit-review-profile{background:#eef4fa!important;color:#0f3665!important}
+.credit-review-profile[hidden]{display:none!important}
+.credit-row .credit-request-actions{display:flex;flex-wrap:wrap;gap:8px}
+.credit-request-actions button{flex:1;min-width:105px}
+@media(max-width:600px){#creditApprovalPanel .credit-form{grid-template-columns:1fr}#creditApprovalPanel .credit-acts{grid-template-columns:1fr}.credit-reseller-details{grid-template-columns:1fr}}
+
 .credit-billing-settings .credit-form{margin-top:11px}
 .credit-billing-settings input[readonly]{background:#f4f7fa;color:#4a627c}
 .credit-message{margin-top:12px}
@@ -239,6 +273,20 @@
   <div><small>Limite utilizado</small><strong id="creditStatUsed">—</strong></div>
  </div>
  <div class="credit-due-line" id="creditDueSummary">Consultando situação financeira...</div>
+ <section id="creditApprovalPanel" hidden>
+  <h3>Aprovar limite de crédito</h3>
+  <p class="credit-hint" id="creditApproveRequested">Informe o valor que deseja liberar.</p>
+  <p class="credit-hint">O crédito começa automaticamente no dia da aprovação e fica válido até a data-limite de pagamento escolhida, inclusive.</p>
+  <div class="credit-form">
+   <label>Valor liberado (R$)<input id="creditApproveLimit" type="number" min="0.01" max="10000000" step="0.01" inputmode="decimal" placeholder="Ex.: 500,00" required></label>
+   <label>Data-limite para pagamento<input id="creditApproveDue" type="date" required></label>
+  </div>
+  <div class="credit-acts"><button type="button" id="creditApproveSave">CONFIRMAR APROVAÇÃO</button><button type="button" id="creditApproveCancel" class="warn">Cancelar</button></div>
+ </section>
+ <section id="creditResellerCard" hidden aria-label="Ficha da revendedora">
+  <div class="credit-reseller-card-head"><h3>Ficha da revendedora</h3><button type="button" id="creditResellerCardClose" class="credit-small" style="margin-left:auto">Fechar ficha</button></div>
+  <div id="creditResellerCardBody">Carregando cadastro da revendedora...</div>
+ </section>
  <div class="receivable-ficha-info" id="receivableFichaInfo"><p>Carregando informações de cobrança...</p></div>
  <section id="creditHistorySection" class="credit-history-section">
   <h3>Histórico de utilização do limite</h3><p class="credit-hint">Movimentações registradas pela administração. Compras fora do módulo de crédito não são lançadas automaticamente.</p>
@@ -289,7 +337,7 @@
   <div class="credit-acts"><button type="button" id="creditCopyPix">Copiar chave PIX</button></div>
   <p class="credit-hint">O WhatsApp é aberto com a mensagem pronta. Confirme o envio no aplicativo. Pagamentos devem ser registrados após confirmação do recebimento.</p>
  </section>
- <div class="credit-acts" id="creditReviewActions" hidden><button type="button" id="creditReviewApprove">Aprovar solicitação após liberar limite</button><button type="button" id="creditReviewDecline" class="warn">Recusar solicitação</button></div>
+ <div class="credit-acts" id="creditReviewActions" hidden><button type="button" id="creditReviewResellerCard" class="credit-review-profile">Ver ficha da revendedora</button><button type="button" id="creditReviewApprove">Aprovar limite</button><button type="button" id="creditReviewDecline" class="warn">Recusar solicitação</button></div>
  <div class="credit-message" id="creditMessage" role="status" aria-live="polite"></div>
 </section></div>
 
@@ -783,6 +831,9 @@ function creditPick(type,id){
 }
 function creditOpenModal(){
  $('creditModal').classList.add('open');
+ $('creditModal').classList.remove('credit-approve-mode');
+ $('creditApprovalPanel').hidden=true;
+ $('creditResellerCard').hidden=true;
  $('creditMessage').textContent='';
  $('creditEditorPanel').hidden=true;creditEditorAction='';
  $('creditBulkActions').hidden=!creditBulkMode;
@@ -811,10 +862,83 @@ function creditReview(decision){
  if(!creditCurrent||creditBusy)return;
  const k=creditHolderKey(creditCurrent.type,creditCurrent.id),req=creditRequests.find(r=>r.holderKey===k);
  if(!req)return alert('Não há solicitação pendente para esta pessoa.');
- if(decision==='APPROVED'&&!creditCurrentWallet?.exists)return alert('Libere o limite antes de aprovar a solicitação.');
+ if(decision==='APPROVED'){creditOpenApproval();return;}
  if(!confirm(decision==='APPROVED'?'Aprovar esta solicitação?':'Recusar a solicitação?'))return;
  creditBusy=true;$('creditMessage').textContent='Atualizando solicitação...';
  send('CREDIT_ACTION',{token,action:'REQUEST_REVIEW',holderType:creditCurrent.type,holderId:creditCurrent.id,data:{requestId:req.id,decision}});
+}
+let creditApprovalSubmitting=false,creditApprovalRequestId='',creditProfileId='';
+function creditFortalezaToday(){
+ const pieces=new Intl.DateTimeFormat('en-US',{timeZone:'America/Fortaleza',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+ const p=Object.fromEntries(pieces.map(x=>[x.type,x.value]));
+ return p.year+'-'+p.month+'-'+p.day;
+}
+function creditOpenApproval(){
+ if(creditBusy||!creditCurrent||creditBulkMode)return;
+ const k=creditHolderKey(creditCurrent.type,creditCurrent.id),req=creditRequests.find(r=>r.holderKey===k);
+ if(!req)return alert('Esta solicitação não está mais pendente. Atualize a lista.');
+ creditApprovalRequestId=req.id;
+ $('creditApproveLimit').value='';
+ $('creditApproveLimit').placeholder='Ex.: '+(Number(req.requestedCents||0)/100).toFixed(2).replace('.',',');
+ $('creditApproveDue').value='';
+ $('creditApproveDue').min=creditFortalezaToday();
+ $('creditApproveRequested').textContent='Valor solicitado: '+creditMoney(req.requestedCents)+'. Escolha o valor que será efetivamente liberado.';
+ $('creditApprovalPanel').hidden=false;
+ $('creditResellerCard').hidden=true;
+ $('creditEditorPanel').hidden=true;
+ $('creditModal').classList.add('credit-approve-mode');
+ $('creditModalDesc').textContent='Informe somente o valor liberado e a data-limite de pagamento.';
+ $('creditModal').querySelector('.credit-window').scrollTop=0;
+ $('creditApproveLimit').focus();
+}
+function creditCloseApproval(){
+ if(creditApprovalSubmitting)return;
+ $('creditModal').classList.remove('credit-approve-mode');
+ $('creditApprovalPanel').hidden=true;
+ $('creditModalDesc').textContent=creditCurrentWallet?.exists?'Limites, utilização, vencimento e histórico':'Nenhum limite concedido para este titular';
+ creditApprovalRequestId='';
+}
+function creditSubmitApproval(){
+ if(creditBusy||!creditCurrent||!creditApprovalRequestId)return;
+ const amount=Number($('creditApproveLimit').value);
+ const cents=Math.round(amount*100),due=$('creditApproveDue').value,now=creditFortalezaToday();
+ if(!Number.isSafeInteger(cents)||cents<1||cents>1000000000)return alert('Preencha o valor liberado em reais.');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(due)||due<now)return alert('Escolha uma data de pagamento igual ou posterior à aprovação.');
+ const req=creditRequests.find(r=>r.id===creditApprovalRequestId&&r.holderKey===creditHolderKey(creditCurrent.type,creditCurrent.id));
+ if(!req)return alert('A solicitação mudou. Atualize a lista antes de aprovar.');
+ if(!confirm('Aprovar '+creditMoney(cents)+' de crédito até '+creditDate(due)+' para '+(creditHolderInfo.displayName||creditCurrent.id)+'?'))return;
+ creditBusy=true;creditApprovalSubmitting=true;
+ $('creditApproveSave').disabled=true;
+ $('creditApproveSave').textContent='APROVANDO...';
+ $('creditMessage').textContent='Registrando aprovação...';
+ send('CREDIT_ACTION',{token,action:'APPROVE_REQUEST',holderType:creditCurrent.type,holderId:creditCurrent.id,
+  data:{requestId:req.id,limitCents:cents,dueDate:due}});
+}
+function creditOpenResellerCard(){
+ if(!creditCurrent||creditCurrent.type!=='RESELLER')return;
+ creditProfileId=creditCurrent.id;
+ $('creditResellerCard').hidden=false;
+ $('creditResellerCardBody').textContent='Carregando cadastro da revendedora...';
+ send('CREDIT_RESELLER_CARD',{token,id:creditProfileId});
+ $('creditResellerCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function creditRenderResellerCard(result){
+ if(!creditProfileId||!creditCurrent||creditCurrent.type!=='RESELLER'||creditProfileId!==creditCurrent.id||String(result?.resellerId||'')!==creditProfileId)return;
+ const box=$('creditResellerCardBody');
+ if(!result?.ok){box.textContent=result?.mensagem||'Não foi possível consultar a ficha.';return;}
+ const r=result.item||{};
+ const fields=[['Nome da loja',r.name],['Responsável',r.responsible],['E-mail',r.email],['WhatsApp',r.whatsapp],
+   ['Instagram',r.instagram],['Endereço',[r.address,r.number,r.neighborhood].filter(Boolean).join(', ')],
+   ['Cidade / UF',[r.city,r.state].filter(Boolean).join(' - ')],['CEP',r.zipCode],
+   ['Situação',r.active?'Ativa':'Inativa'],['Tema da vitrine',r.theme],['Margem padrão',Number(r.margin||0)+'%']];
+ const photo=/^https:\/\//i.test(String(r.logo||''))?'<img src="'+esc(r.logo)+'" alt="Logo da revendedora">':'';
+ const slug=String(r.slug||'').trim(),digits=String(r.whatsapp||'').replace(/\D/g,'');
+ const contact=digits.length===10||digits.length===11?'55'+digits:digits;
+ const links=(slug?'<a href="https://www.vaidevelum.com/vitrine-revendedora?revendedora='+encodeURIComponent(slug)+'" target="_blank" rel="noopener noreferrer">Abrir vitrine</a>':'')+
+  (contact.length>=12&&contact.length<=13?'<a href="https://wa.me/'+contact+'" target="_blank" rel="noopener noreferrer">WhatsApp</a>':'');
+ box.innerHTML='<div class="credit-reseller-card-head">'+photo+'<div><h3>'+esc(r.name||'Revendedora')+'</h3><span>'+esc(r.responsible||'')+'</span></div></div>'+
+  '<div class="credit-reseller-details">'+fields.map(([a,v])=>'<p><b>'+esc(a)+'</b>'+esc(v||'Não informado')+'</p>').join('')+'</div>'+
+  (links?'<div class="credit-reseller-links">'+links+'</div>':'');
 }
 function creditRenderTable(){
  const list=creditVisibleAccounts(),tbody=$('creditAccountList');
@@ -856,10 +980,16 @@ function renderCreditOverview(d){
  $('creditSummary').textContent=creditAccounts.length+' limite(s) autorizado(s) · '+creditMoney(used)+' utilizado(s) · '+creditRequests.length+' solicitação(ões) em análise.';
  creditRenderTable();creditShowSelected();
  $('creditRequestList').innerHTML=creditRequests.length?creditRequests.map(r=>
-  '<div class="credit-row"><span>⏳</span><div><b>'+esc(r.displayName||r.holderId)+'</b><small>'+esc(r.holderType==='RESELLER'?'Revendedora':'Cliente')+' · Solicitação: '+creditMoney(r.requestedCents)+'</small><small>'+esc(r.reason||'Sem observação')+'</small></div><button type="button" class="credit-small" data-credit-open="'+esc(r.holderKey)+'">Analisar</button></div>'
+  '<div class="credit-row"><span>⏳</span><div><b>'+esc(r.displayName||r.holderId)+'</b><small>'+esc(r.holderType==='RESELLER'?'Revendedora':'Cliente')+' · Solicitação: '+creditMoney(r.requestedCents)+'</small><small>'+esc(r.reason||'Sem observação')+'</small></div><div class="credit-request-actions"><button type="button" class="credit-small" data-credit-open="'+esc(r.holderKey)+'">Analisar</button>'+
+  (r.holderType==='RESELLER'?'<button type="button" class="credit-small credit-review-profile" data-credit-profile="'+esc(r.holderKey)+'">Ver ficha</button>':'')+'</div></div>'
  ).join(''):'<p>Nenhuma solicitação pendente.</p>';
  $('creditRequestList').querySelectorAll('[data-credit-open]').forEach(el=>el.onclick=()=>{
   const k=el.dataset.creditOpen,i=k.indexOf(':');creditPick(k.slice(0,i),k.slice(i+1));
+ });
+ $('creditRequestList').querySelectorAll('[data-credit-profile]').forEach(el=>el.onclick=()=>{
+  const k=el.dataset.creditProfile,i=k.indexOf(':');
+  creditPick(k.slice(0,i),k.slice(i+1));
+  creditOpenResellerCard();
  });
 }
 function showCreditDetails(d){
@@ -895,6 +1025,7 @@ function showCreditDetails(d){
    (x.notes?'<small>'+esc(x.notes)+'</small>':'')+'</div><span class="credit-event-amount">'+amount+'</span></div>';
  }).join(''):'<p>Nenhuma utilização registrada para este limite.</p>';
  $('creditReviewActions').hidden=!creditRequests.some(r=>r.holderKey===creditHolderKey(creditCurrent?.type,creditCurrent?.id));
+ $('creditReviewResellerCard').hidden=creditCurrent?.type!=='RESELLER';
 }
 function creditEditor(action){
  if(creditBusy)return;
@@ -973,7 +1104,7 @@ $('creditBulkAddClients').onclick=()=>{
 $('creditOpen').onclick=()=>creditPick($('creditHolderType').value,$('creditHolderId').value.trim());
 $('creditRefresh').onclick=creditList;
 $('creditBulkOpen').onclick=creditBulkOpen;
-$('creditClose').onclick=()=>{$('creditModal').classList.remove('open');$('creditEditorPanel').hidden=true;clearTimeout(creditDetailLoadTimer);creditDetailRequestSeq++};
+$('creditClose').onclick=()=>{$('creditModal').classList.remove('open','credit-approve-mode');$('creditEditorPanel').hidden=true;$('creditApprovalPanel').hidden=true;creditProfileId='';clearTimeout(creditDetailLoadTimer);creditDetailRequestSeq++};
 $('creditDetailReload').onclick=()=>{
  if(!creditCurrent)return;
  const {type,id}=creditCurrent;
@@ -985,7 +1116,11 @@ document.querySelectorAll('[data-credit-bulk]').forEach(btn=>btn.onclick=()=>{
 });
 $('creditEditorSave').onclick=()=>creditBulkMode?creditBulk(creditEditorAction):creditOperate(creditEditorAction);
 $('creditEditorCancel').onclick=()=>{$('creditEditorPanel').hidden=true;creditEditorAction=''};
-$('creditReviewApprove').onclick=()=>creditReview('APPROVED');
+$('creditReviewApprove').onclick=creditOpenApproval;
+$('creditReviewResellerCard').onclick=creditOpenResellerCard;
+$('creditResellerCardClose').onclick=()=>{$('creditResellerCard').hidden=true;creditProfileId=''};
+$('creditApproveCancel').onclick=creditCloseApproval;
+$('creditApproveSave').onclick=creditSubmitApproval;
 $('creditReviewDecline').onclick=()=>creditReview('DECLINED');
 $('creditReminder').onclick=()=>creditWhatsapp('reminder');
 $('creditBilling').onclick=()=>creditWhatsapp('billing');
@@ -1148,7 +1283,21 @@ $('refresh').onclick=load;$('search').oninput=render;$('frSave').onclick=saveFre
 document.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>{current=b.dataset.entity;selectedLabels.clear();document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x===b));$('title').textContent=cfg[current].title;$('subtitle').textContent=cfg[current].subtitle;$('search').value='';$('search').placeholder=current==='deliveries'?'Pesquisar remetente, destinatário, cidade, motorista ou status...':'Buscar por nome, cidade, WhatsApp...';$('adminActiveLabel').textContent=current==='deliveries'?'Em curso':'Ativos';$('adminInactiveLabel').textContent=current==='deliveries'?'Encerradas':'Inativos';$('entityPanel').classList.toggle('hidden',current==='freights'||current==='external'||current==='credit'||current==='receivables');$('deliveryOverviewFilters').classList.toggle('hidden',current!=='deliveries');$('cards').classList.toggle('delivery-overview-cards',current==='deliveries');$('creditPanel').classList.toggle('hidden',current!=='credit');$('receivablesPanel').classList.toggle('hidden',current!=='receivables');$('externalPanel').classList.toggle('hidden',current!=='external');$('freightPanel').classList.toggle('hidden',current!=='freights');load();scheduleAdminPoll()});
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='VELUM_ADMIN_PORTAL_PAGE')return;const d=m.payload||{};if(m.type==='RESTORE_SESSION'){if(d.ok&&d.token){token=String(d.token);send('CHECK_SESSION',{token});}else showLogin('Sessão inválida.');return}if(m.type==='READY'){if(token)send('CHECK_SESSION',{token});else if(!window.__adminAwaitSession){window.__adminAwaitSession=setTimeout(()=>{if(!token)showLogin('Sua sessão não foi identificada. Entre pelo login principal do VELUM.');},14000)}}if(m.type==='LOGIN_RESULT'){clearTimeout(window.__adminLoginTimeout);$('loginBtn').disabled=false;$('loginBtn').textContent='ENTRAR';if(!d.ok)return showLogin(d.mensagem||'Acesso negado.');token=d.token;$('password').value='';showApp()}if(m.type==='SESSION_RESULT'){clearTimeout(window.__adminLoginTimeout);if(d.ok)showApp();else showLogin(d.mensagem||'Sessão expirada.')}if(m.type==='CREDIT_LIST_RESULT')renderCreditOverview(d);
 if(m.type==='CREDIT_DETAILS_RESULT')showCreditDetails(d);
-if(m.type==='CREDIT_ACTION_RESULT'){creditBusy=false;if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao salvar.';}else{showCreditDetails(d);$('creditEditorPanel').hidden=true;$('creditMessage').textContent='Operação registrada. Valores e histórico atualizados.';creditList()}}
+if(m.type==='CREDIT_RESELLER_CARD_RESULT')creditRenderResellerCard(d);
+if(m.type==='CREDIT_ACTION_RESULT'){
+ const approved=creditApprovalSubmitting;
+ creditBusy=false;creditApprovalSubmitting=false;
+ $('creditApproveSave').disabled=false;$('creditApproveSave').textContent='CONFIRMAR APROVAÇÃO';
+ if(!d.ok){$('creditMessage').textContent=d.mensagem||'Falha ao salvar.';}
+ else{
+  $('creditModal').classList.remove('credit-approve-mode');
+  $('creditApprovalPanel').hidden=true;creditApprovalRequestId='';
+  showCreditDetails(d);$('creditEditorPanel').hidden=true;
+  if(approved)$('creditReviewActions').hidden=true;
+  $('creditMessage').textContent=approved?'Crédito aprovado e liberado. Vigência iniciada hoje; vencimento registrado na data escolhida.':'Operação registrada. Valores e histórico atualizados.';
+  creditList();
+ }
+}
 if(m.type==='CREDIT_BULK_RESULT'){creditBusy=false;$('creditMessage').textContent=d.ok?d.success+' sucesso(s), '+d.failed+' falha(s). '+(d.results||[]).filter(x=>!x.ok).map(x=>x.key+': '+x.mensagem).join('; '):(d.mensagem||'Erro no lote');creditList()}
 if(m.type==='DATA_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);toast(d.mensagem||'Não foi possível carregar.');rows=[]}else rows=Array.isArray(d.items)?d.items:[];const s=d.summary||{};$('sumTotal').textContent=s.total||0;$('sumActive').textContent=s.active||0;$('sumInactive').textContent=s.inactive||0;render()}if(m.type==='ACTION_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);return toast(d.mensagem||'Não foi possível executar a ação.')}toast(d.mensagem||'Alteração realizada.');load()}if(m.type==='FREIGHT_DATA'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);toast(d.mensagem||'Não foi possível carregar os fretes.')}freights=Array.isArray(d.items)?d.items:[];$('sumTotal').textContent=freights.length;$('sumActive').textContent=freights.filter(x=>x.active).length;$('sumInactive').textContent=freights.filter(x=>!x.active).length;renderFreights()}if(m.type==='FREIGHT_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);return toast(d.mensagem||'Não foi possível salvar o frete.')}toast(d.mensagem||'Frete atualizado.');clearFreight();load()}if(m.type==='SUGGEST_ADDRESS_RESULT'){renderSuggestions(String(d.target||'delivery'),d.items||[])}if(m.type==='DRIVER_CALL_CALCULATE_RESULT'){$('callCalculate').disabled=false;$('callCalculate').textContent=editingDeliveryId?'RECALCULAR FRETE':'CALCULAR FRETE';if(!d.ok){callQuotedFee=null;$('callSend').disabled=true;$('callQuote').classList.remove('show');$('callStatus').textContent=d.mensagem||'Não foi possível calcular o frete.';return}callQuotedFee=Number(d.deliveryFee)||0;$('callQuoteValue').textContent=money(($('callCustomerPickupAtCenter').checked||$('callCustomerPickupAtStore').checked)?Number(d.customerPickupCharge??$('callCustomerPickupExtraFee').value??0):callQuotedFee);$('callQuote').classList.add('show');$('callSend').disabled=false;if(!editingDeliveryId)$('callSend').textContent='GERAR ETIQUETA';$('callStatus').textContent=editingDeliveryId?'Frete recalculado. Salve as alterações.':'Frete calculado. Agora gere a etiqueta; o entregador ainda não será chamado.'}if(m.type==='UPDATE_PENDING_RESULT'){$('callCalculate').disabled=false;$('callSend').disabled=false;$('callSend').textContent='SALVAR ALTERAÇÕES';if(!d.ok){$('callStatus').textContent=d.mensagem||'Não foi possível editar a corrida.';return}toast(d.mensagem||'Corrida atualizada.');closeDriverCall();load()}if(m.type==='CANCEL_PENDING_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível cancelar a corrida.');toast(d.mensagem||'Corrida cancelada.');load()}if(m.type==='DRIVER_CALL_RESULT'){$('callCalculate').disabled=false;$('callSend').textContent='GERAR ETIQUETA';if(!d.ok){$('callSend').disabled=false;$('callStatus').textContent=d.mensagem||'Não foi possível criar a corrida.';return}toast(d.mensagem||'Corrida criada e etiqueta pronta.');showLabelNextActions(d);$('callStatus').textContent=d.internalLogistics?'Processo criado. A etiqueta já pode ser impressa antes do chamado final.':'Etiqueta pronta. Imprima antes de chamar o entregador.';setTimeout(()=>{closeDriverCall();current='pending';document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x.dataset.entity==='pending'));$('title').textContent=cfg.pending.title;$('subtitle').textContent=cfg.pending.subtitle;$('search').value='';load();scheduleAdminPoll()},700)}if(m.type==='DISPATCH_DRIVERS_RESULT'){if(!d.ok){toast(d.mensagem||'Não foi possível carregar os entregadores.');return}dispatchDrivers=Array.isArray(d.items)?d.items:[];renderDispatchDrivers()}if(m.type==='DISPATCH_PENDING_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível enviar o chamado.');toast(d.mensagem||'Chamado enviado.');closeDispatchModal();load()}if(m.type==='ADMIN_LOGISTICS_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível atualizar a logística.');toast(d.mensagem||'Logística atualizada.');load()}if(m.type==='RESET_RESELLER_PASSWORD_RESULT'){alert(d.mensagem||(d.ok?'Solicitacao de redefinicao enviada.':'Nao foi possivel iniciar a redefinicao.'));}if(m.type==='NATIVE_MEMBERS_RESULT'){nativeMembersResult(d)}if(m.type==='CREATE_PICKUP_RESULT'){$('pickupGenerate').disabled=false;if(!d.ok)return alert(d.mensagem||'Falha ao gerar retirada');$('pickupResult').style.display='block';$('pickupResult').textContent='Retirada '+d.id+' criada. Link da etiqueta e comprovante: '+d.receiptUrl;$('pickupLink').href=d.receiptUrl;$('pickupLink').style.display='inline-block'}if(m.type==='RESELLER_CART_RESULT'){renderResellerCart(d)}if(m.type==='RESELLER_DETAILS_RESULT'){
   if(!d.ok){const label=resellerEditMode==='DESIGN'?'resellerSettingsStatus':'resellerEditorStatus';$(label).textContent=d.mensagem||'Não foi possível consultar dados.';resellerDetailsPending=false}
