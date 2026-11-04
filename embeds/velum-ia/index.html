@@ -1,0 +1,185 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#0f3665">
+<title>Atendimento IA — VELUM</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#173453;background:#f5f7fb;font-size:14px}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding-bottom:env(safe-area-inset-bottom,0px)}button,textarea{font:inherit}button:focus-visible,textarea:focus-visible{outline:2px solid #ff7a00;outline-offset:2px}.top{background:#0f3665;color:#fff;padding:17px 20px}
+.top-inner{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.top b{font-size:20px}.top small{display:block;color:#d0e0ef;font-size:11px;margin-top:4px}.back{border:1px solid #ffffff66;border-radius:10px;color:white;background:transparent;padding:11px;font-weight:750;cursor:pointer}
+.container{max-width:1200px;margin:0 auto;padding:22px 16px}.heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-size:13px;line-height:1.5}
+.refresh{border:0;background:#ff7a00;color:white;border-radius:11px;padding:12px 15px;font-weight:750;cursor:pointer}
+.notice{border:1px solid #d5e2f1;background:#eaf3ff;padding:14px 16px;border-radius:13px;color:#24476a;font-size:12px;margin-bottom:16px;line-height:1.5}
+.workspace{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:14px}
+.panel{background:#fff;border:1px solid #e0e7f0;border-radius:16px;min-height:360px;overflow:hidden}
+.panel-title{padding:17px 18px;border-bottom:1px solid #e8edf3;font-weight:800;color:#14375d}
+.panel-title small{font-size:11px;font-weight:500;color:#8292a3;display:block;margin-top:5px}
+.empty{padding:35px 18px;color:#65798d;text-align:center;line-height:1.6}.conv{width:100%;border:0;border-bottom:1px solid #edf0f4;background:#fff;cursor:pointer;display:block;text-align:left;padding:15px 17px;color:#123456}
+.conv.selected{background:#fff5eb;border-left:4px solid #ff7a00;padding-left:13px}.conv b{font-size:13px}.conv p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:6px 0}
+.meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.chip{font-size:10px;font-weight:750;border-radius:25px;padding:5px 8px;background:#e7effb;color:#1b4e83}
+.chip.human{background:#e7f8ed;color:#12734a}.chip.ia{background:#fff1dc;color:#a86112}
+.detail{padding:20px}.detail h2{margin:0 0 8px;color:#15365c;font-size:18px}.details{margin:16px 0;padding:12px;border-radius:12px;background:#f4f7fa;font-size:12px;color:#536c82;white-space:pre-wrap}
+.take{background:#0f3665;color:white;border:0;border-radius:10px;padding:13px 16px;font-weight:800;cursor:pointer}
+.take:disabled{opacity:.5;cursor:not-allowed}.draft-label{display:block;margin:15px 0 7px;font-size:12px;font-weight:800;color:#193e64}
+.draft-input{width:100%;min-height:112px;border:1px solid #d5e0ec;border-radius:12px;padding:12px;resize:vertical;font:inherit;line-height:1.5;color:#173453}
+.draft-actions{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 15px}
+.draft-actions button{padding:11px 13px;border-radius:9px;cursor:pointer;font-weight:750;border:1px solid #bbcde1;background:#fff;color:#173d67}
+.draft-actions #suggest{background:#ff7a00;color:#fff;border-color:#ff7a00}
+#smoke{background:#ff7a00;color:#fff;border:0;border-radius:11px;padding:12px 15px;font-weight:800;cursor:pointer}
+#smoke:disabled{opacity:.5;cursor:wait}
+#smokeResult{display:none;margin:10px 0 14px;background:#fff7ec;border:1px solid #f4c78d;border-radius:12px;padding:13px;color:#744212;font-size:13px;white-space:pre-wrap;line-height:1.55}
+#smokeResult.active{display:block}
+.draft-actions button:disabled{opacity:.45;cursor:not-allowed}.feedback{padding:12px 0;font-size:12px;color:#1b6e55;min-height:32px}
+@media(max-width:700px){.workspace{grid-template-columns:1fr}.container{padding:14px 10px}.top{padding:13px}.heading{align-items:flex-start}.panel{min-height:130px}.detail{padding:15px}h1{font-size:21px}}
+@media(max-width:440px){.heading{flex-wrap:wrap}.heading>div:last-child{width:100%;justify-content:space-between}.heading button{flex:1}.top b{font-size:18px}.back{padding:9px 11px}}\n</style></head><body>
+<header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Administração VELUM • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
+<main class="container"><div class="heading"><div><h1>Central de conversas</h1><p>Acompanhe mensagens e assuma o atendimento quando necessário.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="smoke" type="button" title="Usa uma pequena quantidade de créditos da OpenAI e não envia mensagem a clientes">Testar IA (usa créditos)</button><button class="refresh" id="refresh" type="button">Atualizar</button></div></div>
+<div class="notice" id="notice">Conectando à caixa de entrada... O envio automático permanece desativado até a integração oficial com a Meta.</div><div id="smokeResult" role="status" aria-live="polite"></div>
+<div class="workspace"><section class="panel" aria-label="Lista de conversas"><div class="panel-title">Conversas <small id="counter">0 conversas</small></div><div id="conversationList" class="empty">Carregando conversas...</div></section>
+<section class="panel" aria-label="Detalhes da conversa"><div class="panel-title">Atendimento <small>Selecione uma conversa para visualizar detalhes</small></div><div class="detail"><h2 id="client">Nenhuma conversa selecionada</h2><p id="channel">As mensagens aparecerão aqui após conectar Instagram e WhatsApp.</p><div class="details" id="message">Nenhum histórico sincronizado.</div>
+<label class="draft-label" for="aiDraft">Rascunho da LUMEN IA — revise antes de usar</label>
+<textarea class="draft-input" id="aiDraft" placeholder="Selecione uma conversa e gere uma sugestão. Nenhuma resposta será enviada automaticamente." maxlength="900"></textarea>
+<div class="draft-actions"><button type="button" id="suggest" disabled>✨ Sugerir resposta com IA</button><button type="button" id="copyReply" disabled>Copiar resposta</button></div>
+<button id="take" class="take" type="button" disabled>Assumir conversa</button><div id="feedback" class="feedback" role="status" aria-live="polite"></div></div></section></div></main>
+<script>
+(function(){
+  'use strict';
+  const src="VELUM_ADMIN_PORTAL";
+  const answerFrom="VELUM_ADMIN_PORTAL_PAGE";
+  let items=[];
+  let selectedId='';
+  let loading=false;
+  let draftLoading=false;
+  let draftRequestedId='';
+  const byId=id=>document.getElementById(id);
+  const send=(type,payload={})=>parent.postMessage({source:src,type,payload},'*');
+  function selectItem(item){
+    selectedId=String(item.id||'');
+    byId('client').textContent=item.cliente||'Cliente';
+    byId('channel').textContent=(item.canal||'Canal não informado')+' • '+(item.modo==='HUMANO'?'Atendimento humano':'Atendimento IA');
+    byId('message').textContent=item.ultimaMensagem||'Aguardando histórico da conversa.';
+    byId('aiDraft').value='';
+    byId('suggest').disabled=false;
+    byId('copyReply').disabled=true;
+    byId('take').disabled=item.modo==='HUMANO'||item.status==='ENCERRADA';
+    byId('take').textContent=item.modo==='HUMANO'?'Conversa em atendimento humano':'Assumir conversa';
+    renderList();
+  }
+  function renderList(){
+    const list=byId('conversationList');
+    list.replaceChildren();
+    byId('counter').textContent=items.length+' conversa(s)';
+    if(!items.length){
+      list.className='empty';
+      list.textContent='Nenhuma conversa sincronizada. As mensagens reais aparecerão após conectar a Meta.';
+      return;
+    }
+    list.className='';
+    for(const item of items){
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='conv'+(selectedId===String(item.id)?' selected':'');
+      const name=document.createElement('b');name.textContent=item.cliente||'Cliente';button.appendChild(name);
+      const teaser=document.createElement('p');teaser.textContent=item.ultimaMensagem||'Sem prévia de mensagem';button.appendChild(teaser);
+      const badges=document.createElement('div');badges.className='meta';
+      for(const label of [item.canal||'Canal', item.modo==='HUMANO'?'Humano':'IA']){
+        const badge=document.createElement('span');badge.className='chip'+(label==='Humano'?' human':label==='IA'?' ia':'');
+        badge.textContent=label;badges.appendChild(badge);
+      }
+      button.appendChild(badges);
+      button.addEventListener('click',()=>selectItem(item));
+      list.appendChild(button);
+    }
+  }
+  function reload(){
+    if(loading)return;
+    loading=true;
+    byId('refresh').disabled=true;
+    send('IA_LIST');
+  }
+  byId('back').addEventListener('click',()=>send('IA_BACK'));
+  byId('refresh').addEventListener('click',reload);
+  byId('smoke').addEventListener('click',()=>{
+    const box=byId('smokeResult');
+    box.classList.add('active');
+    box.textContent='Testando conexão com uma mensagem fictícia… Nenhuma cliente será contatada.';
+    byId('smoke').disabled=true;
+    send('IA_SMOKE');
+  });
+  byId('suggest').addEventListener('click',()=>{
+    if(!selectedId||draftLoading)return;
+    draftLoading=true;
+    draftRequestedId=selectedId;
+    byId('suggest').disabled=true;
+    byId('feedback').textContent='Preparando sugestão. Nenhuma mensagem será enviada.';
+    send('IA_DRAFT',{id:selectedId});
+  });
+  byId('aiDraft').addEventListener('input',()=>{
+    byId('copyReply').disabled=!byId('aiDraft').value.trim();
+  });
+  byId('copyReply').addEventListener('click',async()=>{
+    const texto=byId('aiDraft').value.trim();
+    if(!texto)return;
+    try{
+      if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(texto);
+      else throw new Error('clipboard indisponível');
+      byId('feedback').textContent='Resposta copiada. Revise e envie manualmente no canal da cliente.';
+    }catch(_){
+      byId('aiDraft').focus();byId('aiDraft').select();
+      byId('feedback').textContent='Selecione o texto e copie manualmente. Nenhuma mensagem foi enviada.';
+    }
+  });
+  byId('take').addEventListener('click',()=>{
+    if(!selectedId)return;
+    byId('take').disabled=true;
+    byId('feedback').textContent='Transferindo para atendimento humano...';
+    send('IA_ASSUME',{id:selectedId});
+  });
+  window.addEventListener('message',event=>{
+    if(event.data?.source!==answerFrom)return;
+    const msg=event.data;
+    if(msg.type==='IA_LIST_RESULT'){
+      loading=false;
+      byId('refresh').disabled=false;
+      const data=msg.payload||{};
+      items=data.ok===true && Array.isArray(data.items)?data.items:[];
+      byId('notice').textContent=data.aviso||data.mensagem||'Não foi possível consultar a caixa de entrada.';
+      renderList();
+      if(selectedId){
+        const item=items.find(v=>String(v.id)===selectedId);
+        if(item)selectItem(item);
+        else {selectedId='';byId('take').disabled=true;byId('client').textContent='Nenhuma conversa selecionada'}
+      }
+    }
+    if(msg.type==='IA_SMOKE_RESULT'){
+      byId('smoke').disabled=false;
+      const data=msg.payload||{};
+      const box=byId('smokeResult');
+      box.classList.add('active');
+      box.textContent=data.ok===true
+        ? 'Conexão com OpenAI validada! Resposta fictícia gerada:\n'+String(data.rascunho||'')
+        : 'Teste não concluído: '+String(data.mensagem||'Falha desconhecida.');
+    }
+    if(msg.type==='IA_DRAFT_RESULT'){
+      const data=msg.payload||{};
+      if(String(data.id||'')!==draftRequestedId)return;
+      draftLoading=false;
+      if(selectedId===draftRequestedId){
+        byId('suggest').disabled=false;
+        byId('feedback').textContent=data.mensagem||(data.ok?'Rascunho criado.':'Não foi possível gerar rascunho.');
+        if(data.ok===true&&typeof data.rascunho==='string'){
+          byId('aiDraft').value=data.rascunho;
+          byId('copyReply').disabled=false;
+        }
+      }
+    }
+    if(msg.type==='IA_ASSUME_RESULT'){
+      const data=msg.payload||{};
+      byId('feedback').textContent=data.mensagem||(data.ok?'Conversa assumida.':'Não foi possível assumir a conversa.');
+      if(data.ok)reload();
+      else byId('take').disabled=false;
+    }
+  });
+  send('IA_LIST');
+})();
+</script></body></html>
