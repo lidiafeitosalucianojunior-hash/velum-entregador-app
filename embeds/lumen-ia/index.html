@@ -66,6 +66,10 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 .lab-result-label{font-size:11px;font-weight:800;color:#406484;margin-bottom:7px}
 .lab-answer{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:#17395e;line-height:1.6}
 .lab-status{font-size:11px;color:#61768b;margin-top:8px;line-height:1.5}
+.lab-diag{margin-top:13px;border-top:1px solid #e2e9f2;padding-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lab-diag button{background:#edf4fc;border:1px solid #cddded;color:#194672;font-size:12px;font-weight:750;padding:9px 12px;border-radius:10px;cursor:pointer}
+.lab-diag button:disabled{opacity:.55;cursor:not-allowed}
+.lab-diag-status{color:#56708b;font-size:11px;line-height:1.5;flex:1;min-width:190px;white-space:pre-wrap}
 .lab-mode{display:inline-block;font-weight:750;color:#aa6115}
 @media(max-width:600px){.lab{padding:14px}.lab-actions button{width:100%}}
 
@@ -121,6 +125,10 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     <div id="labAnswer" class="lab-answer">Escolha um exemplo ou digite uma pergunta para iniciar o teste.</div>
     <div id="labStatus" class="lab-status">Nenhuma mensagem será enviada ao WhatsApp ou Instagram.</div>
   </div>
+  <div class="lab-diag">
+    <button type="button" id="labDiagRun">Verificar Bling e frete</button>
+    <div id="labDiagStatus" class="lab-diag-status" role="status" aria-live="polite">Diagnóstico administrativo, somente leitura.</div>
+  </div>
 </section>
 
 <div class="workspace"><section class="panel" aria-label="Lista de conversas"><div class="panel-title">Conversas <small id="counter">0 conversas</small></div><div id="conversationList" class="empty">Carregando conversas...</div></section>
@@ -142,6 +150,9 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let labLoading=false;
   let labSequence=0;
   let labActiveId='';
+  let labDiagPending=false;
+  let labDiagCounter=0;
+  let labDiagActiveId='';
   let labPreviousModel='';
   const byId=id=>document.getElementById(id);
   const send=(type,payload={})=>parent.postMessage({source:src,type,payload},'*');
@@ -325,6 +336,21 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       labFeedback('Teste indisponível. Verifique sua sessão e tente novamente.');
     },20000);
   });
+  byId('labDiagRun').addEventListener('click',()=>{
+    if(labDiagPending)return;
+    labDiagPending=true;
+    labDiagActiveId='diag-'+String(++labDiagCounter);
+    byId('labDiagRun').disabled=true;
+    byId('labDiagStatus').textContent='Consultando o Bling e as tarifas da VELUM…';
+    const requestId=labDiagActiveId;
+    send('IA_LAB_DIAG',{requestId});
+    setTimeout(()=>{
+      if(!labDiagPending||labDiagActiveId!==requestId)return;
+      labDiagPending=false;
+      byId('labDiagRun').disabled=false;
+      byId('labDiagStatus').textContent='Verificação indisponível. Nenhum dado ou mensagem foi alterado.';
+    },20000);
+  });
   function selectItem(item){
     selectedId=String(item.id||'');
     byId('client').textContent=item.cliente||'Cliente';
@@ -446,6 +472,28 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   window.addEventListener('message',event=>{
     if(event.data?.source!==answerFrom)return;
     const msg=event.data;
+    if(msg.type==='IA_LAB_DIAG_RESULT'){
+      if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
+      const data=msg.payload||{};
+      if(String(data.requestId||'')!==labDiagActiveId)return;
+      labDiagPending=false;
+      byId('labDiagRun').disabled=false;
+      if(data.ok!==true){
+        byId('labDiagStatus').textContent=String(data.mensagem||'Falha no diagnóstico.');
+        return;
+      }
+      const bling=data.bling||{};
+      const frete=data.frete||{};
+      const lines=[
+        'Catálogo Bling: '+String(bling.catalogo||'PENDENTE'),
+        'Estoque Bling: '+String(bling.estoque||'PENDENTE'),
+        'Tabela de frete: '+String(frete.tabela||'PENDENTE')
+      ];
+      if(frete.tabela==='OK' && Number.isFinite(Number(frete.tarifaExemplo))){
+        lines.push('Exemplo Cajazeiras/PB: R$ '+Number(frete.tarifaExemplo).toFixed(2).replace('.',','));
+      }
+      byId('labDiagStatus').textContent=lines.join(' | ')+' | Sem envio ao WhatsApp.';
+    }
     if(msg.type==='IA_LAB_RESULT'){
       if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
       const data=msg.payload||{};

@@ -30,6 +30,13 @@ const html=fs.readFileSync(path.join(__dirname,'embeds/lumen-ia/index.html'),'ut
           payload:{ok:true,requestId:p.requestId,enviado:false,pendente:false,...answer}},
           'https://app.vaidevelum.com');
       }
+      if(event.data.type==='IA_LAB_DIAG'){
+        frame.postMessage({source:'LUMEN_ADMIN_PANEL_PAGE',type:'IA_LAB_DIAG_RESULT',
+          payload:{ok:true,requestId:event.data.payload.requestId,
+            enviado:false,bling:{catalogo:'OK',estoque:'OK'},
+            frete:{tabela:'OK',tarifaExemplo:5}}},
+          'https://app.vaidevelum.com');
+      }
       if(event.data.type==='IA_LIST'){
         frame.postMessage({source:'LUMEN_ADMIN_PANEL_PAGE',type:'IA_LIST_RESULT',
           payload:{ok:true,items:[],aviso:'Conexão Meta pendente'}},'https://app.vaidevelum.com');
@@ -64,6 +71,14 @@ const html=fs.readFileSync(path.join(__dirname,'embeds/lumen-ia/index.html'),'ut
   const sent3=await page.evaluate(()=>window.received.filter(x=>x.type==='IA_LAB_TEST'));
   assert.equal(sent3[2].payload.modeloAnterior,'sandalia');
 
+  await f.locator('#labDiagRun').click();
+  await f.locator('#labDiagStatus').getByText(/Catálogo Bling: OK/).waitFor();
+  const diag=await f.locator('#labDiagStatus').innerText();
+  assert.match(diag,/Estoque Bling: OK/);
+  assert.match(diag,/Tabela de frete: OK/);
+  assert.match(diag,/Cajazeiras\/PB: R\$ 5,00/);
+  const requested=await page.evaluate(()=>window.received.filter(x=>x.type==='IA_LAB_DIAG'));
+  assert.equal(requested.length,1);
   // Mensagens forjadas de uma janela que não é a página Wix devem ser ignoradas.
   await f.locator('body').evaluate(()=>{
     window.postMessage({source:'LUMEN_ADMIN_PANEL_PAGE',type:'IA_LAB_RESULT',
