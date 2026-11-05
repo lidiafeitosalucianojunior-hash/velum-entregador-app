@@ -205,10 +205,16 @@ body:has(.ride-detail-overlay:not([hidden])) #velumAppDownload{display:none}
  .phase-count{min-width:23px;padding:3px}
 }
 body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
+/* Discreet, accessible IA shortcut in Lúmen header. */
+.top-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ia-icon-button{width:40px;height:40px;display:grid;place-items:center;padding:0;border:1px solid #dbe5ef;border-radius:12px;background:#fff;color:#153a67;font-size:20px;line-height:1;cursor:pointer}
+.ia-icon-button:hover{background:#edf4fa;border-color:#b8cade}
+.ia-icon-button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+@media(max-width:350px){.top-actions{gap:5px}.ia-icon-button{width:36px;height:36px}.top-actions .exit{padding:9px 11px}}
 </style></head>
 <body><div class="app">
-<div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><button id="logout" class="exit">Sair</button></div>
-<section class="quick"><button class="card call" id="velumAtendimentoIaOpen" type="button" style="background:#153a67;color:#fff"><b>🤖 Atendimento IA</b><span style="color:#dce9fc">Conversas e atendimento humano</span></button><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button></section>
+<div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><div class="top-actions"><button id="velumAtendimentoIaOpen" class="ia-icon-button" type="button" title="Atendimento IA" aria-label="Abrir Atendimento IA">🤖</button><button id="logout" class="exit">Sair</button></div></div>
+<section class="quick"><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button></section>
 
 <section class="card callbox" id="callBox">
 <h3>Chamar entregador</h3><p>Monte o trajeto em etapas. O endereço da LÚMEN vem preenchido por padrão e continua editável.</p>
