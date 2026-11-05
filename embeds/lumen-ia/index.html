@@ -86,6 +86,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       <span class="meta-url" id="waUrl">https://www.vaidevelum.com/_functions/metaWhatsappWebhook</span>
       <button type="button" id="waCopy">Copiar URL do WhatsApp</button><button type="button" id="waSubscribe" disabled>Ativar recebimento de mensagens</button>
       <button type="button" id="waConnect" class="coex-button" disabled>🔗 Conectar WhatsApp</button>
+      <small id="waConnectHint" aria-live="polite">Verificando a autorização do número oficial da loja...</small>
       <div class="coex-setup" id="waConnectBox" hidden>
         <p><strong>Conexão oficial com a Meta.</strong> Esta opção é exclusivamente para continuar utilizando o WhatsApp Business no iPhone junto com a API. Não avance se a Meta oferecer apenas a substituição ou migração exclusiva do número.</p>
         <div class="coex-actions">
@@ -177,7 +178,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     coexPending=false;
     signupRequested=false;
     byId('waConfirm').disabled=!sdkReady;
-    byId('waConnect').disabled=!sdkReady;
+    byId('waConnect').disabled=!(metaAppId && metaConfigId);
   }
   function tryCompleteCoexistence(){
     if(!pendingAuthCode||!pendingMetaSession||!signupRequested)return;
@@ -246,7 +247,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
         sdkReady=true;
         byId('waConnect').disabled=false;
         byId('waConfirm').disabled=false;
-      }catch(_){connectionFeedback('Não foi possível inicializar o SDK oficial da Meta.')}
+        byId('waConnectHint').textContent='Autorização Meta pronta. Toque para continuar com segurança.';
+      }catch(_){
+        byId('waConnectHint').textContent='Navegador bloqueou a Meta. Abra o painel diretamente no Safari.';
+        connectionFeedback('Não foi possível inicializar o SDK oficial da Meta.');
+      }
     };
     if(document.getElementById('metaWhatsAppSdk'))return;
     const script=document.createElement('script');
@@ -254,12 +259,17 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     script.async=true;
     script.crossOrigin='anonymous';
     script.src='https://connect.facebook.net/pt_BR/sdk.js';
-    script.onerror=()=>connectionFeedback('O navegador não conseguiu carregar o SDK da Meta.');
+    script.onerror=()=>{
+      byId('waConnectHint').textContent='O WhatsApp bloqueou a janela da Meta? Abra o painel no Safari.';
+      connectionFeedback('O navegador não conseguiu carregar o SDK da Meta.');
+    };
     document.head.appendChild(script);
   }
   byId('waConnect').addEventListener('click',()=>{
     byId('waConnectBox').hidden=false;
-    connectionFeedback('Confirme no aplicativo oficial da Meta que o WhatsApp Business continuará no iPhone.');
+    connectionFeedback(sdkReady
+      ? 'Confirme na Meta que o WhatsApp Business continuará no iPhone.'
+      : 'O navegador interno do WhatsApp pode bloquear a autorização. Abra este painel diretamente no Safari do iPhone para continuar. Não migre nem desconecte o número.');
   });
   byId('waCancel').addEventListener('click',()=>{byId('waConnectBox').hidden=true;});
   byId('waConfirm').addEventListener('click',()=>{
@@ -464,7 +474,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const total=Number(data.totalCount)||(canal==='whatsapp'?6:3);
     const count=Number(data.completeCount)||0;
     const inscricao=canal==='whatsapp'?String(data.integracao?.estado||'PENDENTE'):'PENDENTE';
-    if(canal==='whatsapp')byId('waSubscribe').disabled=count!==6||inscricao==='OK';
+    if(canal==='whatsapp'){
+      const inscrito=inscricao==='OK';
+      byId('waSubscribe').disabled=count!==6||inscrito;
+      byId('waSubscribe').textContent=inscrito?'✓ Aplicativo inscrito na Meta':'Ativar recebimento de mensagens';
+    }
     const situacao=inscricao==='OK'?'Inscrição Meta confirmada':
       inscricao==='NAO_INSCRITO'?'Aplicativo não inscrito na Meta':
       inscricao==='ERRO'?'Erro na consulta à Meta':'Inscrição não verificada';
@@ -503,6 +517,9 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   window.addEventListener('message',event=>{
     if(event.data?.source!==answerFrom)return;
     const msg=event.data;
+    if(['IA_META_CONFIG_RESULT','IA_META_COEX_RESULT','IA_META_SUBSCRIBE_RESULT','IA_META_STATUS_RESULT'].includes(msg.type)){
+      if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
+    }
     if(msg.type==='IA_LAB_DIAG_RESULT'){
       if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
       const data=msg.payload||{};
@@ -546,10 +563,15 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       if(v.ok===true && /^\d{8,30}$/.test(String(v.appId||'')) && /^\d{8,30}$/.test(String(v.configId||''))){
         metaAppId=String(v.appId);
         metaConfigId=String(v.configId);
+        byId('waConnect').disabled=false;
+        byId('waConnectHint').textContent='Cadastro seguro identificado. Preparando autorização da Meta...';
         initMetaSdk();
       }else{
+        metaAppId='';
+        metaConfigId='';
         byId('waConnect').disabled=true;
-        byId('waMissing').textContent=String(v.mensagem||'A autorização Meta está indisponível nesta sessão.');
+        byId('waConfirm').disabled=true;
+        byId('waConnectHint').textContent=String(v.mensagem||'A autorização Meta está indisponível nesta sessão.');
       }
     }
     if(msg.type==='IA_META_COEX_RESULT'){
@@ -624,6 +646,9 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   send('IA_META_CONFIG_REQUEST');
   send('IA_META_STATUS');
   setTimeout(()=>{
+    if(!metaAppId && byId('waConnectHint').textContent.startsWith('Verificando')){
+      byId('waConnectHint').textContent='A autorização oficial não respondeu. Reabra o painel Lúmen no Safari e faça login novamente.';
+    }
     for(const key of ['wa','ig']){
       if(byId(key+'State').textContent.startsWith('Verificando')){
         byId(key+'State').textContent='Consulta pendente';

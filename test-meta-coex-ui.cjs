@@ -74,9 +74,11 @@ const html=fs.readFileSync(path.join(__dirname,'embeds/lumen-ia/index.html'),'ut
     assert.equal(sent[0].payload.phoneNumberId,'987654321123');
     assert.equal(sent[0].payload.code,'Q'.repeat(60));
     assert.equal((await f.locator('#waConnectFeedback').innerText()).includes('Validando'),true);
-    await f.locator('body').evaluate(()=>{
-      window.postMessage({source:'LUMEN_ADMIN_PANEL_PAGE',type:'IA_META_COEX_RESULT',
-        payload:{ok:true,numero:'••••1234',mensagem:'Meta confirmou a coexistência.'}},'*');
+    await page.evaluate(()=>{
+      document.querySelector('iframe').contentWindow.postMessage({
+        source:'LUMEN_ADMIN_PANEL_PAGE',type:'IA_META_COEX_RESULT',
+        payload:{ok:true,numero:'••••1234',mensagem:'Meta confirmou a coexistência.'}
+      },'https://app.vaidevelum.com');
     });
     assert.match(await f.locator('#waConnectFeedback').innerText(),/confirmou a coexist.ncia/);
     await f.locator('#waConnectBox').screenshot({path:path.join(process.env.TEMP,'lumen-ia-coex-mobile-test-20261105.png')});
