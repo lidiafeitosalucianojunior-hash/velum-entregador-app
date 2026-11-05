@@ -84,7 +84,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       <h3>WhatsApp Business</h3><div class="result" id="waState">Verificando configurações…</div>
       <small id="waMissing">Aguarde a verificação segura das credenciais.</small>
       <span class="meta-url" id="waUrl">https://www.vaidevelum.com/_functions/metaWhatsappWebhook</span>
-      <button type="button" id="waCopy">Copiar URL do WhatsApp</button>
+      <button type="button" id="waCopy">Copiar URL do WhatsApp</button><button type="button" id="waSubscribe" disabled>Ativar recebimento de mensagens</button>
       <button type="button" id="waConnect" class="coex-button" disabled>🔗 Conectar WhatsApp</button>
       <div class="coex-setup" id="waConnectBox" hidden>
         <p><strong>Conexão oficial com a Meta.</strong> Esta opção é exclusivamente para continuar utilizando o WhatsApp Business no iPhone junto com a API. Não avance se a Meta oferecer apenas a substituição ou migração exclusiva do número.</p>
@@ -135,7 +135,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 <section class="panel" aria-label="Detalhes da conversa"><div class="panel-title">Atendimento <small>Selecione uma conversa para visualizar detalhes</small></div><div class="detail"><h2 id="client">Nenhuma conversa selecionada</h2><p id="channel">As mensagens aparecerão aqui após conectar Instagram e WhatsApp.</p><div class="details" id="message">Nenhum histórico sincronizado.</div>
 <label class="draft-label" for="aiDraft">Rascunho da LUMEN IA — revise antes de usar</label>
 <textarea class="draft-input" id="aiDraft" placeholder="Selecione uma conversa e gere uma sugestão. Nenhuma resposta será enviada automaticamente." maxlength="900"></textarea>
-<div class="draft-actions"><button type="button" id="suggest" disabled>✨ Sugerir resposta com IA</button><button type="button" id="copyReply" disabled>Copiar resposta</button></div>
+<div class="draft-actions"><button type="button" id="suggest" disabled>✨ Sugerir resposta com IA</button><button type="button" id="copyReply" disabled>Copiar resposta</button><button type="button" id="sendApproved" disabled>Enviar resposta aprovada no WhatsApp</button></div>
 <button id="take" class="take" type="button" disabled>Assumir conversa</button><div id="feedback" class="feedback" role="status" aria-live="polite"></div></div></section></div></main>
 <script>
 (function(){
@@ -147,6 +147,8 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let loading=false;
   let draftLoading=false;
   let draftRequestedId='';
+  let draftMessageId='';
+  let sendLoading=false;
   let labLoading=false;
   let labSequence=0;
   let labActiveId='';
@@ -357,6 +359,8 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId('channel').textContent=(item.canal||'Canal não informado')+' • '+(item.modo==='HUMANO'?'Atendimento humano':'Atendimento IA');
     byId('message').textContent=item.ultimaMensagem||'Aguardando histórico da conversa.';
     byId('aiDraft').value='';
+    draftMessageId='';
+    byId('sendApproved').disabled=true;
     byId('suggest').disabled=false;
     byId('copyReply').disabled=true;
     byId('take').disabled=item.modo==='HUMANO'||item.status==='ENCERRADA';
@@ -421,6 +425,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   });
   byId('aiDraft').addEventListener('input',()=>{
     byId('copyReply').disabled=!byId('aiDraft').value.trim();
+    byId('sendApproved').disabled=!draftMessageId||!byId('aiDraft').value.trim()||sendLoading;
   });
   byId('copyReply').addEventListener('click',async()=>{
     const texto=byId('aiDraft').value.trim();
@@ -433,6 +438,15 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       byId('aiDraft').focus();byId('aiDraft').select();
       byId('feedback').textContent='Selecione o texto e copie manualmente. Nenhuma mensagem foi enviada.';
     }
+  });
+  byId('sendApproved').addEventListener('click',()=>{
+    const content=byId('aiDraft').value.trim();
+    if(!selectedId||!draftMessageId||!content||sendLoading)return;
+    if(!window.confirm('Enviar esta resposta revisada à cliente pelo WhatsApp da LÚMEN LUXOS?'))return;
+    sendLoading=true;
+    byId('sendApproved').disabled=true;
+    byId('feedback').textContent='Enviando resposta aprovada à Meta...';
+    send('IA_SEND',{id:selectedId,messageId:draftMessageId,texto:content});
   });
   byId('take').addEventListener('click',()=>{
     if(!selectedId)return;
@@ -450,6 +464,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const total=Number(data.totalCount)||(canal==='whatsapp'?6:3);
     const count=Number(data.completeCount)||0;
     const inscricao=canal==='whatsapp'?String(data.integracao?.estado||'PENDENTE'):'PENDENTE';
+    if(canal==='whatsapp')byId('waSubscribe').disabled=count!==6||inscricao==='OK';
     const situacao=inscricao==='OK'?'Inscrição Meta confirmada':
       inscricao==='NAO_INSCRITO'?'Aplicativo não inscrito na Meta':
       inscricao==='ERRO'?'Erro na consulta à Meta':'Inscrição não verificada';
@@ -476,6 +491,13 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId(key+'Missing').textContent='Copie a URL selecionada.';
   }
   byId('waCopy').addEventListener('click',()=>copiarUrl('whatsapp'));
+  byId('waSubscribe').addEventListener('click',()=>{
+    if(byId('waSubscribe').disabled)return;
+    if(!window.confirm('Inscrever o aplicativo LUMEN IA para receber mensagens do WhatsApp na VELUM? Esta ação não envia respostas.'))return;
+    byId('waSubscribe').disabled=true;
+    byId('waMissing').textContent='Conferindo inscrição do número comercial na Meta...';
+    send('IA_META_SUBSCRIBE');
+  });
   byId('igCopy').addEventListener('click',()=>copiarUrl('instagram'));
 
   window.addEventListener('message',event=>{
@@ -537,6 +559,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
         ? '✅ '+String(v.mensagem||'Coexistência verificada.')+(v.numero?' Número: '+String(v.numero):'')
         : String(v.mensagem||'Autorização pendente. Nenhuma mensagem foi enviada.'));
     }
+    if(msg.type==='IA_META_SUBSCRIBE_RESULT'){
+      const data=msg.payload||{};
+      byId('waMissing').textContent=String(data.mensagem||'Configuração da Meta não confirmada.');
+      byId('waSubscribe').disabled=true;
+    }
     if(msg.type==='IA_META_STATUS_RESULT'){
       const v=msg.payload||{};
       atualizarDiagnostico('whatsapp',v.ok?v.whatsapp:null);
@@ -573,9 +600,19 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
         byId('feedback').textContent=data.mensagem||(data.ok?'Rascunho criado.':'Não foi possível gerar rascunho.');
         if(data.ok===true&&typeof data.rascunho==='string'){
           byId('aiDraft').value=data.rascunho;
+          draftMessageId=String(data.messageId||'');
+          byId('sendApproved').disabled=!draftMessageId;
           byId('copyReply').disabled=false;
         }
       }
+    }
+    if(msg.type==='IA_SEND_RESULT'){
+      sendLoading=false;
+      const data=msg.payload||{};
+      byId('sendApproved').disabled=true;
+      draftMessageId='';
+      byId('feedback').textContent=String(data.mensagem||'Envio não confirmado. Confira o WhatsApp.');
+      if(data.ok===true&&data.enviado===true)reload();
     }
     if(msg.type==='IA_ASSUME_RESULT'){
       const data=msg.payload||{};
