@@ -32,10 +32,38 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 .draft-actions button:disabled{opacity:.45;cursor:not-allowed}.feedback{padding:12px 0;font-size:12px;color:#1b6e55;min-height:32px}
 @media(max-width:700px){.workspace{grid-template-columns:1fr}.container{padding:14px 10px}.top{padding:13px}.top-inner{flex-wrap:wrap}.heading{display:flex;flex-direction:column;align-items:stretch;gap:10px}.heading>div:last-child{display:flex;flex-wrap:wrap;gap:8px;width:100%}.heading>div:last-child button{flex:1 1 140px}.panel{min-height:130px;min-width:0}.detail{padding:15px}h1{font-size:21px}}
 @media(max-width:440px){.heading{flex-wrap:wrap}.heading>div:last-child{width:100%;justify-content:space-between}.heading button{flex:1}.top b{font-size:18px}.back{padding:9px 11px}}
+.meta-status{border:1px solid #d6e3f1;border-radius:16px;background:#fff;padding:15px;margin:0 0 16px}
+.meta-title{font-weight:850;color:#153a67;font-size:15px;margin:0 0 12px}
+.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.meta-channel{border:1px solid #e0e8f2;border-radius:12px;padding:12px;min-width:0}
+.meta-channel h3{margin:0 0 5px;font-size:14px;color:#163d67}
+.meta-channel .result{font-size:13px;color:#576d83;font-weight:700}
+.meta-channel small{display:block;color:#60748b;line-height:1.45;margin:6px 0 8px;overflow-wrap:anywhere}
+.meta-url{font-size:11px;color:#536b85;display:block;overflow-wrap:anywhere;line-height:1.45}
+.meta-channel button{margin:9px 0 0;border:1px solid #d7e3f0;border-radius:9px;background:#f7faff;color:#153a67;font-weight:800;padding:9px 11px;cursor:pointer}
+@media(max-width:600px){.meta-grid{grid-template-columns:1fr}}
 </style></head><body>
 <header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Administração VELUM • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
 <main class="container"><div class="heading"><div><h1>Central de conversas</h1><p>Acompanhe mensagens e assuma o atendimento quando necessário.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="smoke" type="button" title="Usa uma pequena quantidade de créditos da OpenAI e não envia mensagem a clientes">Testar IA (usa créditos)</button><button class="refresh" id="refresh" type="button">Atualizar</button></div></div>
-<div class="notice" id="notice">Conectando à caixa de entrada... O envio automático permanece desativado até a integração oficial com a Meta.</div><div id="smokeResult" role="status" aria-live="polite"></div>
+<div class="notice" id="notice">Conectando à caixa de entrada... O envio automático permanece desativado até a integração oficial com a Meta.</div><div id="smokeResult" role="status" aria-live="polite"></div><section class="meta-status" aria-label="Configuração dos canais Meta">
+  <div class="meta-title">Conexão com WhatsApp e Instagram</div>
+  <div class="meta-grid">
+    <div class="meta-channel">
+      <h3>WhatsApp Business</h3><div class="result" id="waState">Verificando configurações…</div>
+      <small id="waMissing">Aguarde a verificação segura das credenciais.</small>
+      <span class="meta-url" id="waUrl">https://www.vaidevelum.com/_functions/metaWhatsappWebhook</span>
+      <button type="button" id="waCopy">Copiar URL do WhatsApp</button>
+    </div>
+    <div class="meta-channel">
+      <h3>Instagram Direct</h3><div class="result" id="igState">Verificando configurações…</div>
+      <small id="igMissing">Aguarde a verificação segura das credenciais.</small>
+      <span class="meta-url" id="igUrl">https://www.vaidevelum.com/_functions/metaInstagramWebhook</span>
+      <button type="button" id="igCopy">Copiar URL do Instagram</button>
+    </div>
+  </div>
+  <small style="display:block;margin:10px 0 0;color:#627b93">Credenciais cadastradas não significam conexão concluída. O webhook deve ser verificado pela Meta e o aplicativo habilitado para produção. Nenhuma mensagem será enviada automaticamente.</small>
+</section>
+
 <div class="workspace"><section class="panel" aria-label="Lista de conversas"><div class="panel-title">Conversas <small id="counter">0 conversas</small></div><div id="conversationList" class="empty">Carregando conversas...</div></section>
 <section class="panel" aria-label="Detalhes da conversa"><div class="panel-title">Atendimento <small>Selecione uma conversa para visualizar detalhes</small></div><div class="detail"><h2 id="client">Nenhuma conversa selecionada</h2><p id="channel">As mensagens aparecerão aqui após conectar Instagram e WhatsApp.</p><div class="details" id="message">Nenhum histórico sincronizado.</div>
 <label class="draft-label" for="aiDraft">Rascunho da LUMEN IA — revise antes de usar</label>
@@ -143,9 +171,43 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId('feedback').textContent='Transferindo para atendimento humano...';
     send('IA_ASSUME',{id:selectedId});
   });
+  function atualizarDiagnostico(canal,data){
+    const key=canal==='whatsapp'?'wa':'ig';
+    if(!data||typeof data.completeCount!=='number'){
+      byId(key+'State').textContent='Verificação indisponível';
+      byId(key+'Missing').textContent='Confira a sessão e use Atualizar.';
+      return;
+    }
+    byId(key+'State').textContent=data.configured?'3/3 credenciais cadastradas · Meta não verificada':data.completeCount+'/3 configurações cadastradas';
+    byId(key+'Missing').textContent=Array.isArray(data.missing)&&data.missing.length
+      ? 'Faltam: '+data.missing.join(', ')
+      : 'Aguardando validação de webhook e autorização da Meta.';
+  }
+  function copiarUrl(canal){
+    const key=canal==='whatsapp'?'wa':'ig';
+    const url=byId(key+'Url').textContent.trim();
+    if(navigator.clipboard?.writeText){
+      navigator.clipboard.writeText(url).then(()=>{
+        byId(key+'Missing').textContent='URL copiada. Cole no campo de callback da Meta após publicar o endpoint.';
+      }).catch(()=>selecionarUrl(key));
+    }else selecionarUrl(key);
+  }
+  function selecionarUrl(key){
+    const range=document.createRange();range.selectNodeContents(byId(key+'Url'));
+    const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+    byId(key+'Missing').textContent='Copie a URL selecionada.';
+  }
+  byId('waCopy').addEventListener('click',()=>copiarUrl('whatsapp'));
+  byId('igCopy').addEventListener('click',()=>copiarUrl('instagram'));
+
   window.addEventListener('message',event=>{
     if(event.data?.source!==answerFrom)return;
     const msg=event.data;
+    if(msg.type==='IA_META_STATUS_RESULT'){
+      const v=msg.payload||{};
+      atualizarDiagnostico('whatsapp',v.ok?v.whatsapp:null);
+      atualizarDiagnostico('instagram',v.ok?v.instagram:null);
+    }
     if(msg.type==='IA_LIST_RESULT'){
       loading=false;
       byId('refresh').disabled=false;
@@ -188,6 +250,15 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       else byId('take').disabled=false;
     }
   });
+  send('IA_META_STATUS');
+  setTimeout(()=>{
+    for(const key of ['wa','ig']){
+      if(byId(key+'State').textContent.startsWith('Verificando')){
+        byId(key+'State').textContent='Consulta pendente';
+        byId(key+'Missing').textContent='Reabra a prévia atualizada do painel Lúmen para verificar.';
+      }
+    }
+  },12000);
   reload();
 })();
 </script></body></html>
