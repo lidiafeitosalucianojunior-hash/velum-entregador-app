@@ -50,6 +50,25 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 .coex-actions button{width:auto;min-height:40px}
 .coex-actions .coex-primary{background:#1877f2;color:white;border:0}
 .coex-feedback{margin-top:10px;font-size:12px;line-height:1.5;color:#294c73;overflow-wrap:anywhere}
+.lab{border:1px solid #dce6f0;background:#fff;border-radius:16px;padding:17px 18px;margin-bottom:16px}
+.lab-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:5px}
+.lab h2{margin:0;font-size:17px;color:#15375d}
+.lab-tag{font-size:10px;font-weight:800;background:#ecf5ff;color:#23588b;padding:6px 9px;border-radius:30px}
+.lab-desc{margin:6px 0 12px;font-size:12px;color:#62778c}
+.lab-prompts{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 11px}
+.lab-prompts button{border:1px solid #d5dfeb;background:#f7faff;color:#173e66;font-size:11px;font-weight:650;border-radius:20px;padding:7px 10px;cursor:pointer}
+.lab-input{display:block;width:100%;min-height:70px;resize:vertical;border:1px solid #cad9e9;border-radius:11px;padding:11px;color:#15375d;line-height:1.45;max-height:180px;font:inherit}
+.lab-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px}
+.lab-actions button{background:#ff7a00;color:#fff;border:0;border-radius:10px;padding:11px 15px;font-weight:800;cursor:pointer}
+.lab-actions button:disabled{opacity:.55;cursor:not-allowed}
+.lab-counter{font-size:11px;color:#65788b}
+.lab-result{margin-top:12px;background:#f5f8fc;border:1px solid #e0e8f2;border-radius:12px;padding:13px;min-height:72px}
+.lab-result-label{font-size:11px;font-weight:800;color:#406484;margin-bottom:7px}
+.lab-answer{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:#17395e;line-height:1.6}
+.lab-status{font-size:11px;color:#61768b;margin-top:8px;line-height:1.5}
+.lab-mode{display:inline-block;font-weight:750;color:#aa6115}
+@media(max-width:600px){.lab{padding:14px}.lab-actions button{width:100%}}
+
 @media(max-width:600px){.meta-grid{grid-template-columns:1fr}}
 </style></head><body>
 <header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Lúmen Luxos • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
@@ -82,6 +101,28 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   <small style="display:block;margin:10px 0 0;color:#627b93">Credenciais cadastradas não significam conexão concluída. O webhook deve ser verificado pela Meta e o aplicativo habilitado para produção. Nenhuma mensagem será enviada automaticamente.</small>
 </section>
 
+<section class="lab" aria-labelledby="labTitle">
+  <div class="lab-head"><h2 id="labTitle">🧪 Laboratório LÚMEN IA</h2><span class="lab-tag">Teste privado • sem envio</span></div>
+  <p class="lab-desc">Simule perguntas fictícias e confira as regras da Lúmen Luxos. Preços e estoque dependem de consulta real ao Bling; fretes usam o módulo da VELUM. Este teste não consome créditos da OpenAI. Não insira dados de clientes.</p>
+  <div class="lab-prompts" role="group" aria-label="Exemplos de perguntas">
+    <button type="button" data-lab-example="Bom dia!">Bom dia</button>
+    <button type="button" data-lab-example="Tem sandália 37?">Sandália 37</button>
+    <button type="button" data-lab-example="Qual o frete para Sousa - PB?">Frete Sousa/PB</button>
+    <button type="button" data-lab-example="Quem ganhou o jogo de futebol?">Fora do assunto</button>
+  </div>
+  <label for="labQuestion" class="draft-label">Mensagem fictícia para testar</label>
+  <textarea id="labQuestion" class="lab-input" maxlength="280" placeholder="Ex.: Tem tênis preto no tamanho 38?"></textarea>
+  <div class="lab-actions">
+    <button type="button" id="labRun">Testar resposta da Lúmen IA</button>
+    <span class="lab-counter" id="labCounter">0 / 280 caracteres</span>
+  </div>
+  <div id="labResult" class="lab-result" role="status" aria-live="polite">
+    <div class="lab-result-label">Prévia da resposta</div>
+    <div id="labAnswer" class="lab-answer">Escolha um exemplo ou digite uma pergunta para iniciar o teste.</div>
+    <div id="labStatus" class="lab-status">Nenhuma mensagem será enviada ao WhatsApp ou Instagram.</div>
+  </div>
+</section>
+
 <div class="workspace"><section class="panel" aria-label="Lista de conversas"><div class="panel-title">Conversas <small id="counter">0 conversas</small></div><div id="conversationList" class="empty">Carregando conversas...</div></section>
 <section class="panel" aria-label="Detalhes da conversa"><div class="panel-title">Atendimento <small>Selecione uma conversa para visualizar detalhes</small></div><div class="detail"><h2 id="client">Nenhuma conversa selecionada</h2><p id="channel">As mensagens aparecerão aqui após conectar Instagram e WhatsApp.</p><div class="details" id="message">Nenhum histórico sincronizado.</div>
 <label class="draft-label" for="aiDraft">Rascunho da LUMEN IA — revise antes de usar</label>
@@ -98,6 +139,10 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let loading=false;
   let draftLoading=false;
   let draftRequestedId='';
+  let labLoading=false;
+  let labSequence=0;
+  let labActiveId='';
+  let labPreviousModel='';
   const byId=id=>document.getElementById(id);
   const send=(type,payload={})=>parent.postMessage({source:src,type,payload},'*');
   // A autorização Meta só pode ser solicitada após sessão Lúmen validada pelo Wix.
@@ -244,6 +289,42 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     }
   });
 
+  function labFeedback(message){
+    byId('labAnswer').textContent=String(message||'');
+    byId('labStatus').textContent='Teste privado. Nenhuma mensagem foi enviada.';
+  }
+  byId('labQuestion').addEventListener('input',()=>{
+    byId('labCounter').textContent=byId('labQuestion').value.length+' / 280 caracteres';
+  });
+  document.querySelectorAll('[data-lab-example]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      byId('labQuestion').value=String(button.dataset.labExample||'');
+      byId('labCounter').textContent=byId('labQuestion').value.length+' / 280 caracteres';
+      byId('labQuestion').focus();
+    });
+  });
+  byId('labRun').addEventListener('click',()=>{
+    if(labLoading)return;
+    const pergunta=byId('labQuestion').value.trim();
+    if(!pergunta || pergunta.length>280){
+      labFeedback('Digite uma pergunta fictícia com até 280 caracteres.');
+      return;
+    }
+    labLoading=true;
+    labActiveId='lab-'+String(++labSequence);
+    byId('labRun').disabled=true;
+    labFeedback('Consultando o catálogo Bling ou a tabela de fretes VELUM…');
+    const requestId=labActiveId;
+    send('IA_LAB_TEST',{
+      requestId,pergunta,modeloAnterior:labPreviousModel
+    });
+    setTimeout(()=>{
+      if(!labLoading || labActiveId!==requestId)return;
+      labLoading=false;
+      byId('labRun').disabled=false;
+      labFeedback('Teste indisponível. Verifique sua sessão e tente novamente.');
+    },20000);
+  });
   function selectItem(item){
     selectedId=String(item.id||'');
     byId('client').textContent=item.cliente||'Cliente';
@@ -365,6 +446,22 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   window.addEventListener('message',event=>{
     if(event.data?.source!==answerFrom)return;
     const msg=event.data;
+    if(msg.type==='IA_LAB_RESULT'){
+      if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
+      const data=msg.payload||{};
+      if(String(data.requestId||'')!==labActiveId)return;
+      labLoading=false;
+      byId('labRun').disabled=false;
+      if(data.ok!==true){
+        labFeedback(String(data.mensagem||'Não foi possível executar a simulação.'));
+        return;
+      }
+      labFeedback(String(data.resposta||'Nenhuma resposta disponível.'));
+      byId('labStatus').textContent='Fonte: '+String(data.fonte||'política Lúmen')+
+        ' • '+(data.pendente?'Aguardando confirmação ou informações.':'Resposta para revisão.')+
+        ' • Sem envio ao WhatsApp ou Instagram.';
+      labPreviousModel=String(data.modeloAnterior||'').slice(0,80);
+    }
     if(msg.type==='IA_META_CONFIG_RESULT'){
       const v=msg.payload||{};
       if(v.ok===true && /^\d{8,30}$/.test(String(v.appId||'')) && /^\d{8,30}$/.test(String(v.configId||''))){
