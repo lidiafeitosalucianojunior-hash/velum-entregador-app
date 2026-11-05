@@ -41,6 +41,15 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 .meta-channel small{display:block;color:#60748b;line-height:1.45;margin:6px 0 8px;overflow-wrap:anywhere}
 .meta-url{font-size:11px;color:#536b85;display:block;overflow-wrap:anywhere;line-height:1.45}
 .meta-channel button{margin:9px 0 0;border:1px solid #d7e3f0;border-radius:9px;background:#f7faff;color:#153a67;font-weight:800;padding:9px 11px;cursor:pointer}
+.coex-button{margin-top:12px;background:#ff7a00!important;color:#fff!important;border-color:#ff7a00!important;width:100%;min-height:42px}
+.coex-button:disabled{opacity:.5;cursor:not-allowed}
+.coex-setup{margin-top:12px;border:1px solid #d9e4f0;background:#f8fbff;border-radius:12px;padding:13px}
+.coex-setup[hidden]{display:none!important}
+.coex-setup p{font-size:12px;line-height:1.55;color:#35526e;margin:0 0 10px}
+.coex-actions{display:flex;gap:8px;flex-wrap:wrap}
+.coex-actions button{width:auto;min-height:40px}
+.coex-actions .coex-primary{background:#1877f2;color:white;border:0}
+.coex-feedback{margin-top:10px;font-size:12px;line-height:1.5;color:#294c73;overflow-wrap:anywhere}
 @media(max-width:600px){.meta-grid{grid-template-columns:1fr}}
 </style></head><body>
 <header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Lúmen Luxos • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
@@ -53,6 +62,15 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       <small id="waMissing">Aguarde a verificação segura das credenciais.</small>
       <span class="meta-url" id="waUrl">https://www.vaidevelum.com/_functions/metaWhatsappWebhook</span>
       <button type="button" id="waCopy">Copiar URL do WhatsApp</button>
+      <button type="button" id="waConnect" class="coex-button" disabled>🔗 Conectar WhatsApp</button>
+      <div class="coex-setup" id="waConnectBox" hidden>
+        <p><strong>Conexão oficial com a Meta.</strong> Esta opção é exclusivamente para continuar utilizando o WhatsApp Business no iPhone junto com a API. Não avance se a Meta oferecer apenas a substituição ou migração exclusiva do número.</p>
+        <div class="coex-actions">
+          <button type="button" id="waConfirm" class="coex-primary" disabled>Iniciar com a Meta</button>
+          <button type="button" id="waCancel">Cancelar</button>
+        </div>
+        <div id="waConnectFeedback" class="coex-feedback" role="status" aria-live="polite">Aguardando autorização da Meta.</div>
+      </div>
     </div>
     <div class="meta-channel">
       <h3>Instagram Direct</h3><div class="result" id="igState">Verificando configurações…</div>
@@ -82,6 +100,150 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let draftRequestedId='';
   const byId=id=>document.getElementById(id);
   const send=(type,payload={})=>parent.postMessage({source:src,type,payload},'*');
+  // A autorização Meta só pode ser solicitada após sessão Lúmen validada pelo Wix.
+  // O código de uso único nunca vai para postMessage com origem-curinga.
+  const trustedParentOrigin='https://www.vaidevelum.com';
+  let metaAppId='';
+  let metaConfigId='';
+  let sdkReady=false;
+  let coexPending=false;
+  let pendingAuthCode='';
+  let pendingAuthAt=0;
+  let pendingMetaSession=null;
+  let signupRequested=false;
+  const connectionFeedback=text=>{byId('waConnectFeedback').textContent=String(text||'');};
+  function resetSignupPending(){
+    pendingAuthCode='';
+    pendingAuthAt=0;
+    pendingMetaSession=null;
+    coexPending=false;
+    signupRequested=false;
+    byId('waConfirm').disabled=!sdkReady;
+    byId('waConnect').disabled=!sdkReady;
+  }
+  function tryCompleteCoexistence(){
+    if(!pendingAuthCode||!pendingMetaSession||!signupRequested)return;
+    if(Date.now()-pendingAuthAt>25000){
+      resetSignupPending();
+      connectionFeedback('A autorização expirou. Reabra o cadastro da Meta.');
+      return;
+    }
+    const payload={
+      event:pendingMetaSession.event,
+      wabaId:pendingMetaSession.wabaId,
+      phoneNumberId:pendingMetaSession.phoneNumberId,
+      code:pendingAuthCode
+    };
+    pendingAuthCode='';
+    pendingMetaSession=null;
+    coexPending=true;
+    byId('waConfirm').disabled=true;
+    byId('waConnect').disabled=true;
+    connectionFeedback('Validando a coexistência e o número comercial com a Meta…');
+    parent.postMessage({source:src,type:'IA_META_COEX_FINISH',payload},trustedParentOrigin);
+  }
+  function onMetaSignupEvent(event){
+    if(!/^https:\/\/([a-z0-9-]+\.)*facebook\.com$/i.test(event.origin))return;
+    let message=event.data;
+    if(typeof message==='string'){
+      if(message.length>12000)return;
+      try{message=JSON.parse(message)}catch(_){return}
+    }
+    if(!message||message.type!=='WA_EMBEDDED_SIGNUP'||!signupRequested)return;
+    if(message.event==='CANCEL'){
+      resetSignupPending();
+      connectionFeedback('O cadastro foi cancelado na Meta. Nenhuma credencial foi alterada.');
+      return;
+    }
+    if(message.event==='ERROR'){
+      resetSignupPending();
+      connectionFeedback('A Meta informou um erro. Verifique o acesso à conta comercial.');
+      return;
+    }
+    if(typeof message.event==='string' && message.event.startsWith('FINISH') &&
+       message.event!=='FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'){
+      resetSignupPending();
+      connectionFeedback('A Meta não confirmou a coexistência com o WhatsApp Business do iPhone. O número não será ativado.');
+      return;
+    }
+    if(message.event!=='FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING')return;
+    const info=message.data||{};
+    const waba=String(info.waba_id||info.messaging_account_ids?.[0]||'');
+    const phone=String(info.phone_number_id||'');
+    if(!/^\d{5,30}$/.test(waba)|| (phone&&!/^\d{5,30}$/.test(phone))){
+      resetSignupPending();
+      connectionFeedback('A Meta não retornou os identificadores esperados. Nada foi ativado.');
+      return;
+    }
+    pendingMetaSession={event:message.event,wabaId:waba,phoneNumberId:phone};
+    tryCompleteCoexistence();
+  }
+  window.addEventListener('message',onMetaSignupEvent);
+  function initMetaSdk(){
+    if(!metaAppId||!/^\d{8,30}$/.test(metaAppId))return;
+    if(sdkReady)return;
+    window.fbAsyncInit=()=>{
+      try{
+        window.FB.init({appId:metaAppId,xfbml:false,autoLogAppEvents:false,version:'v27.0'});
+        sdkReady=true;
+        byId('waConnect').disabled=false;
+        byId('waConfirm').disabled=false;
+      }catch(_){connectionFeedback('Não foi possível inicializar o SDK oficial da Meta.')}
+    };
+    if(document.getElementById('metaWhatsAppSdk'))return;
+    const script=document.createElement('script');
+    script.id='metaWhatsAppSdk';
+    script.async=true;
+    script.crossOrigin='anonymous';
+    script.src='https://connect.facebook.net/pt_BR/sdk.js';
+    script.onerror=()=>connectionFeedback('O navegador não conseguiu carregar o SDK da Meta.');
+    document.head.appendChild(script);
+  }
+  byId('waConnect').addEventListener('click',()=>{
+    byId('waConnectBox').hidden=false;
+    connectionFeedback('Confirme no aplicativo oficial da Meta que o WhatsApp Business continuará no iPhone.');
+  });
+  byId('waCancel').addEventListener('click',()=>{byId('waConnectBox').hidden=true;});
+  byId('waConfirm').addEventListener('click',()=>{
+    if(!sdkReady||!metaAppId||!metaConfigId||coexPending||!window.FB)return;
+    resetSignupPending();
+    signupRequested=true;
+    byId('waConfirm').disabled=true;
+    connectionFeedback('Aguardando o fluxo oficial de coexistência da Meta…');
+    try{
+      window.FB.login(response=>{
+        const code=String(response?.authResponse?.code||'');
+        if(!code){
+          if(!pendingMetaSession)connectionFeedback('A Meta não devolveu o código de autorização. Nenhum número foi ativado.');
+          return;
+        }
+        if(!/^[A-Za-z0-9._-]{10,4000}$/.test(code)){
+          resetSignupPending();
+          connectionFeedback('A Meta retornou um código inválido. Nada foi ativado.');
+          return;
+        }
+        pendingAuthCode=code;
+        pendingAuthAt=Date.now();
+        setTimeout(()=>{
+          if(pendingAuthCode&&Date.now()-pendingAuthAt>=25000){
+            resetSignupPending();
+            connectionFeedback('Código expirado. Inicie novamente pela Meta.');
+          }
+        },26000);
+        tryCompleteCoexistence();
+      },{
+        config_id:metaConfigId,
+        auth_type:'rerequest',
+        response_type:'code',
+        override_default_response_type:true,
+        extras:{setup:{},featureType:'whatsapp_business_app_onboarding'}
+      });
+    }catch(_){
+      resetSignupPending();
+      connectionFeedback('O navegador bloqueou a janela da Meta. Permita pop-ups para continuar.');
+    }
+  });
+
   function selectItem(item){
     selectedId=String(item.id||'');
     byId('client').textContent=item.cliente||'Cliente';
@@ -203,6 +365,24 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   window.addEventListener('message',event=>{
     if(event.data?.source!==answerFrom)return;
     const msg=event.data;
+    if(msg.type==='IA_META_CONFIG_RESULT'){
+      const v=msg.payload||{};
+      if(v.ok===true && /^\d{8,30}$/.test(String(v.appId||'')) && /^\d{8,30}$/.test(String(v.configId||''))){
+        metaAppId=String(v.appId);
+        metaConfigId=String(v.configId);
+        initMetaSdk();
+      }else{
+        byId('waConnect').disabled=true;
+        byId('waMissing').textContent=String(v.mensagem||'A autorização Meta está indisponível nesta sessão.');
+      }
+    }
+    if(msg.type==='IA_META_COEX_RESULT'){
+      const v=msg.payload||{};
+      resetSignupPending();
+      connectionFeedback(v.ok===true
+        ? '✅ '+String(v.mensagem||'Coexistência verificada.')+(v.numero?' Número: '+String(v.numero):'')
+        : String(v.mensagem||'Autorização pendente. Nenhuma mensagem foi enviada.'));
+    }
     if(msg.type==='IA_META_STATUS_RESULT'){
       const v=msg.payload||{};
       atualizarDiagnostico('whatsapp',v.ok?v.whatsapp:null);
@@ -250,6 +430,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       else byId('take').disabled=false;
     }
   });
+  send('IA_META_CONFIG_REQUEST');
   send('IA_META_STATUS');
   setTimeout(()=>{
     for(const key of ['wa','ig']){
