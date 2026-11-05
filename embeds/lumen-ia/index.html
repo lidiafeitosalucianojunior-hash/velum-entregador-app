@@ -447,10 +447,19 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       byId(key+'Missing').textContent='Confira a sessão e use Atualizar.';
       return;
     }
-    byId(key+'State').textContent=data.configured?'3/3 credenciais cadastradas · Meta não verificada':data.completeCount+'/3 configurações cadastradas';
+    const total=Number(data.totalCount)||(canal==='whatsapp'?6:3);
+    const count=Number(data.completeCount)||0;
+    const inscricao=canal==='whatsapp'?String(data.integracao?.estado||'PENDENTE'):'PENDENTE';
+    const situacao=inscricao==='OK'?'Inscrição Meta confirmada':
+      inscricao==='NAO_INSCRITO'?'Aplicativo não inscrito na Meta':
+      inscricao==='ERRO'?'Erro na consulta à Meta':'Inscrição não verificada';
+    byId(key+'State').textContent=count+'/'+total+' credenciais cadastradas'+
+      (canal==='whatsapp'?' | '+situacao:' | Meta não verificada');
     byId(key+'Missing').textContent=Array.isArray(data.missing)&&data.missing.length
       ? 'Faltam: '+data.missing.join(', ')
-      : 'Aguardando validação de webhook e autorização da Meta.';
+      : canal==='whatsapp'&&data.integracao?.detalhe
+        ? String(data.integracao.detalhe)+' Teste de mensagem real ainda necessário.'
+        : 'Aguardando validação de webhook e autorização da Meta.';
   }
   function copiarUrl(canal){
     const key=canal==='whatsapp'?'wa':'ig';
