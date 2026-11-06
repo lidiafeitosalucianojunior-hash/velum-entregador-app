@@ -137,7 +137,14 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 <label class="draft-label" for="aiDraft">Rascunho da LUMEN IA — revise antes de usar</label>
 <textarea class="draft-input" id="aiDraft" placeholder="Selecione uma conversa e gere uma sugestão. Nenhuma resposta será enviada automaticamente." maxlength="900"></textarea>
 <div class="draft-actions"><button type="button" id="suggest" disabled>✨ Sugerir resposta com IA</button><button type="button" id="copyReply" disabled>Copiar resposta</button><button type="button" id="sendApproved" disabled>Enviar resposta aprovada no WhatsApp</button></div>
-<button id="take" class="take" type="button" disabled>Assumir conversa</button><div id="feedback" class="feedback" role="status" aria-live="polite"></div></div></section></div></main>
+<button id="take" class="take" type="button" disabled>Assumir conversa</button><div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+<details id="cadastroPreviewPanel" class="profile-stage" style="margin-top:16px;border-top:1px solid #dce5ed;padding-top:14px">
+<summary style="font-weight:800;color:#203e64;cursor:pointer">Cadastro Bling — prévia protegida</summary>
+<p style="font-size:13px;color:#526880">Analisa somente dados declarados pela cliente. Não cadastra nem altera contatos; confirme a identidade antes de sincronizar.</p>
+<button id="cadastroPreviewButton" type="button" disabled style="padding:11px 14px;border:1px solid #cbd7e4;border-radius:9px;background:#f6f9fc;color:#183d64;font-weight:750">Conferir dados da conversa</button>
+<div id="cadastroPreviewStatus" role="status" aria-live="polite" style="font-size:13px;color:#425b76;padding:10px 0"></div>
+<div id="cadastroPreviewFields" style="font-size:14px;line-height:1.7"></div>
+</details></div></section></div></main>
 <script>
 (function(){
   'use strict';
@@ -150,6 +157,8 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let metaStatusAnswered=false;
   let metaConfigAnswered=false;
   let listCycle=0;
+  let previewLoading=false;
+  let previewRequestedId='';
   let draftLoading=false;
   let draftRequestedId='';
   let draftMessageId='';
@@ -377,6 +386,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId('channel').textContent=(item.canal||'Canal não informado')+' • '+(item.modo==='HUMANO'?'Atendimento humano':'Atendimento IA');
     byId('message').textContent=item.ultimaMensagem||'Aguardando histórico da conversa.';
     byId('aiDraft').value='';
+    previewRequestedId='';
+    previewLoading=false;
+    byId('cadastroPreviewButton').disabled=false;
+    byId('cadastroPreviewStatus').textContent='Clique em Conferir dados da conversa. Nenhuma alteração será feita no Bling.';
+    byId('cadastroPreviewFields').replaceChildren();
     draftMessageId='';
     byId('sendApproved').disabled=true;
     const semTexto=semTextoParaIA(item.ultimaMensagem);
@@ -446,6 +460,22 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     box.textContent='Testando conexão com uma mensagem fictícia… Nenhuma cliente será contatada.';
     byId('smoke').disabled=true;
     send('IA_SMOKE');
+  });
+  byId('cadastroPreviewButton').addEventListener('click',()=>{
+    if(!selectedId || previewLoading)return;
+    previewLoading=true;
+    previewRequestedId=selectedId;
+    byId('cadastroPreviewButton').disabled=true;
+    byId('cadastroPreviewStatus').textContent='Preparando prévia segura; consultando cadastro existente no Bling...';
+    byId('cadastroPreviewFields').replaceChildren();
+    const current=selectedId;
+    send('IA_CADASTRO_PREVIEW',{id:current});
+    setTimeout(()=>{
+      if(!previewLoading || previewRequestedId!==current || selectedId!==current)return;
+      previewLoading=false;
+      byId('cadastroPreviewButton').disabled=false;
+      byId('cadastroPreviewStatus').textContent='A consulta não respondeu. Nenhum contato foi modificado.';
+    },35000);
   });
   byId('suggest').addEventListener('click',()=>{
     if(!selectedId||draftLoading)return;
@@ -651,6 +681,47 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       box.textContent=data.ok===true
         ? 'Conexão com OpenAI validada! Resposta fictícia gerada:\n'+String(data.rascunho||'')
         : 'Teste não concluído: '+String(data.mensagem||'Falha desconhecida.');
+    }
+    if(msg.type==='IA_CADASTRO_PREVIEW_RESULT'){
+      const data=msg.payload||{};
+      if(String(data.id||'')!==previewRequestedId || selectedId!==previewRequestedId)return;
+      previewLoading=false;
+      byId('cadastroPreviewButton').disabled=false;
+      const status=byId('cadastroPreviewStatus');
+      const fields=byId('cadastroPreviewFields');
+      fields.replaceChildren();
+      if(data.ok!==true){
+        status.textContent=String(data.mensagem||'Prévia indisponível. Nenhuma alteração realizada.');
+        return;
+      }
+      const cadastro=data.cadastro||{};
+      const propostas=cadastro.campos||{};
+      const labels={nome:'Nome',endereco:'Endereço',cidade:'Cidade',uf:'Estado',cep:'CEP',email:'E-mail',telefoneInformado:'Telefone informado'};
+      const allowed=['nome','telefoneInformado','endereco','cidade','uf','cep','email'];
+      for(const key of allowed)if(propostas[key]?.valor){
+        const line=document.createElement('p');
+        line.style.margin='4px 0';
+        const bold=document.createElement('b');
+        bold.textContent=labels[key]+': ';
+        line.appendChild(bold);
+        line.appendChild(document.createTextNode(String(propostas[key].valor).slice(0,120)+' • aguarda confirmação'));
+        fields.appendChild(line);
+      }
+      if(!fields.children.length){
+        fields.textContent='Nenhum dado cadastral explicitamente informado no histórico recente.';
+      }
+      const blingState=String(cadastro.bling?.estado||'NAO_CONSULTADO');
+      const states={
+        CORRESPONDENCIA_UNICA:'Encontrado um possível cadastro no Bling. Confirme identidade e conta conectada.',
+        CONTATOS_DUPLICADOS:'Atenção: múltiplos contatos com o telefone informado. Não cadastrar nem atualizar.',
+        SEM_CORRESPONDENCIA_EXATA:'Nenhum contato com telefone exatamente igual encontrado; não criar automaticamente.',
+        RESULTADO_TRUNCADO:'A busca retornou muitos resultados. Conferência manual necessária.',
+        CONSULTA_INDISPONIVEL:'Bling indisponível; confira a conexão antes de atualizar.',
+        SEM_TELEFONE_VALIDO:'Telefone não verificado para correspondência.',
+        NAO_CONSULTADO:'Bling não consultado.'
+      };
+      status.textContent='Somente leitura. '+String(states[blingState]||'Correspondência não confirmada.')+' Nenhum registro foi alterado.';
+      return;
     }
     if(msg.type==='IA_DRAFT_RESULT'){
       const data=msg.payload||{};
