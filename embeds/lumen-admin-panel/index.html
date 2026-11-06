@@ -1020,8 +1020,10 @@ function printLabels(items,existingWindow=null){
  w.document.open();w.document.write(doc);w.document.close();
 }
 function toggleEditRouteFields(disabled){
-  ['pickupAddress','pickupNumber','pickupNeighborhood','pickupCity','pickupState','pickupZipCode','deliveryAddress','deliveryCity','deliveryState','deliveryZipCode'].forEach(k=>{if($(k))$(k).disabled=disabled});
-  $('addStop').disabled=disabled;
+  ['pickupAddress','pickupNumber','pickupNeighborhood','pickupCity','pickupState','pickupZipCode'].forEach(k=>{if($(k))$(k).disabled=disabled});
+  // Antes do chamado, permitir definir o destino caso a cliente mude de retirada para entrega.
+  ['deliveryAddress','deliveryCity','deliveryState','deliveryZipCode'].forEach(k=>{if($(k))$(k).disabled=false});
+  $('addStop').disabled=false; // Permitir adicionar o próximo centro antes do chamado de entregador.
   $('storePickupMode').disabled=disabled;
   // A modalidade continua editável sem entregador; somente centros já
   // confirmados ficam bloqueados. Corrigir uma parada em trânsito é permitido.
@@ -1030,9 +1032,12 @@ function toggleEditRouteFields(disabled){
   const centerStages=Array.isArray(ride?.logisticsStages)?ride.logisticsStages:[];
   document.querySelectorAll('#stopList input[data-stop][data-key]').forEach(el=>{
     const current=centerStages[Number(el.dataset.stop)]||{};
-    el.disabled=disabled&&current.status==='ARRIVED';
+    el.disabled=disabled&&['ARRIVED','IN_TRANSIT'].includes(current.status);
   });
-  document.querySelectorAll('#stopList button[data-rm]').forEach(el=>el.disabled=disabled);
+  document.querySelectorAll('#stopList button[data-rm]').forEach(el=>{
+    const current=centerStages[Number(el.dataset.rm)]||{};
+    el.disabled=disabled&&['ARRIVED','IN_TRANSIT'].includes(current.status);
+  });
 }
 function startEditRide(x){
   if(!x)return;
@@ -1067,7 +1072,7 @@ function startEditRide(x){
     if(logistics)toggleEditRouteFields(true);
   }
   $('callBox').scrollIntoView({behavior:'smooth',block:'start'});
-  notice(logistics?'Edite a retirada ou corrija os centros sem chegada confirmada. A etapa atual será preservada.':store?'Edite os dados do cliente para a retirada em loja.':'Confira os dados antes de salvar. O status da corrida será preservado.',true);
+  notice(logistics?'Você pode marcar retirada no centro sem frete e adicionar centros futuros. Centros já movimentados ficam protegidos; a etapa atual será preservada.':store?'Edite os dados do cliente para retirada em loja.':'Confira os dados antes de salvar. A etapa atual será preservada.',true);
 }
 function resetEditMode(){
   editingDeliveryId='';
@@ -1097,6 +1102,7 @@ function resetEditMode(){
 function dispatchOpen(id){
  const ride=rideById(id);
   if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(ride.status))return;
+  if(ride.customerPickupAtCenter===true&&(!(Number(ride.deliveryFee)>0)||!String(ride.deliveryAddress||'').trim()))return notice('Retirada no centro sem frete. Para chamar entregador, primeiro altere para entrega, informe o destino e calcule o frete.',false);
   dispatchTimerClear();
  dispatchSelection={deliveryId:String(id),status:String(ride.status),sending:false};
  const overlay=$('driverDispatchOverlay');
@@ -1422,7 +1428,7 @@ function detailPrimaryAction(x){
     button='<button type="button" class="detail-primary-button" disabled>Aguardando atualização do entregador</button>';
     hint='O avanço desta fase é realizado pelo entregador para preservar a sequência correta.';
   }
-  if((status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||(status==='LOGISTICS_READY_FOR_DRIVER'&&x.customerPickupAtCenter===true))&&x.internalLogistics===true)
+  if((status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||(status==='LOGISTICS_READY_FOR_DRIVER'&&x.customerPickupAtCenter===true))&&x.internalLogistics===true&&Number(x.deliveryFee)>0&&x.deliveryAddress)
     button+='<button type="button" class="detail-primary-button dispatch-choice" data-id="'+id+'" style="margin-top:9px;background:#fff;color:#0f3665;border:1px solid #0f3665">Chamar entregador</button>';
   return '<section class="detail-primary" aria-label="Ação da próxima etapa"><div class="detail-next-caption">Próxima etapa / confirmação</div>'+button+
     '<p class="detail-next-hint">'+esc(hint)+'</p></section>';
@@ -1549,7 +1555,7 @@ function routeReview(){
 }
 
 $('call').onclick=()=>{$('callBox').classList.toggle('on');if($('callBox').classList.contains('on'))$('callBox').scrollIntoView({behavior:'smooth',block:'start'})};
-$('addStop').onclick=()=>{stops.push(stops.length===0?defaultXimbaStop():{name:'',address:'',city:'',state:'PB',zipCode:'',hasFee:false,fee:0});renderStops()};
+$('addStop').onclick=()=>{stops.push(stops.length===0?defaultXimbaStop():{name:'',address:'',city:'',state:'PB',zipCode:'',hasFee:false,fee:0});renderStops();if(editingDeliveryId&&rideById(editingDeliveryId)?.internalLogistics===true)toggleEditRouteFields(true)};
 function applyStorePickupMode(){
   const selected=$('storePickupMode').checked;
   if(selected)$('centerPickupMode').checked=false;
@@ -1573,7 +1579,8 @@ $('centerPickupMode').onchange=()=>{
   if($('centerPickupMode').checked&&$('storePickupMode').checked){$('storePickupMode').checked=false;applyStorePickupMode()}
   applyCenterPickupUI();
   const editingLogistics=!!editingDeliveryId&&rideById(editingDeliveryId)?.internalLogistics===true;
-  if(!editingLogistics)currentFee=0;
+  // A retirada no centro não pode reutilizar o valor do frete anterior.
+  currentFee=0;
   $('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;
   if($('centerPickupMode').checked&&!stops.length)notice('Adicione uma parada para indicar o centro de retirada.',false);
   else if(editingDeliveryId&&rideById(editingDeliveryId)?.internalLogistics===true){
