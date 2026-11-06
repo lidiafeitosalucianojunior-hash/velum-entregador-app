@@ -311,7 +311,17 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 .driver-dispatch-specific{display:grid;gap:6px;margin:12px 0}
 .driver-dispatch-specific[hidden]{display:none}
 .driver-dispatch-specific label{color:#173d65;font-size:12px;font-weight:850}
-.driver-dispatch-specific select{border:1px solid #cfdce9;background:#fff;width:100%;border-radius:10px;padding:12px;color:#173d65;min-width:0;font-size:13px}
+.driver-dispatch-list-label{color:#173d65;font-size:12px;font-weight:850}
+.driver-dispatch-choices{display:grid;gap:8px;max-height:36vh;overflow-y:auto;overscroll-behavior:contain;padding:2px}
+.driver-dispatch-choice{display:flex;align-items:center;gap:10px;cursor:pointer;padding:9px 11px;border-radius:12px;border:1px solid #dce6f0;background:#fff;min-height:65px}
+.driver-dispatch-choice:has(input:checked){border-color:#ff7a00;background:#fff4e8;box-shadow:inset 0 0 0 1px #ff7a00}
+.driver-dispatch-choice input{accent-color:#ff7a00;width:18px;height:18px;flex:none}
+.driver-dispatch-photo{width:46px;height:46px;border-radius:50%;background:#e9eff5;color:#173d65;font-size:17px;font-weight:900;display:grid;place-items:center;overflow:hidden;flex:none}
+.driver-dispatch-photo img{width:100%;height:100%;object-fit:cover}
+.driver-dispatch-copy{min-width:0;flex:1}.driver-dispatch-copy b{display:block;font-size:12px;line-height:1.35;color:#173d65;overflow-wrap:anywhere}
+.driver-dispatch-copy small{display:block;color:#687a91;font-size:10px;margin-top:3px}
+.driver-dispatch-online{font-size:10px;white-space:nowrap;color:#9b4a35}.driver-dispatch-online.on{color:#168052}
+.driver-dispatch-help{font-size:10px;line-height:1.4;color:#63758c;margin:0}
 .driver-dispatch-confirm{width:100%;min-height:47px;background:#ff7a00;color:#fff;border:0;border-radius:12px;font-size:13px;font-weight:900;cursor:pointer}
 .driver-dispatch-confirm:disabled{background:#ecf1f5;color:#74859a;cursor:wait}
 .driver-dispatch-message{font-size:11px;line-height:1.5;min-height:18px;color:#a33b3e;margin:9px 0 0}
@@ -447,10 +457,12 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
   </div>
   <label class="driver-dispatch-option"><input type="radio" name="driverDispatchMode" value="all" checked> Enviar para todos os entregadores disponíveis</label>
   <label class="driver-dispatch-option"><input type="radio" name="driverDispatchMode" value="one"> Direcionar para um entregador específico</label>
-  <div class="driver-dispatch-specific" id="driverDispatchSpecific" hidden>
-   <label for="driverDispatchSelect">Entregador aprovado</label>
-   <select id="driverDispatchSelect"><option value="">Escolha um entregador</option></select>
-  </div>
+   <div class="driver-dispatch-specific" id="driverDispatchSpecific" hidden>
+    <div class="driver-dispatch-list-label">Selecione um entregador aprovado</div>
+    <input type="hidden" id="driverDispatchSelect" value="">
+    <div class="driver-dispatch-choices" id="driverDispatchChoices" role="radiogroup" aria-label="Entregadores aprovados com foto"></div>
+    <p class="driver-dispatch-help">Fotos do cadastro, nome e situação atual. Somente o entregador escolhido receberá o chamado direcionado.</p>
+   </div>
   <button class="driver-dispatch-confirm" type="button" id="driverDispatchConfirm">Confirmar chamada</button>
   <p class="driver-dispatch-message" id="driverDispatchMessage" role="status" aria-live="polite"></p>
  </div>
@@ -1070,53 +1082,85 @@ function resetEditMode(){
   $('calc').disabled=false;
   $('create').textContent='GERAR ETIQUETA';
 }
-let dispatchSelection=null;
+ let dispatchSelection=null,dispatchTimer=null,dispatchSeq=0;
+ function dispatchTimerClear(){if(dispatchTimer){clearTimeout(dispatchTimer);dispatchTimer=null}}
+ function dispatchWatchdog(state,phase,waitMs){
+   dispatchTimerClear();
+   dispatchTimer=setTimeout(()=>{
+     if(dispatchSelection!==state||state.phase!==phase||!state.sending)return;
+     state.sending=false;state.uncertain=true;
+     $('driverDispatchConfirm').textContent='Atualizar corridas antes de tentar';
+     $('driverDispatchMessage').textContent='Não recebemos a confirmação. O chamado pode ter sido processado. Atualize as corridas antes de tentar novamente para evitar notificações duplicadas.';
+     dispatchUpdateMode();
+   },waitMs);
+ }
 function dispatchOpen(id){
  const ride=rideById(id);
- if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(ride.status))return;
+  if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(ride.status))return;
+  dispatchTimerClear();
  dispatchSelection={deliveryId:String(id),status:String(ride.status),sending:false};
  const overlay=$('driverDispatchOverlay');
  $('driverDispatchTitle').textContent=ride.status==='WAITING_DRIVER'?'Chamar entregador novamente':'Chamar entregador';
  $('driverDispatchOrder').textContent='Pedido '+String(ride.orderNumber||ride.deliveryId)+' · '+String(ride.customerName||'Cliente');
- $('driverDispatchSelect').innerHTML='<option value="">Escolha um entregador</option>'+availableDrivers.filter(d=>d.id).map(d=>
-  '<option value="'+esc(d.id)+'">'+esc(d.name||'Entregador')+(d.online?' · Online':' · Offline')+'</option>').join('');
+   const list=availableDrivers.filter(d=>d.id).slice().sort((a,b)=>Number(Boolean(b.online))-Number(Boolean(a.online))||String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));
+  $('driverDispatchChoices').innerHTML=list.length?list.map(d=>{
+    const photo=d.photoData?'<img src="'+esc(d.photoData)+'" alt="Foto de '+esc(d.name||'Entregador')+'" loading="lazy">':esc(String(d.name||'E').slice(0,1).toUpperCase());
+    return '<label class="driver-dispatch-choice"><input type="radio" name="driverDispatchCourier" value="'+esc(d.id)+'"><span class="driver-dispatch-photo">'+photo+'</span><span class="driver-dispatch-copy"><b>'+esc(d.name||'Entregador')+'</b><small>'+esc([d.vehicleType,d.plate].filter(Boolean).join(' • ')||'Entregador aprovado')+'</small></span><span class="driver-dispatch-online '+(d.online?'on':'')+'">'+(d.online?'● Online':'○ Offline')+'</span></label>';
+  }).join(''):'<p class="driver-dispatch-help">Nenhum entregador aprovado disponível na lista. Atualize o painel.</p>';
+  $('driverDispatchChoices').querySelectorAll('input[name="driverDispatchCourier"]').forEach(input=>{
+    input.onchange=()=>{$('driverDispatchSelect').value=input.value;dispatchUpdateMode()};
+  });
  const selected=Array.isArray(ride.selectedDriverIds)?ride.selectedDriverIds.map(String):[];
  const picked=selected.length===1&&availableDrivers.some(d=>String(d.id)===selected[0]);
  $('driverDispatchOverlay').querySelector('input[value="'+(picked?'one':'all')+'"]').checked=true;
- $('driverDispatchSelect').value=picked?selected[0]:'';
+  $('driverDispatchSelect').value=picked?selected[0]:'';
+  $('driverDispatchChoices').querySelectorAll('input[name="driverDispatchCourier"]').forEach(input=>{
+    input.checked=picked&&input.value===selected[0];
+  });
  dispatchUpdateMode();
  $('driverDispatchMessage').textContent='';
- $('driverDispatchConfirm').disabled=false;
- $('driverDispatchConfirm').textContent='Confirmar chamada';
- overlay.hidden=false;
+  $('driverDispatchConfirm').textContent='Confirmar chamada';
+  overlay.hidden=false;
+  dispatchUpdateMode();
  $('driverDispatchConfirm').focus();
 }
 function dispatchUpdateMode(){
  const specific=$('driverDispatchOverlay').querySelector('input[value="one"]').checked;
  $('driverDispatchSpecific').hidden=!specific;
- $('driverDispatchConfirm').disabled=!!dispatchSelection?.sending||(specific&&!$('driverDispatchSelect').value);
+  $('driverDispatchConfirm').disabled=!!dispatchSelection?.sending||(specific&&!$('driverDispatchSelect').value)||!availableDrivers.length;
 }
 function dispatchClose(force=false){
- if(dispatchSelection?.sending&&!force)return;
- $('driverDispatchOverlay').hidden=true;
- dispatchSelection=null;
+  const pending=dispatchSelection?.sending;
+  dispatchTimerClear();
+  $('driverDispatchOverlay').hidden=true;
+  dispatchSelection=null;
+  if(pending&&!force){
+    notice('O chamado pode continuar em processamento. Confira o status atualizado antes de repetir.',false);
+    send('REFRESH');
+  }
 }
-function dispatchConfirm(){
- const state=dispatchSelection;if(!state||state.sending)return;
+ function dispatchConfirm(){
+  const state=dispatchSelection;if(!state||state.sending)return;
+  if(state.uncertain){dispatchClose(true);send('REFRESH');return;}
  const specific=$('driverDispatchOverlay').querySelector('input[value="one"]').checked;
  const target=specific?String($('driverDispatchSelect').value||''):'';
  if(specific&&!availableDrivers.some(d=>String(d.id)===target)){
   $('driverDispatchMessage').textContent='Selecione um entregador aprovado.';return;
  }
- state.sending=true;state.targetIds=specific?[target]:[];
- $('driverDispatchConfirm').textContent='Preparando chamado...';
- $('driverDispatchMessage').textContent='';
- dispatchUpdateMode();
- send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds});
+  state.sending=true;state.uncertain=false;state.phase='selecting';
+  state.requestId='driver-'+(++dispatchSeq)+'-'+Date.now();
+  state.targetIds=specific?[target]:[];
+  $('driverDispatchConfirm').textContent='Preparando chamado...';
+  $('driverDispatchMessage').textContent='Aguarde a confirmação. A tela será liberada se houver demora.';
+  dispatchUpdateMode();
+  dispatchWatchdog(state,'selecting',25000);
+  send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
 }
 function dispatchSelectionResult(data){
  const state=dispatchSelection;
- if(!state||!state.sending||String(data.deliveryId||'')!==state.deliveryId)return;
+  if(!state||!state.sending||state.phase!=='selecting')return;
+  if(String(data.deliveryId||'')!==state.deliveryId||String(data.requestId||'')!==state.requestId)return;
+  dispatchTimerClear();
  if(!data.ok){
   state.sending=false;
   $('driverDispatchMessage').textContent=data.mensagem||'Não foi possível selecionar o entregador.';
@@ -1131,16 +1175,20 @@ function dispatchSelectionResult(data){
   notice('Chamado atualizado para '+(state.targetIds.length?'o entregador selecionado.':'todos os entregadores disponíveis.'),true);
   return;
  }
- $('driverDispatchConfirm').textContent='Chamando entregador...';
- if(['LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(state.status))
-  send('LOGISTICS_ACTION',{deliveryId:state.deliveryId,action:'CALL_DRIVER'});
- else send('DISPATCH_PREPARED',{deliveryId:state.deliveryId});
+  state.phase='dispatching';
+  $('driverDispatchConfirm').textContent='Chamando entregador...';
+  $('driverDispatchMessage').textContent='A seleção foi confirmada. Registrando o chamado...';
+  dispatchWatchdog(state,'dispatching',35000);
+  if(state.status==='LOGISTICS_READY_FOR_DRIVER')
+   send('LOGISTICS_ACTION',{deliveryId:state.deliveryId,action:'CALL_DRIVER',requestId:state.requestId});
+  else send('DISPATCH_PREPARED',{deliveryId:state.deliveryId,requestId:state.requestId});
 }
 function dispatchFinalResult(data,kind){
  const state=dispatchSelection;
- if(!state||!state.sending)return;
- const valid=kind==='LOGISTICS'?['LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(state.status):state.status==='READY_TO_DISPATCH';
- if(!valid)return;
+  if(!state||!state.sending||state.phase!=='dispatching')return;
+  const valid=kind==='LOGISTICS'?state.status==='LOGISTICS_READY_FOR_DRIVER':state.status==='READY_TO_DISPATCH';
+  if(!valid||String(data.deliveryId||'')!==state.deliveryId||String(data.requestId||'')!==state.requestId)return;
+  dispatchTimerClear();
  if(!data.ok){
   state.sending=false;
   $('driverDispatchMessage').textContent=data.mensagem||'Não foi possível chamar o entregador.';
@@ -1557,9 +1605,13 @@ $('editRoute').onclick=()=>{$('review').classList.remove('on');$('calc').closest
 $('cancelRoute').onclick=()=>{currentFee=0;resetEditMode();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';clearNotice()};
 $('readyConfirm').onchange=()=>{$('create').disabled=!$('readyConfirm').checked};
 $('create').onclick=()=>{
- if(!(currentFee>0)&&!$('centerPickupMode').checked)return notice('Calcule a entrega primeiro.');
- $('create').disabled=true;
- if(editingDeliveryId){$('create').textContent='SALVANDO...';send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data:payload()});return}
+  if(editingDeliveryId){
+    $('create').disabled=true;
+    $('create').textContent='SALVANDO...';
+    send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data:payload()});return;
+  }
+  if(!(currentFee>0)&&!$('centerPickupMode').checked)return notice('Calcule a entrega primeiro.');
+  $('create').disabled=true;
  // iOS Safari blocks popups opened after the asynchronous Wix response.
  // Reserve the print tab synchronously with the tap, then populate it on DATA.
  reservedPrintWindow=window.open('','_blank');
