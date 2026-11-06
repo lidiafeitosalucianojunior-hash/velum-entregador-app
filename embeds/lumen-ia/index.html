@@ -367,6 +367,10 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       byId('labDiagStatus').textContent='Verificação indisponível. Nenhum dado ou mensagem foi alterado.';
     },45000);
   });
+  function semTextoParaIA(mensagem){
+    const msg=String(mensagem||'').trim();
+    return !msg || /^\[\s*(?:imagem|vídeo|video|áudio|audio|documento|mídia|midia|mensagem|interação|interacao)[^\]]*\]/i.test(msg);
+  }
   function selectItem(item){
     selectedId=String(item.id||'');
     byId('client').textContent=item.cliente||'Cliente';
@@ -375,8 +379,12 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId('aiDraft').value='';
     draftMessageId='';
     byId('sendApproved').disabled=true;
-    byId('suggest').disabled=false;
+    const semTexto=semTextoParaIA(item.ultimaMensagem);
+    byId('suggest').disabled=semTexto;
     byId('copyReply').disabled=true;
+    byId('feedback').textContent=semTexto
+      ? 'Esta mensagem não contém texto legível para a IA. A mídia não é analisada nesta etapa; confira no WhatsApp Business e atenda manualmente.'
+      : '';
     byId('take').disabled=item.modo==='HUMANO'||item.status==='ENCERRADA';
     byId('take').textContent=item.modo==='HUMANO'?'Conversa em atendimento humano':'Assumir conversa';
     renderList();
