@@ -650,11 +650,11 @@ function nativeMembersResult(d){
   if(d.action==='CHECK_DELETE'){
     const identity=d.email||'o cadastro selecionado';
     if(d.hasMember){
-      if(!confirm('ATENÇÃO: '+identity+' é CONTATO e MEMBRO Wix. Para excluir o contato será removido também o ACESSO AO SITE dessa pessoa. O contato ficará na lixeira Wix por até 90 dias. Cadastros operacionais não serão apagados. Deseja continuar?'))return;
+      if(!confirm('ATENÇÃO: '+identity+' é CONTATO e MEMBRO Wix. Para excluir o contato será removido também o ACESSO AO SITE dessa pessoa. A exclusão da conta de membro e do contato é PERMANENTE e não poderá ser desfeita. Cadastros operacionais não serão apagados. Deseja continuar?'))return;
       const phrase=prompt('Confirmação de segurança: digite EXCLUIR para remover o contato e o acesso de membro Wix.');
       if(phrase!=='EXCLUIR'){status.textContent='Exclusão cancelada; nenhum cadastro alterado.';return;}
     }else{
-      if(!confirm('Excluir o contato '+identity+'? Ele irá para a lixeira do Wix (recuperável por até 90 dias).'))return;
+      if(!confirm('Excluir o contato '+identity+'? A exclusão do contato é PERMANENTE e não poderá ser desfeita.'))return;
     }
     nativeMembersRequest('DELETE_FULL',{kind:d.kind,id:d.kind==='MEMBER'?d.memberId:d.contactId,contactId:d.contactId,memberId:d.memberId,email:d.email,confirmationText:d.hasMember?'EXCLUIR':'',confirm:true});
     return;
