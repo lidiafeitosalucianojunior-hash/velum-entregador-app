@@ -609,13 +609,102 @@ function renderResellerCart(d){
  }).join('');
 }
 async function shareVelumApp(){const url='https://github.com/lidiafeitosalucianojunior-hash/velum-android-download/releases/download/v1.1.0/app-release.apk';const text='Instale o aplicativo VELUM no Android:';try{if(navigator.share){await navigator.share({title:'Aplicativo VELUM',text,url});return}}catch(e){if(e?.name==='AbortError')return}try{await navigator.clipboard.writeText(text+' '+url);toast('Link copiado para compartilhar.')}catch(_){prompt('Copie o link para compartilhar:',url)}}
-function nativeMembersOpen(){document.getElementById('nativeMemberModal').style.display='grid';nativeMembersRequest('LIST')}
-function nativeMembersClose(){document.getElementById('nativeMemberModal').style.display='none'}
-function nativeMembersRequest(action,data={}){document.getElementById('nativeMembersStatus').textContent='Consultando o Wix...';send('NATIVE_MEMBERS',{token,action,data})}
-function nativeMemberCreate(){const name=document.getElementById('nativeCreateName').value.trim(),email=document.getElementById('nativeCreateEmail').value.trim();if(!name||!email)return alert('Preencha nome e e-mail.');if(!confirm('Criar conta nativa Wix para '+email+'? Este passo nao cria automaticamente o perfil operacional.'))return;nativeMembersRequest('CREATE',{name,email})}
-let nativeMembersCache=[];
-function nativeMembersResult(d){const out=document.getElementById('nativeMembersStatus');out.textContent=d.mensagem||(d.ok?'Consulta concluida.':'Falha na consulta.');if(!d.ok)return;if(d.action!=='LIST'){nativeMembersRequest('LIST');return}nativeMembersCache=d.items||[];filterNativeMembers();}
-function filterNativeMembers(){const search=String(document.getElementById('nativeMembersSearch')?.value||'').trim().toLowerCase();const digits=search.replace(/\D/g,'');const result=nativeMembersCache.filter(m=>!search||[m.name,m.email,m.phone].some(v=>String(v||'').toLowerCase().includes(search))||(digits.length>=3&&String(m.phone||'').replace(/\D/g,'').includes(digits)));document.getElementById('nativeMembersCount').textContent=result.length+' de '+nativeMembersCache.length+' membros';const el=document.getElementById('nativeMemberRows');el.replaceChildren();if(!result.length)el.textContent='Nenhum membro encontrado';result.forEach(m=>{const row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #e3e9ef;display:grid;gap:9px;overflow-wrap:anywhere;min-width:0';const info=document.createElement('div');info.textContent=[m.name,m.email,m.phone,m.status].filter(Boolean).join(' ? ');const edit=document.createElement('button');edit.textContent='Editar nome';edit.onclick=()=>{const name=prompt('Nome do membro',m.name||'');if(name)nativeMembersRequest('EDIT',{id:m.id,name})};const del=document.createElement('button');del.textContent='Excluir membro Wix';del.style.color='#a91c1c';del.onclick=()=>{if(confirm('ATENÇÃO: excluir permanentemente '+m.email+'? Esta ação NÃO pode ser desfeita.'))nativeMembersRequest('DELETE',{id:m.id,confirm:true})};edit.style.cssText='background:#0F3665;color:#fff;border:0;border-radius:10px;padding:10px;font-weight:800';del.style.cssText='background:#fff0ee;color:#af2020;border:1px solid #f2cac3;border-radius:10px;padding:10px;font-weight:800';row.append(info,edit,del);el.append(row)})}
+let nativeMembersCache=[],nativeMembersRequestId=0,nativeMembersSearchTimer=null,nativeMembersPendingTimer=null;
+function nativeMembersOpen(){
+  document.getElementById('nativeMemberModal').style.display='grid';
+  nativeMembersRequest('LIST');
+}
+function nativeMembersClose(){
+  document.getElementById('nativeMemberModal').style.display='none';
+  clearTimeout(nativeMembersSearchTimer);
+  clearTimeout(nativeMembersPendingTimer);
+}
+function nativeMembersRequest(action,data={}){
+  const status=document.getElementById('nativeMembersStatus');
+  const requestId=++nativeMembersRequestId;
+  const search=String(document.getElementById('nativeMembersSearch')?.value||'').trim();
+  status.textContent=action==='LIST'?'Consultando membros e contatos Wix...':'Salvando alteração no Wix...';
+  clearTimeout(nativeMembersPendingTimer);
+  nativeMembersPendingTimer=setTimeout(()=>{
+    if(requestId===nativeMembersRequestId)status.textContent='A consulta demorou demais. Toque em Atualizar lista para tentar novamente.';
+  },18000);
+  send('NATIVE_MEMBERS',{token,action,data:{...data,search},requestId});
+}
+function nativeMemberCreate(){
+  const name=document.getElementById('nativeCreateName').value.trim();
+  const email=document.getElementById('nativeCreateEmail').value.trim();
+  if(!name||!email)return alert('Preencha nome e e-mail.');
+  if(!confirm('Criar CONTATO no Wix para '+email+'? Não será criada uma conta de membro para login.'))return;
+  nativeMembersRequest('CREATE',{name,email});
+}
+function nativeMembersResult(d){
+  if(Number(d.requestId)!==nativeMembersRequestId)return;
+  clearTimeout(nativeMembersPendingTimer);
+  const status=document.getElementById('nativeMembersStatus');
+  status.textContent=d.mensagem||(d.ok?'Consulta concluída.':'Não foi possível consultar os cadastros do Wix.');
+  if(!d.ok){
+    if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);
+    document.getElementById('nativeMembersCount').textContent='Não foi possível confirmar os registros.';
+    return;
+  }
+  if(d.action!=='LIST'){
+    toast(d.mensagem||'Alteração registrada.');
+    nativeMembersRequest('LIST');
+    return;
+  }
+  nativeMembersCache=Array.isArray(d.items)?d.items:[];
+  const counts=d.counts||{};
+  const prefix=nativeMembersCache.length+' resultado(s) · '+(Number(counts.members)||0)+' membro(s) · '+(Number(counts.contacts)||0)+' contato(s)';
+  document.getElementById('nativeMembersCount').textContent=prefix+(d.limited?' · Lista parcial; refine a pesquisa':'');
+  renderNativeMembers(nativeMembersCache,Boolean(d.limited));
+}
+function renderNativeMembers(items,limited){
+  const el=document.getElementById('nativeMemberRows');
+  el.replaceChildren();
+  if(!items.length){
+    const note=document.createElement('p');
+    note.style.cssText='color:#64748b;padding:10px 0;line-height:1.5';
+    note.textContent='Nenhum resultado confirmado para esta pesquisa. Verifique o e-mail ou tente parte do nome.';
+    el.appendChild(note);
+    return;
+  }
+  for(const m of items){
+    const kind=m.kind==='MEMBER'?'MEMBER':'CONTACT',typeLabel=kind==='MEMBER'?'Membro Wix (possui login)':'Contato Wix (CRM)';
+    const row=document.createElement('div');
+    row.style.cssText='padding:12px 0;border-bottom:1px solid #e3e9ef;display:grid;gap:8px;overflow-wrap:anywhere;min-width:0';
+    const badge=document.createElement('strong');
+    badge.textContent=typeLabel;
+    badge.style.cssText='font-size:12px;color:#0F3665';
+    const info=document.createElement('div');
+    info.textContent=[m.name,m.email,m.phone].filter(Boolean).join(' · ');
+    info.style.cssText='font-size:13px;color:#334155;line-height:1.5';
+    const actions=document.createElement('div');
+    actions.style.cssText='display:flex;flex-wrap:wrap;gap:8px';
+    const edit=document.createElement('button');
+    edit.type='button';edit.textContent='Editar nome';
+    edit.style.cssText='background:#0F3665;color:white;border:0;border-radius:10px;padding:10px;font-weight:800';
+    edit.onclick=()=>{
+      const name=prompt('Novo nome do '+(kind==='MEMBER'?'membro':'contato'),m.name||'');
+      if(name?.trim())nativeMembersRequest('EDIT',{kind,id:m.id,name:name.trim()});
+    };
+    const del=document.createElement('button');
+    del.type='button';del.textContent=kind==='MEMBER'?'Excluir membro Wix':'Excluir contato Wix';
+    del.style.cssText='background:#fff0ee;color:#af2020;border:1px solid #f2cac3;border-radius:10px;padding:10px;font-weight:800';
+    del.onclick=()=>{
+      const warning=kind==='MEMBER'?
+        'Excluir permanentemente a conta de membro Wix de '+(m.email||m.name)+'? A pessoa perderá o acesso ao site. O contato CRM não será excluído.':
+        'Excluir permanentemente o contato Wix '+(m.email||m.name)+'? Isso não remove uma conta de membro.';
+      if(confirm(warning))nativeMembersRequest('DELETE',{kind,id:m.id,confirm:true});
+    };
+    actions.append(edit,del);row.append(badge,info,actions);el.append(row);
+  }
+}
+function filterNativeMembers(){
+  clearTimeout(nativeMembersSearchTimer);
+  document.getElementById('nativeMembersStatus').textContent='Preparando pesquisa no Wix...';
+  nativeMembersSearchTimer=setTimeout(()=>nativeMembersRequest('LIST'),400);
+}
+
 let resellerEditId='',resellerEditMode='',resellerDetailsPending=false;
 function openResellerEditor(id){openResellerDetail(id,'CONTACT')}
 function openResellerSettings(id){openResellerDetail(id,'DESIGN')}
@@ -1299,6 +1388,7 @@ if(m.type==='CREDIT_ACTION_RESULT'){
  }
 }
 if(m.type==='CREDIT_BULK_RESULT'){creditBusy=false;$('creditMessage').textContent=d.ok?d.success+' sucesso(s), '+d.failed+' falha(s). '+(d.results||[]).filter(x=>!x.ok).map(x=>x.key+': '+x.mensagem).join('; '):(d.mensagem||'Erro no lote');creditList()}
+if(m.type==='NATIVE_MEMBERS_RESULT'){nativeMembersResult(d)}
 if(m.type==='DATA_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);toast(d.mensagem||'Não foi possível carregar.');rows=[]}else rows=Array.isArray(d.items)?d.items:[];const s=d.summary||{};$('sumTotal').textContent=s.total||0;$('sumActive').textContent=s.active||0;$('sumInactive').textContent=s.inactive||0;render()}if(m.type==='ACTION_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);return toast(d.mensagem||'Não foi possível executar a ação.')}toast(d.mensagem||'Alteração realizada.');load()}if(m.type==='FREIGHT_DATA'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);toast(d.mensagem||'Não foi possível carregar os fretes.')}freights=Array.isArray(d.items)?d.items:[];$('sumTotal').textContent=freights.length;$('sumActive').textContent=freights.filter(x=>x.active).length;$('sumInactive').textContent=freights.filter(x=>!x.active).length;renderFreights()}if(m.type==='FREIGHT_RESULT'){if(!d.ok){if(/sessão/i.test(d.mensagem||''))return showLogin(d.mensagem);return toast(d.mensagem||'Não foi possível salvar o frete.')}toast(d.mensagem||'Frete atualizado.');clearFreight();load()}if(m.type==='SUGGEST_ADDRESS_RESULT'){renderSuggestions(String(d.target||'delivery'),d.items||[])}if(m.type==='DRIVER_CALL_CALCULATE_RESULT'){$('callCalculate').disabled=false;$('callCalculate').textContent=editingDeliveryId?'RECALCULAR FRETE':'CALCULAR FRETE';if(!d.ok){callQuotedFee=null;$('callSend').disabled=true;$('callQuote').classList.remove('show');$('callStatus').textContent=d.mensagem||'Não foi possível calcular o frete.';return}callQuotedFee=Number(d.deliveryFee)||0;$('callQuoteValue').textContent=money(($('callCustomerPickupAtCenter').checked||$('callCustomerPickupAtStore').checked)?Number(d.customerPickupCharge??$('callCustomerPickupExtraFee').value??0):callQuotedFee);$('callQuote').classList.add('show');$('callSend').disabled=false;if(!editingDeliveryId)$('callSend').textContent='GERAR ETIQUETA';$('callStatus').textContent=editingDeliveryId?'Frete recalculado. Salve as alterações.':'Frete calculado. Agora gere a etiqueta; o entregador ainda não será chamado.'}if(m.type==='UPDATE_PENDING_RESULT'){$('callCalculate').disabled=false;$('callSend').disabled=false;$('callSend').textContent='SALVAR ALTERAÇÕES';if(!d.ok){$('callStatus').textContent=d.mensagem||'Não foi possível editar a corrida.';return}toast(d.mensagem||'Corrida atualizada.');closeDriverCall();load()}if(m.type==='CANCEL_PENDING_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível cancelar a corrida.');toast(d.mensagem||'Corrida cancelada.');load()}if(m.type==='DRIVER_CALL_RESULT'){$('callCalculate').disabled=false;$('callSend').textContent='GERAR ETIQUETA';if(!d.ok){$('callSend').disabled=false;$('callStatus').textContent=d.mensagem||'Não foi possível criar a corrida.';return}toast(d.mensagem||'Corrida criada e etiqueta pronta.');showLabelNextActions(d);$('callStatus').textContent=d.internalLogistics?'Processo criado. A etiqueta já pode ser impressa antes do chamado final.':'Etiqueta pronta. Imprima antes de chamar o entregador.';setTimeout(()=>{closeDriverCall();current='pending';document.querySelectorAll('[data-entity]').forEach(x=>x.classList.toggle('active',x.dataset.entity==='pending'));$('title').textContent=cfg.pending.title;$('subtitle').textContent=cfg.pending.subtitle;$('search').value='';load();scheduleAdminPoll()},700)}if(m.type==='DISPATCH_DRIVERS_RESULT'){if(!d.ok){toast(d.mensagem||'Não foi possível carregar os entregadores.');return}dispatchDrivers=Array.isArray(d.items)?d.items:[];renderDispatchDrivers()}if(m.type==='DISPATCH_PENDING_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível enviar o chamado.');toast(d.mensagem||'Chamado enviado.');closeDispatchModal();load()}if(m.type==='ADMIN_LOGISTICS_RESULT'){if(!d.ok)return toast(d.mensagem||'Não foi possível atualizar a logística.');toast(d.mensagem||'Logística atualizada.');load()}if(m.type==='RESET_RESELLER_PASSWORD_RESULT'){alert(d.mensagem||(d.ok?'Solicitacao de redefinicao enviada.':'Nao foi possivel iniciar a redefinicao.'));}if(m.type==='NATIVE_MEMBERS_RESULT'){nativeMembersResult(d)}if(m.type==='CREATE_PICKUP_RESULT'){$('pickupGenerate').disabled=false;if(!d.ok)return alert(d.mensagem||'Falha ao gerar retirada');$('pickupResult').style.display='block';$('pickupResult').textContent='Retirada '+d.id+' criada. Link da etiqueta e comprovante: '+d.receiptUrl;$('pickupLink').href=d.receiptUrl;$('pickupLink').style.display='inline-block'}if(m.type==='RESELLER_CART_RESULT'){renderResellerCart(d)}if(m.type==='RESELLER_DETAILS_RESULT'){
   if(!d.ok){const label=resellerEditMode==='DESIGN'?'resellerSettingsStatus':'resellerEditorStatus';$(label).textContent=d.mensagem||'Não foi possível consultar dados.';resellerDetailsPending=false}
   else fillResellerEditor(d.item||{});
@@ -1369,7 +1459,7 @@ const adminReadyTimer=setInterval(()=>{
 <div id="resellerCartModal" class="admin-cart-page" style="display:none" role="dialog" aria-modal="true" aria-label="Carrinho da revendedora">
 <section class="admin-cart-shell"><div class="admin-cart-header"><div><h2 id="resellerCartTitle">Meu carrinho</h2><p>Itens reais registrados na conta da revendedora — visualização administrativa, somente leitura.</p></div><button type="button" class="admin-cart-back" onclick="closeResellerCart()">← Voltar às revendedoras</button></div>
 <div class="admin-cart-toolbar"><span id="resellerCartUpdated" role="status">Carregando carrinho...</span><button type="button" onclick="requestResellerCart()">↻ Atualizar carrinho</button></div>
-<div id="resellerCartContent" class="admin-cart-list">Carregando produtos...</div></section></div><div id="nativeMemberModal" style="display:none;position:fixed;inset:0;z-index:99995;background:#061b35ce;place-items:center;padding:12px"><section style="background:white;color:#17314f;width:min(720px,100%);max-height:90dvh;overflow:auto;padding:clamp(14px,4vw,24px);border-radius:18px;border:2px solid #ff7a00;box-shadow:0 20px 60px #0004"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="color:#0F3665;font-size:clamp(20px,5vw,28px);margin:0">Gerenciar membros Wix</h2><button onclick="nativeMembersClose()">Fechar</button></div><p style="font-size:12px">A conta Wix ? diferente do cadastro operacional de entregador, revendedora ou loja parceira.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:9px"><input id="nativeCreateName" placeholder="Nome" style="padding:11px"><input id="nativeCreateEmail" type="email" placeholder="E-mail" style="padding:11px"></div><button onclick="nativeMemberCreate()" style="padding:12px;background:#FF7A00;color:white;border:0;border-radius:10px;margin-top:9px">Criar membro Wix</button><p id="nativeMembersStatus"></p><label style="display:block;margin-top:15px;font-weight:800;color:#0F3665">Buscar por nome, e-mail ou telefone</label><input id="nativeMembersSearch" oninput="filterNativeMembers()" type="search" placeholder="Digite nome, e-mail ou telefone" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:11px;margin:7px 0"><p id="nativeMembersCount" style="font-size:12px;color:#64748b"></p><div id="nativeMemberRows" style="max-height:43vh;overflow:auto"></div><button onclick="nativeMembersRequest('LIST')">Atualizar lista</button></section></div><div class="modal" id="pickupModal"><div class="modal-card" style="max-width:580px"><div class="modal-head"><div><h2>📦 Gerar retirada no local</h2><p>Não chama entregador. Gere a etiqueta com QR Code da retirada.</p></div><button class="modal-close" id="pickupCancel">Fechar</button></div><div class="call-grid"><div class="field"><label>NOME DO COMPRADOR</label><input id="pickupBuyer" placeholder="Nome completo"></div><div class="field"><label>TELEFONE DO COMPRADOR</label><input id="pickupPhone" type="tel" placeholder="WhatsApp com DDD"></div><div class="field full"><label>OBSERVAÇÕES E INSTRUÇÕES</label><textarea id="pickupNotes" rows="3" placeholder="Pedido, itens e instruções"></textarea></div></div><button type="button" class="primary" id="pickupGenerate">GERAR ETIQUETA DA RETIRADA</button><p id="pickupResult" style="display:none;overflow-wrap:anywhere;padding:10px;color:#0F3665"></p><a id="pickupLink" href="#" target="_blank" rel="noopener" style="display:none;color:#0F3665;font-weight:900;margin:10px 0">Abrir etiqueta e QR Code</a></div></div><script>(function(){
+<div id="resellerCartContent" class="admin-cart-list">Carregando produtos...</div></section></div><div id="nativeMemberModal" style="display:none;position:fixed;inset:0;z-index:99995;background:#061b35ce;place-items:center;padding:12px"><section style="background:white;color:#17314f;width:min(720px,100%);max-height:90dvh;overflow:auto;padding:clamp(14px,4vw,24px);border-radius:18px;border:2px solid #ff7a00;box-shadow:0 20px 60px #0004"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="color:#0F3665;font-size:clamp(20px,5vw,28px);margin:0">Gerenciar membros e contatos Wix</h2><button onclick="nativeMembersClose()">Fechar</button></div><p style="font-size:12px">Membros possuem acesso ao site; contatos são registros do CRM. Ambos são diferentes do cadastro operacional de entregador, revendedora ou loja parceira.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:9px"><input id="nativeCreateName" placeholder="Nome" style="padding:11px"><input id="nativeCreateEmail" type="email" placeholder="E-mail" style="padding:11px"></div><button onclick="nativeMemberCreate()" style="padding:12px;background:#FF7A00;color:white;border:0;border-radius:10px;margin-top:9px">Criar contato Wix</button><p id="nativeMembersStatus"></p><label style="display:block;margin-top:15px;font-weight:800;color:#0F3665">Buscar por nome, e-mail ou telefone</label><input id="nativeMembersSearch" oninput="filterNativeMembers()" type="search" placeholder="Digite nome, e-mail ou telefone" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:11px;margin:7px 0"><p id="nativeMembersCount" style="font-size:12px;color:#64748b"></p><div id="nativeMemberRows" style="max-height:43vh;overflow:auto"></div><button onclick="nativeMembersRequest('LIST')">Atualizar lista</button></section></div><div class="modal" id="pickupModal"><div class="modal-card" style="max-width:580px"><div class="modal-head"><div><h2>📦 Gerar retirada no local</h2><p>Não chama entregador. Gere a etiqueta com QR Code da retirada.</p></div><button class="modal-close" id="pickupCancel">Fechar</button></div><div class="call-grid"><div class="field"><label>NOME DO COMPRADOR</label><input id="pickupBuyer" placeholder="Nome completo"></div><div class="field"><label>TELEFONE DO COMPRADOR</label><input id="pickupPhone" type="tel" placeholder="WhatsApp com DDD"></div><div class="field full"><label>OBSERVAÇÕES E INSTRUÇÕES</label><textarea id="pickupNotes" rows="3" placeholder="Pedido, itens e instruções"></textarea></div></div><button type="button" class="primary" id="pickupGenerate">GERAR ETIQUETA DA RETIRADA</button><p id="pickupResult" style="display:none;overflow-wrap:anywhere;padding:10px;color:#0F3665"></p><a id="pickupLink" href="#" target="_blank" rel="noopener" style="display:none;color:#0F3665;font-weight:900;margin:10px 0">Abrir etiqueta e QR Code</a></div></div><script>(function(){
 'use strict';
 function txt(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function value(x,...keys){for(const k of keys){const v=x?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return v;}return '';}
