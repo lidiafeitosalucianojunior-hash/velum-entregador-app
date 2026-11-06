@@ -1,0 +1,1 @@
+const fs=require('node:fs'),vm=require('node:vm');const html=fs.readFileSync(process.argv[2],'utf8');const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];if(scripts.length<1)throw Error('NO_SCRIPTS');for(const [i,m] of scripts.entries()){if(m[1].trim()){new vm.Script(m[1],{filename:'inline-'+i+'.js'});console.log('SCRIPT_'+i+'_PARSED')}}

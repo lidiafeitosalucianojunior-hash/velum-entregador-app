@@ -1,0 +1,18 @@
+'use strict';
+const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('node:vm'),path=require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'embeds/lumen-admin-panel/index.html'),'utf8');
+const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+assert(scripts.length>=1,'HTML must have script');
+scripts.forEach(([_,js],i)=>{if(js.trim())new vm.Script(js,{filename:'lumen-embed-'+i})});
+assert(html.includes('id="driverDispatchChoices"'), 'Driver portrait list exists');
+assert(html.includes('driver-dispatch-photo'), 'Portraits rendered as circular photos');
+assert(html.includes('d.photoData'), 'Portrait sourced from approved driver');
+assert(html.includes('driver-dispatch-online'), 'Online/offline distinctions present');
+assert(html.includes('id="driverDispatchSelect"')&&!html.includes('<select id="driverDispatchSelect"'), 'Mobile-friendly driver selection not native select');
+assert(html.includes('dispatchTimerClear()')&&html.includes('dispatchWatchdog(state'), 'Pending action must recover');
+assert(html.includes('state.requestId')&&html.includes('data.requestId'), 'Responses correlated with request');
+assert(html.includes("state.uncertain")&&html.includes("send('REFRESH')"), 'Timeout must not retry automatically');
+assert(html.includes("state.phase='selecting'")&&html.includes("state.phase='dispatching'"), 'Two-phase dispatch has explicit states');
+assert(html.includes("if(editingDeliveryId){\n    $('create').disabled=true;"), 'Edits must not be blocked by missing freight');
+assert(html.includes("if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(ride.status))return;"), 'No inappropriate call for center customer pickup');
+console.log('DISPATCH_MODAL_UI_TEST_OK: 11 protected behaviors + '+scripts.length+' scripts parsed');
