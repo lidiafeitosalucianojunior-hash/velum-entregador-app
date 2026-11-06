@@ -146,6 +146,10 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let items=[];
   let selectedId='';
   let loading=false;
+  let bridgeConfirmed=false;
+  let metaStatusAnswered=false;
+  let metaConfigAnswered=false;
+  let listCycle=0;
   let draftLoading=false;
   let draftRequestedId='';
   let draftMessageId='';
@@ -346,7 +350,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       labLoading=false;
       byId('labRun').disabled=false;
       labFeedback('Teste indisponível. Verifique sua sessão e tente novamente.');
-    },20000);
+    },40000);
   });
   byId('labDiagRun').addEventListener('click',()=>{
     if(labDiagPending)return;
@@ -361,7 +365,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       labDiagPending=false;
       byId('labDiagRun').disabled=false;
       byId('labDiagStatus').textContent='Verificação indisponível. Nenhum dado ou mensagem foi alterado.';
-    },20000);
+    },45000);
   });
   function selectItem(item){
     selectedId=String(item.id||'');
@@ -406,15 +410,25 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   function reload(){
     if(loading)return;
     loading=true;
+    const cycle=++listCycle;
     byId('refresh').disabled=true;
+    byId('notice').textContent='Consultando as conversas do VELUM...';
     send('IA_LIST');
+    const aguardando=()=>loading&&cycle===listCycle;
     setTimeout(()=>{
-      if(!loading)return;
+      if(!aguardando())return;
+      byId('notice').textContent='Conexão demorada. Tentando novamente, sem alterar mensagens...';
+      send('IA_PING');
+      send('IA_LIST');
+    },9000);
+    setTimeout(()=>{if(aguardando())send('IA_LIST');},20000);
+    setTimeout(()=>{
+      if(!aguardando())return;
       loading=false;
       byId('refresh').disabled=false;
-      byId('notice').textContent='Não foi possível carregar as conversas. Verifique a sessão do painel e tente Atualizar.';
-      byId('conversationList').textContent='As conversas não responderam. Use Atualizar para tentar novamente.';
-    },12000);
+      byId('notice').textContent='A caixa de entrada não respondeu. Verifique sua sessão e toque em Atualizar.';
+      byId('conversationList').textContent='Conexão indisponível. Nenhuma conversa foi alterada.';
+    },36000);
   }
   byId('back').addEventListener('click',()=>send('IA_BACK'));
   byId('refresh').addEventListener('click',reload);
@@ -516,7 +530,18 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 
   window.addEventListener('message',event=>{
     if(event.data?.source!==answerFrom)return;
+    if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
     const msg=event.data;
+    if(msg.type==='IA_PONG'){
+      if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
+      bridgeConfirmed=msg.payload?.ok===true;
+      if(bridgeConfirmed){
+        if(loading)send('IA_LIST');
+        if(!metaStatusAnswered)send('IA_META_STATUS');
+        if(!metaConfigAnswered)send('IA_META_CONFIG_REQUEST');
+      }
+      return;
+    }
     if(['IA_META_CONFIG_RESULT','IA_META_COEX_RESULT','IA_META_SUBSCRIBE_RESULT','IA_META_STATUS_RESULT'].includes(msg.type)){
       if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
     }
@@ -559,6 +584,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       labPreviousModel=String(data.modeloAnterior||'').slice(0,80);
     }
     if(msg.type==='IA_META_CONFIG_RESULT'){
+      metaConfigAnswered=true;
       const v=msg.payload||{};
       if(v.ok===true && /^\d{8,30}$/.test(String(v.appId||'')) && /^\d{8,30}$/.test(String(v.configId||''))){
         metaAppId=String(v.appId);
@@ -587,6 +613,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       byId('waSubscribe').disabled=true;
     }
     if(msg.type==='IA_META_STATUS_RESULT'){
+      metaStatusAnswered=true;
       const v=msg.payload||{};
       atualizarDiagnostico('whatsapp',v.ok?v.whatsapp:null);
       atualizarDiagnostico('instagram',v.ok?v.instagram:null);
@@ -597,7 +624,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       const data=msg.payload||{};
       items=data.ok===true && Array.isArray(data.items)?data.items:[];
       byId('notice').textContent=data.aviso||data.mensagem||'Não foi possível consultar a caixa de entrada.';
-      renderList();
+      if(data.ok===true)renderList();
+      else {
+        byId('counter').textContent='Caixa de entrada indisponível';
+        byId('conversationList').textContent=String(data.mensagem||'Falha ao consultar as conversas.');
+      }
       if(selectedId){
         const item=items.find(v=>String(v.id)===selectedId);
         if(item)selectItem(item);
@@ -643,19 +674,30 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       else byId('take').disabled=false;
     }
   });
+  send('IA_PING');
   send('IA_META_CONFIG_REQUEST');
   send('IA_META_STATUS');
   setTimeout(()=>{
-    if(!metaAppId && byId('waConnectHint').textContent.startsWith('Verificando')){
-      byId('waConnectHint').textContent='A autorização oficial não respondeu. Reabra o painel Lúmen no Safari e faça login novamente.';
+    if(!bridgeConfirmed)send('IA_PING');
+    if(!metaConfigAnswered)send('IA_META_CONFIG_REQUEST');
+    if(!metaStatusAnswered)send('IA_META_STATUS');
+  },7000);
+  setTimeout(()=>{
+    if(!bridgeConfirmed)send('IA_PING');
+    if(!metaConfigAnswered)send('IA_META_CONFIG_REQUEST');
+    if(!metaStatusAnswered)send('IA_META_STATUS');
+  },18000);
+  setTimeout(()=>{
+    if(!metaConfigAnswered && !metaAppId){
+      byId('waConnectHint').textContent='O VELUM não confirmou a autorização da Meta. Verifique a sessão.';
     }
     for(const key of ['wa','ig']){
       if(byId(key+'State').textContent.startsWith('Verificando')){
-        byId(key+'State').textContent='Consulta pendente';
-        byId(key+'Missing').textContent='Reabra a prévia atualizada do painel Lúmen para verificar.';
+        byId(key+'State').textContent='Sem resposta do VELUM';
+        byId(key+'Missing').textContent='Reabra a Central de Atendimento após conferir sua sessão.';
       }
     }
-  },12000);
+  },36000);
   reload();
 })();
 </script></body></html>
