@@ -92,8 +92,16 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 .templates-entry .status-pendente{color:#af4848}
 </style></head><body>
 <header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Lúmen Luxos • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
-<main class="container"><div class="heading"><div><h1>Central de conversas</h1><p>Acompanhe mensagens e assuma o atendimento quando necessário.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="smoke" type="button" title="Usa uma pequena quantidade de créditos da OpenAI e não envia mensagem a clientes">Testar IA (usa créditos)</button><button class="refresh" id="refresh" type="button">Atualizar</button></div></div>
-<div class="notice" id="notice">Conectando à caixa de entrada... O envio automático permanece desativado até a integração oficial com a Meta.</div><div id="smokeResult" role="status" aria-live="polite"></div><section class="meta-status" aria-label="Configuração dos canais Meta">
+<main class="container"><div class="heading"><div><h1>Central de conversas</h1><p>Acompanhe mensagens e assuma o atendimento quando necessário.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="smoke" type="button" title="Usa uma pequena quantidade de créditos da OpenAI e não envia mensagem a clientes">Testar IA (usa créditos)</button><button class="refresh" id="modelsQuick" type="button" title="Conferir aprovação dos modelos WhatsApp sem enviar mensagens">Verificar modelos agora</button><button class="refresh" id="refresh" type="button">Atualizar</button></div></div>
+<div class="notice" id="notice">Conectando à caixa de entrada... O envio automático permanece desativado até a integração oficial com a Meta.</div><div id="smokeResult" role="status" aria-live="polite"></div><details class="meta-status templates-panel" id="templatesPanel" open>
+  <summary class="meta-title">Mensagens automáticas <span>Consultar aprovações da Meta</span></summary>
+  <p class="templates-caption" id="modelsMessage" role="status" aria-live="polite">Conferência segura dos modelos usados na comanda, no recibo, na etiqueta e no rastreamento.</p>
+  <button id="modelsRefresh" type="button">Atualizar consulta da Meta</button>
+  <div class="templates-items" id="modelsList" aria-live="polite"></div>
+  <p class="templates-caption">Consulta administrativa, sem enviar mensagens nem alterar pedidos ou pagamentos. O status "Pronto" significa modelo aprovado, não mensagem entregue.</p>
+</details>
+
+<section class="meta-status" aria-label="Configuração dos canais Meta">
   <div class="meta-title">Conexão com WhatsApp e Instagram</div>
   <div class="meta-grid">
     <div class="meta-channel">
@@ -122,13 +130,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   <small style="display:block;margin:10px 0 0;color:#627b93">Credenciais cadastradas não significam conexão concluída. O webhook deve ser verificado pela Meta e o aplicativo habilitado para produção. Nenhuma mensagem será enviada automaticamente.</small>
 </section>
 
-<details class="meta-status templates-panel" id="templatesPanel">
-  <summary class="meta-title">Mensagens automáticas <span>Consultar aprovações da Meta</span></summary>
-  <p class="templates-caption" id="modelsMessage" role="status" aria-live="polite">Conferência segura dos modelos usados na comanda, no recibo, na etiqueta e no rastreamento.</p>
-  <button id="modelsRefresh" type="button">Verificar modelos agora</button>
-  <div class="templates-items" id="modelsList" aria-live="polite"></div>
-  <p class="templates-caption">Consulta administrativa, sem enviar mensagens nem alterar pedidos ou pagamentos. O status "Pronto" significa modelo aprovado, não mensagem entregue.</p>
-</details>
+
 
 <section class="lab" aria-labelledby="labTitle">
   <div class="lab-head"><h2 id="labTitle">🧪 Laboratório LÚMEN IA</h2><span class="lab-tag">Teste privado • sem envio</span></div>
@@ -535,6 +537,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     if(byId('templatesPanel').open&&!modelsShown)conferirModelos();
   });
   byId('modelsRefresh').addEventListener('click',conferirModelos);
+  byId('modelsQuick').addEventListener('click',()=>{
+    byId('templatesPanel').open=true;
+    byId('templatesPanel').scrollIntoView({behavior:'smooth',block:'start'});
+    conferirModelos();
+  });
   byId('smoke').addEventListener('click',()=>{
     const box=byId('smokeResult');
     box.classList.add('active');
