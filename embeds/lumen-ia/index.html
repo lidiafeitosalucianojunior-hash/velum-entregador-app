@@ -74,6 +74,22 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 @media(max-width:600px){.lab{padding:14px}.lab-actions button{width:100%}}
 
 @media(max-width:600px){.meta-grid{grid-template-columns:1fr}}
+
+.templates-panel{padding:12px 15px}
+.templates-panel>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0}
+.templates-panel>summary::-webkit-details-marker{display:none}
+.templates-panel>summary span{color:#627b93;font-size:11px;font-weight:650}
+.templates-panel[open]>summary{margin-bottom:12px}
+.templates-panel button{border:1px solid #d7e3f0;border-radius:9px;padding:9px 12px;background:#f7faff;color:#153a67;font-size:12px;font-weight:800;cursor:pointer}
+.templates-panel button:disabled{opacity:.55}
+.templates-caption{font-size:11px;color:#60748b;line-height:1.5;margin:10px 0}
+.templates-items{display:grid;gap:7px;margin-top:9px}
+.templates-entry{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f8fbfe;border:1px solid #e2e9f2;border-radius:10px;padding:9px 11px;font-size:12px}
+.templates-entry strong{font-size:11px;color:#163d67}
+.templates-entry small{font-size:10px;color:#64788e;line-height:1.3;text-align:right}
+.templates-entry .status-pronto{color:#127147}
+.templates-entry .status-analise{color:#955900}
+.templates-entry .status-pendente{color:#af4848}
 </style></head><body>
 <header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Lúmen Luxos • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
 <main class="container"><div class="heading"><div><h1>Central de conversas</h1><p>Acompanhe mensagens e assuma o atendimento quando necessário.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="smoke" type="button" title="Usa uma pequena quantidade de créditos da OpenAI e não envia mensagem a clientes">Testar IA (usa créditos)</button><button class="refresh" id="refresh" type="button">Atualizar</button></div></div>
@@ -105,6 +121,14 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   </div>
   <small style="display:block;margin:10px 0 0;color:#627b93">Credenciais cadastradas não significam conexão concluída. O webhook deve ser verificado pela Meta e o aplicativo habilitado para produção. Nenhuma mensagem será enviada automaticamente.</small>
 </section>
+
+<details class="meta-status templates-panel" id="templatesPanel">
+  <summary class="meta-title">Mensagens automáticas <span>Consultar aprovações da Meta</span></summary>
+  <p class="templates-caption" id="modelsMessage" role="status" aria-live="polite">Conferência segura dos modelos usados na comanda, no recibo, na etiqueta e no rastreamento.</p>
+  <button id="modelsRefresh" type="button">Verificar modelos agora</button>
+  <div class="templates-items" id="modelsList" aria-live="polite"></div>
+  <p class="templates-caption">Consulta administrativa, sem enviar mensagens nem alterar pedidos ou pagamentos. O status "Pronto" significa modelo aprovado, não mensagem entregue.</p>
+</details>
 
 <section class="lab" aria-labelledby="labTitle">
   <div class="lab-head"><h2 id="labTitle">🧪 Laboratório LÚMEN IA</h2><span class="lab-tag">Teste privado • sem envio</span></div>
@@ -156,6 +180,9 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let bridgeConfirmed=false;
   let metaStatusAnswered=false;
   let metaConfigAnswered=false;
+  let modelsPending=false;
+  let modelsShown=false;
+  let modelsCheckCycle=0;
   let listCycle=0;
   let previewLoading=false;
   let previewRequestedId='';
@@ -172,6 +199,56 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   let labPreviousModel='';
   const byId=id=>document.getElementById(id);
   const send=(type,payload={})=>parent.postMessage({source:src,type,payload},'*');
+
+  function conferirModelos(){
+    if(modelsPending)return;
+    modelsPending=true;
+    const cycle=++modelsCheckCycle;
+    byId('modelsRefresh').disabled=true;
+    byId('modelsMessage').textContent='Consultando a Meta. Nenhuma mensagem será enviada.';
+    send('IA_META_MODELOS');
+    setTimeout(()=>{
+      if(!modelsPending||cycle!==modelsCheckCycle)return;
+      modelsPending=false;
+      byId('modelsRefresh').disabled=false;
+      byId('modelsMessage').textContent='A consulta não respondeu. Tente novamente mais tarde. Nenhum envio foi realizado.';
+    },30000);
+  }
+  function atualizarModelosNoPainel(data){
+    modelsPending=false;modelsShown=true;
+    byId('modelsRefresh').disabled=false;
+    const items=Array.isArray(data?.items)?data.items.slice(0,5):[];
+    const status={
+      PRONTO:'Aprovado e compatível',EM_ANALISE:'Em análise',
+      NAO_APROVADO:'Não aprovado',NAO_CADASTRADO:'Não cadastrado',
+      ESTRUTURA_INCOMPATIVEL:'Configuração incompatível',
+      DUPLICADO:'Registro duplicado',NAO_CONFERIDO:'Não conferido'
+    };
+    const list=byId('modelsList');list.replaceChildren();
+    for(const item of items){
+      const row=document.createElement('div');
+      row.className='templates-entry';
+      const name=document.createElement('strong');
+      name.textContent=String(item.label||'Modelo de mensagem').slice(0,80);
+      const side=document.createElement('small');
+      const state=String(item.estado||'NAO_CONFERIDO');
+      side.textContent=String(status[state]||'Não conferido');
+      side.className=state==='PRONTO'?'status-pronto':
+        state==='EM_ANALISE'?'status-analise':'status-pendente';
+      row.appendChild(name);row.appendChild(side);
+      list.appendChild(row);
+    }
+    if(data?.ok!==true){
+      byId('modelsMessage').textContent='Não foi possível autenticar a consulta. Entre novamente no Painel Lúmen.';
+    }else if(data.consultaAtualizada!==true){
+      byId('modelsMessage').textContent='Consulta atual indisponível ('+String(data.codigo||'SEM_CONFIRMACAO').slice(0,70)+'). Os estados abaixo podem ser antigos.';
+    }else{
+      byId('modelsMessage').textContent=String(data.prontos||0)+
+        ' de 5 modelos aprovados e compatíveis. '+String(data.pendentes||0)+
+        ' ainda precisam de conferência, aprovação ou ajuste.';
+    }
+  }
+
   // A autorização Meta só pode ser solicitada após sessão Lúmen validada pelo Wix.
   // O código de uso único nunca vai para postMessage com origem-curinga.
   const trustedParentOrigin='https://www.vaidevelum.com';
@@ -454,6 +531,10 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   }
   byId('back').addEventListener('click',()=>send('IA_BACK'));
   byId('refresh').addEventListener('click',reload);
+  byId('templatesPanel').addEventListener('toggle',()=>{
+    if(byId('templatesPanel').open&&!modelsShown)conferirModelos();
+  });
+  byId('modelsRefresh').addEventListener('click',conferirModelos);
   byId('smoke').addEventListener('click',()=>{
     const box=byId('smokeResult');
     box.classList.add('active');
@@ -570,6 +651,10 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     if(event.data?.source!==answerFrom)return;
     if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
     const msg=event.data;
+    if(msg.type==='IA_META_MODELOS_RESULT'){
+      atualizarModelosNoPainel(msg.payload||{});
+      return;
+    }
     if(msg.type==='IA_PONG'){
       if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
       bridgeConfirmed=msg.payload?.ok===true;
