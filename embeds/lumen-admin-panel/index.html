@@ -850,7 +850,7 @@ function driverPicker(x){
  return '<div class="driver-picker" data-picker="'+esc(x.deliveryId)+'"><button class="driver-picker-toggle" type="button" data-toggle-picker="'+esc(x.deliveryId)+'"><span>SELECIONAR ENTREGADORES PARA ESTA CORRIDA</span><span>'+(selected.size?selected.size+' selecionado(s)':'Todos')+'</span></button><div class="driver-picker-body">'+choices+'<div class="driver-picker-note">Sem seleção, a corrida fica disponível para todos. Um entregador que recusou esta entrega específica não será notificado novamente, mesmo se for selecionado.</div><div class="driver-picker-actions"><button class="btn secondary drivers-all" data-id="'+esc(x.deliveryId)+'" type="button">TODOS</button><button class="btn primary drivers-apply" data-id="'+esc(x.deliveryId)+'" type="button">APLICAR SELEÇÃO</button></div></div></div>';
 }
 function printerSvg(){return'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg>'}
-function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Entrega:</b> '+esc(x.deliveryAddress||'—')+'<br><b>Valor:</b> '+money(x.deliveryFee||0)+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+driverPicker(x)+waitingActions+(x.status==='STORE_PICKUP_READY'?'<button type="button" class="btn primary store-complete" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:10px">CONCLUIR RETIRADA NA LOJA</button>':'')+'</article>'}
+function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';const pdfAction=x.comandaLumen&&!done?(x.etiquetaPdfConfirmada?'<div style="margin-top:8px;font-size:12px;color:#17613d;font-weight:800">✓ Etiqueta PDF arquivada</div>':'<button class="btn secondary label-upload" data-id="'+esc(x.deliveryId)+'" type="button" style="width:100%;margin-top:8px">ANEXAR PDF DA ETIQUETA</button>'):'';return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Entrega:</b> '+esc(x.deliveryAddress||'—')+'<br><b>Valor:</b> '+money(x.deliveryFee||0)+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+pdfAction+driverPicker(x)+waitingActions+(x.status==='STORE_PICKUP_READY'?'<button type="button" class="btn primary store-complete" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:10px">CONCLUIR RETIRADA NA LOJA</button>':'')+'</article>'}
 
 function fillOrigin(loja){if(!loja)return;[['pickupAddress','pickupAddress'],['pickupNumber','pickupNumber'],['pickupNeighborhood','pickupNeighborhood'],['pickupCity','pickupCity'],['pickupState','pickupState'],['pickupZipCode','pickupZipCode'],['pickupPhone','pickupPhone']].forEach(([id,key])=>{if($(id)&&!$(id).value)$(id).value=loja[key]||''})}
 function allRideData(){return [...activeRides,...doneRides]}
@@ -1213,6 +1213,36 @@ $('driverDispatchClose').onclick=()=>dispatchClose();
 $('driverDispatchOverlay').onclick=e=>{if(e.target===$('driverDispatchOverlay'))dispatchClose()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('driverDispatchOverlay').hidden)dispatchClose()});
 
+async function anexarEtiquetaPdfDaCorrida(b){
+ const id=String(b.dataset.id||'');
+ const x=rideById(id);
+ if(!x||!x.comandaLumen||x.etiquetaPdfConfirmada)return;
+ const input=document.createElement('input');
+ input.type='file';input.accept='.pdf,application/pdf';input.style.display='none';
+ document.body.appendChild(input);
+ input.onchange=()=>{
+  const file=input.files?.[0];input.remove();
+  if(!file)return;
+  if(!/\.pdf$/i.test(file.name)||file.size<150||file.size>2000000){
+   notice('Escolha o PDF real da etiqueta (até 2 MB), salvo após a impressão.',false);return;
+  }
+  const reader=new FileReader();
+  reader.onerror=()=>notice('Não foi possível ler a etiqueta PDF.',false);
+  reader.onload=()=>{
+   const raw=String(reader.result||'');
+   const base64=raw.includes(',')?raw.split(',')[1]:'';
+   if(!base64||base64.length>2800000){
+    notice('Arquivo PDF incompleto. Salve novamente pela janela de impressão.',false);return;
+   }
+   b.disabled=true;
+   notice('Registrando o PDF no VELUM; a etiqueta será conferida pelo servidor.',true);
+   send('UPLOAD_LABEL_PDF',{deliveryId:id,base64Pdf:base64});
+  };
+  reader.readAsDataURL(file);
+ };
+ input.click();
+}
+
 function bindRideActions(){
  document.querySelectorAll('.log-act').forEach(b=>b.onclick=()=>{
   if(b.dataset.action==='COMPLETE_CENTER_PICKUP'&&!confirm('Confirma que a cliente recebeu fisicamente o pedido no centro logístico?'))return;
@@ -1223,6 +1253,7 @@ function bindRideActions(){
  document.querySelectorAll('.label-check').forEach(c=>c.onchange=()=>{if(c.checked)selectedLabels.add(c.dataset.labelId);else selectedLabels.delete(c.dataset.labelId);updatePrintState()});
   document.querySelectorAll('.store-complete').forEach(b=>b.onclick=()=>{if(!confirm('Confirmar que o cliente retirou o pedido na loja?'))return;b.disabled=true;send('COMPLETE_STORE_PICKUP',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.print-one').forEach(b=>b.onclick=()=>printLabels([rideById(b.dataset.printId)]));
+ document.querySelectorAll('.label-upload').forEach(b=>b.onclick=()=>anexarEtiquetaPdfDaCorrida(b));
  document.querySelectorAll('.dispatch-choice').forEach(b=>b.onclick=()=>dispatchOpen(b.dataset.id));
  document.querySelectorAll('.ride-call-prepared').forEach(b=>b.onclick=()=>dispatchOpen(b.dataset.id));
  document.querySelectorAll('.ride-recall').forEach(b=>b.onclick=()=>dispatchOpen(b.dataset.id));
@@ -1449,6 +1480,8 @@ function detailQuickActions(x){
   const removable=(!hasDriver||status==='DELIVERED')&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','STORE_PICKUP_READY','DELIVERED'].includes(status);
   const button=(cls,icon,label,attrs='',disabled=false,extra='')=>'<button type="button" class="'+cls+' '+extra+'"'+attrs+(disabled?' disabled title="Ação indisponível nesta etapa"':'')+'>'+detailMiniIcon(icon)+'<span>'+esc(label)+'</span></button>';
   let buttons='';
+  if(x.comandaLumen&&!x.etiquetaPdfConfirmada&&status!=='DELIVERED')
+    buttons+=button('label-upload','print','Anexar PDF',' data-id="'+id+'"');
   buttons+=button('ride-edit','edit','Editar',' data-id="'+id+'"',!editable);
   buttons+=button('ride-delete','trash','Excluir',' data-id="'+id+'"',!removable);
   return '<footer class="detail-footer"><h4>Ações rápidas</h4><div class="detail-mini-actions">'+buttons+'</div></footer>';
@@ -1669,6 +1702,12 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
  }
  if(m.type==='ORDERS_RESULT')lumenOrdersReceive(d);
  if(m.type==='ERROR')notice(d.message||m.message||'Não foi possível carregar.',false);
+ if(m.type==='UPLOAD_LABEL_PDF_RESULT'){
+  const msg=d.ok?(d.pdfConfirmado?'Etiqueta PDF real arquivada no VELUM.':'PDF recebido; aguardando processamento do Wix.'):
+   (d.mensagem||d.codigo||'Não foi possível confirmar o PDF da etiqueta.');
+  notice(msg,!!d.ok);
+ }
+
  if(m.type==='BLING_SEARCH_RESULT'){
     if(String(d.requestId)!==String(blingRequestId))return;
     $('blingSearchBtn').disabled=false;
