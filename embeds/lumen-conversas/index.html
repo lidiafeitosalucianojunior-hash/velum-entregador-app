@@ -48,6 +48,8 @@
  .chat-head-actions{max-width:120px}
  .chat-head-actions .head-btn{min-height:32px;padding:5px 7px}
 }
+.channel-pill{font-size:10px;font-weight:800;border:1px solid #e0dfec;border-radius:7px;padding:4px 7px;color:#7152a2;background:#faf5ff}
+.channel-pill.wa{color:#176f54;background:#f0fbf4;border-color:#d3ebdd}
 </style>
 </head>
 <body>
@@ -55,7 +57,7 @@
   <aside class="sidebar" aria-label="Lista de conversas">
     <header class="side-header">
       <div class="brandline"><button class="back" type="button" id="backPanel" aria-label="Voltar ao Painel Lúmen">‹</button>
-        <div class="brandmark">L</div><div class="brandcopy"><b>Conversas</b><small>Lúmen Luxos · WhatsApp</small></div>
+        <div class="brandmark">L</div><div class="brandcopy"><b>Conversas</b><small>Lúmen Luxos · WhatsApp + Instagram</small></div>
         <button class="refresh" type="button" id="refresh" title="Atualizar conversas" aria-label="Atualizar">↻</button></div>
       <div class="live" id="live"><i></i><span>Carregando conversas…</span></div>
       <div class="stats"><div class="stat"><strong id="total">—</strong><span>Conversas</span></div>
@@ -64,6 +66,8 @@
       <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Pesquisar nome, telefone ou mensagem" autocomplete="off" aria-label="Buscar conversa"></label>
       <nav class="filters" aria-label="Filtrar conversas">
         <button type="button" class="filter on" data-filter="ALL">Todas</button>
+        <button type="button" class="filter" data-filter="WHATSAPP">WhatsApp</button>
+        <button type="button" class="filter" data-filter="INSTAGRAM">Instagram</button>
         <button type="button" class="filter" data-filter="HUMANO">Aguardando humano</button>
         <button type="button" class="filter" data-filter="PAGO">Pagas</button>
         <button type="button" class="filter" data-filter="IA">IA ativa</button>
@@ -120,6 +124,9 @@ function detailRequest(){
 }
 function visibleItems(){
  return state.items.filter(x=>{
+  if(state.filter==='WHATSAPP'&&x.canal!=='WHATSAPP')return false;
+  if(state.filter==='INSTAGRAM'&&x.canal!=='INSTAGRAM')return false;
+  if(x.somenteLeitura&&['HUMANO','PAGO','IA'].includes(state.filter))return false;
   if(state.filter==='HUMANO'&&!x.aguardandoHumano)return false;
   if(state.filter==='PAGO'&&!x.pagamentoConfirmado)return false;
   if(state.filter==='IA'&&x.modo!=='IA')return false;
@@ -133,17 +140,19 @@ function renderList(){
  $('list').innerHTML=visible.map(x=>{
   const edge=x.pagamentoConfirmado?' paid':x.aguardandoHumano?' waiting':'';
   const selected=x.id===state.selected?' selected':'';
-  const mode=x.modo==='IA'?'🤖 IA ativa':x.iaPausaManual?'⛔ IA pausada manualmente':'👩 Atendimento humano';
+  const mode=x.somenteLeitura?'Instagram Direct (consulta)':x.modo==='IA'?'🤖 IA ativa':x.iaPausaManual?'⛔ IA pausada manualmente':'👩 Atendimento humano';
   return '<article class="conv'+edge+selected+'" data-id="'+esc(x.id)+'">'+
    '<div class="conv-main" role="button" tabindex="0" data-open="'+esc(x.id)+'" aria-label="Abrir conversa com '+esc(x.nome)+'">'+
    '<div class="avatar">'+esc(initials(x.nome))+'</div><div class="conv-info">'+
    '<div class="conv-name"><b>'+esc(x.nome)+'</b><time>'+esc(shortDate(x.ultimaAtualizacao))+'</time></div>'+
    '<div class="conv-preview">'+esc(x.ultimaMensagem||'Nova conversa')+'</div>'+
-   '<div class="conv-bottom">'+stageChip(x)+'<span class="mode-compact">'+mode+'</span></div></div></div>'+
+   '<div class="conv-bottom"><span class="channel-pill '+(x.canal==='INSTAGRAM'?'ig':'wa')+'">'+
+    (x.canal==='INSTAGRAM'?'Instagram':'WhatsApp')+'</span>'+stageChip(x)+'<span class="mode-compact">'+mode+'</span></div></div></div>'+
    '<div class="conv-actions">'+
-   (x.aguardandoHumano?'<button class="small-btn stop" data-mode="HUMANO" data-action="ASSUMIR" data-id="'+esc(x.id)+'">Assumir</button>':'')+
+   (x.somenteLeitura?'<span class="small-btn" title="Envio bloqueado até homologação">Somente leitura</span>':
+   ((x.aguardandoHumano?'<button class="small-btn stop" data-mode="HUMANO" data-action="ASSUMIR" data-id="'+esc(x.id)+'">Assumir</button>':'')+
    (x.modo==='IA'?'<button class="small-btn stop" data-mode="HUMANO" data-action="PAUSA_MANUAL" data-id="'+esc(x.id)+'">Desativar IA</button>':
-     '<button class="small-btn start" data-mode="IA" data-id="'+esc(x.id)+'">Ativar IA</button>')+
+     '<button class="small-btn start" data-mode="IA" data-id="'+esc(x.id)+'">Ativar IA</button>')))+
    '</div></article>';
  }).join('');
 }
@@ -165,20 +174,23 @@ function backChat(){state.selected='';state.detail=null;$('shell').classList.rem
 function renderDetail(){
  const d=state.detail;if(!d||!d.conversa)return;
  const x=d.conversa;const paid=x.pagamentoConfirmado,wait=x.aguardandoHumano;
- const humans=x.modo==='HUMANO'&&x.assumidaPor==='LUMEN';
+ const ig=x.canal==='INSTAGRAM'||x.somenteLeitura===true;
+ const humans=!ig&&x.modo==='HUMANO'&&x.assumidaPor==='LUMEN';
  $('chatHead').innerHTML='<button class="chat-mobile-back" type="button" id="chatBack" aria-label="Voltar às conversas">‹</button>'+
   '<div class="avatar">'+esc(initials(x.nome))+'</div>'+
-  '<div class="chat-person"><b>'+esc(x.nome)+'</b><small>'+esc(fmtPhone(x.numero))+'</small></div>'+
-  '<div class="chat-head-actions">'+(x.modo==='IA'?
+  '<div class="chat-person"><b>'+esc(x.nome)+'</b><small>'+esc(ig?'Instagram Direct':fmtPhone(x.numero))+'</small></div>'+
+  '<div class="chat-head-actions">'+(ig?
+    '<span class="head-btn" aria-label="Instagram somente leitura">Consulta</span>':
+    (x.modo==='IA'?
    '<button class="head-btn stop" id="headTake" data-mode="HUMANO" data-action="ASSUMIR">Assumir</button>'+
    '<button class="head-btn stop" id="headMode" data-mode="HUMANO" data-action="PAUSA_MANUAL">Desativar IA</button>':
    (x.assumidaPor!=='LUMEN'?
     '<button class="head-btn stop" id="headTake" data-mode="HUMANO" data-action="ASSUMIR">Assumir</button>':'')+
     (!x.iaPausaManual?'<button class="head-btn stop" data-mode="HUMANO" data-action="PAUSA_MANUAL" title="Não reativar automaticamente após 10 minutos">Fixar pausa</button>':'')+
-    '<button class="head-btn" id="headMode" data-mode="IA">Ativar IA</button>')+'</div>';
+    '<button class="head-btn" id="headMode" data-mode="IA">Ativar IA</button>'))+'</div>';
  $('chatStage').className='chat-stage'+(paid?' stage-border-paid':wait?' stage-border-wait':'');
- $('chatStage').innerHTML=stageChip(x)+'<span>'+esc(x.modo==='IA'?'🤖 IA respondendo':x.iaPausaManual?'⛔ IA desativada manualmente':humans?'👩 Atendimento assumido':'🔴 Aguardando humano')+
-  '</span><span class="spacer"></span><strong>'+esc(d.janela24hAberta?'Janela de resposta aberta':'Janela de 24h encerrada')+'</strong>';
+ $('chatStage').innerHTML=stageChip(x)+'<span>'+esc(ig?'Instagram Direct — aguardando homologação':x.modo==='IA'?'🤖 IA respondendo':x.iaPausaManual?'⛔ IA desativada manualmente':humans?'👩 Atendimento assumido':'🔴 Aguardando humano')+
+  '</span><span class="spacer"></span><strong>'+esc(ig?'Envio desativado':d.janela24hAberta?'Janela de resposta aberta':'Janela de 24h encerrada')+'</strong>';
  $('chatHead').querySelector('#chatBack')?.addEventListener('click',backChat);
  $('chatHead').querySelectorAll('[data-mode]').forEach(btn=>{
   btn.addEventListener('click',()=>setMode(x.id,btn.dataset.mode,btn.dataset.action));
@@ -188,7 +200,7 @@ function renderDetail(){
  const bottom=el.scrollTop+el.clientHeight>=el.scrollHeight-120;
  const oldCount=el.querySelectorAll('.bubble-row').length;
  const wa=String(x.numero||'').replace(/\D/g,'');
- const sourceLink=/^55[1-9]\d{9,10}$/.test(wa)?
+ const sourceLink=!ig&&/^55[1-9]\d{9,10}$/.test(wa)?
    '<a class="history-wa" href="https://wa.me/'+encodeURIComponent(wa)+
    '" rel="noopener noreferrer" target="_blank">Ver conversa original no WhatsApp Business</a>':'';
  el.innerHTML='<p class="history-note">'+esc(d.avisoHistorico||'Histórico recente do WhatsApp')+
@@ -237,7 +249,7 @@ function renderDetail(){
  if(bottom||msgs.length!==oldCount)el.scrollTop=el.scrollHeight;
  // Fotos recentes: buscar apenas arquivos autorizados e somente uma vez
  // enquanto a pessoa navega nesta conversa. Não transferir bytes em polling.
- const photosToLoad=msgs.filter(m=>m.tipo==='image'&&m.midiaDisponivel&&
+ const photosToLoad=(ig?[]:msgs).filter(m=>m.tipo==='image'&&m.midiaDisponivel&&
    !state.mediaCache.has(String(m.id))&&!state.mediaAttempted.has(String(m.id)))
    .slice(-3);
  for(const pic of photosToLoad){
@@ -246,11 +258,11 @@ function renderDetail(){
    state.mediaAttempted.add(mid);state.mediaInFlight.add(mid);
    post('CONVERSAS_MEDIA',{id:x.id,mensagemId:mid});
  }
- $('text').disabled=!humans||!d.janela24hAberta||state.working;
- $('send').disabled=!humans||!d.janela24hAberta||state.working;
+ $('text').disabled=ig||!humans||!d.janela24hAberta||state.working;
+ $('send').disabled=ig||!humans||!d.janela24hAberta||state.working;
  const hint=$('composerHint');
  hint.className='composer-hint'+(humans&&!d.janela24hAberta?' warn':'');
- hint.textContent=x.modo==='IA'?'A IA está ativa. Assuma o atendimento para escrever.':
+ hint.textContent=ig?'Instagram em homologação: nenhuma resposta será enviada até liberar o canal.':x.modo==='IA'?'A IA está ativa. Assuma o atendimento para escrever.':
   !humans?(x.iaPausaManual?
     'IA desativada manualmente: não voltará após 10 minutos. Para responder, toque em Assumir. Para reativar a IA, toque em Ativar IA.':
     'Toque no botão Assumir no topo para responder por aqui. Se precisar consultar mensagens antigas, abra a conversa original no WhatsApp Business.'):
