@@ -133,7 +133,7 @@ function renderList(){
  $('list').innerHTML=visible.map(x=>{
   const edge=x.pagamentoConfirmado?' paid':x.aguardandoHumano?' waiting':'';
   const selected=x.id===state.selected?' selected':'';
-  const mode=x.modo==='IA'?'🤖 IA ativa':'👩 Atendimento humano';
+  const mode=x.modo==='IA'?'🤖 IA ativa':x.iaPausaManual?'⛔ IA pausada manualmente':'👩 Atendimento humano';
   return '<article class="conv'+edge+selected+'" data-id="'+esc(x.id)+'">'+
    '<div class="conv-main" role="button" tabindex="0" data-open="'+esc(x.id)+'" aria-label="Abrir conversa com '+esc(x.nome)+'">'+
    '<div class="avatar">'+esc(initials(x.nome))+'</div><div class="conv-info">'+
@@ -141,8 +141,8 @@ function renderList(){
    '<div class="conv-preview">'+esc(x.ultimaMensagem||'Nova conversa')+'</div>'+
    '<div class="conv-bottom">'+stageChip(x)+'<span class="mode-compact">'+mode+'</span></div></div></div>'+
    '<div class="conv-actions">'+
-   (x.aguardandoHumano?'<button class="small-btn stop" data-mode="HUMANO" data-id="'+esc(x.id)+'">Assumir</button>':'')+
-   (x.modo==='IA'?'<button class="small-btn stop" data-mode="HUMANO" data-id="'+esc(x.id)+'">Desativar IA</button>':
+   (x.aguardandoHumano?'<button class="small-btn stop" data-mode="HUMANO" data-action="ASSUMIR" data-id="'+esc(x.id)+'">Assumir</button>':'')+
+   (x.modo==='IA'?'<button class="small-btn stop" data-mode="HUMANO" data-action="PAUSA_MANUAL" data-id="'+esc(x.id)+'">Desativar IA</button>':
      '<button class="small-btn start" data-mode="IA" data-id="'+esc(x.id)+'">Ativar IA</button>')+
    '</div></article>';
  }).join('');
@@ -170,16 +170,18 @@ function renderDetail(){
   '<div class="avatar">'+esc(initials(x.nome))+'</div>'+
   '<div class="chat-person"><b>'+esc(x.nome)+'</b><small>'+esc(fmtPhone(x.numero))+'</small></div>'+
   '<div class="chat-head-actions">'+(x.modo==='IA'?
-   '<button class="head-btn stop" id="headMode" data-mode="HUMANO">Assumir</button>':
+   '<button class="head-btn stop" id="headTake" data-mode="HUMANO" data-action="ASSUMIR">Assumir</button>'+
+   '<button class="head-btn stop" id="headMode" data-mode="HUMANO" data-action="PAUSA_MANUAL">Desativar IA</button>':
    (x.assumidaPor!=='LUMEN'?
-    '<button class="head-btn stop" id="headTake" data-mode="HUMANO">Assumir</button>':'')+
+    '<button class="head-btn stop" id="headTake" data-mode="HUMANO" data-action="ASSUMIR">Assumir</button>':'')+
+    (!x.iaPausaManual?'<button class="head-btn stop" data-mode="HUMANO" data-action="PAUSA_MANUAL" title="Não reativar automaticamente após 10 minutos">Fixar pausa</button>':'')+
     '<button class="head-btn" id="headMode" data-mode="IA">Ativar IA</button>')+'</div>';
  $('chatStage').className='chat-stage'+(paid?' stage-border-paid':wait?' stage-border-wait':'');
- $('chatStage').innerHTML=stageChip(x)+'<span>'+esc(x.modo==='IA'?'🤖 IA respondendo':humans?'👩 Atendimento assumido':'🔴 Aguardando humano')+
+ $('chatStage').innerHTML=stageChip(x)+'<span>'+esc(x.modo==='IA'?'🤖 IA respondendo':x.iaPausaManual?'⛔ IA desativada manualmente':humans?'👩 Atendimento assumido':'🔴 Aguardando humano')+
   '</span><span class="spacer"></span><strong>'+esc(d.janela24hAberta?'Janela de resposta aberta':'Janela de 24h encerrada')+'</strong>';
  $('chatHead').querySelector('#chatBack')?.addEventListener('click',backChat);
  $('chatHead').querySelectorAll('[data-mode]').forEach(btn=>{
-  btn.addEventListener('click',()=>setMode(x.id,btn.dataset.mode));
+  btn.addEventListener('click',()=>setMode(x.id,btn.dataset.mode,btn.dataset.action));
  });
  const msgs=Array.isArray(d.mensagens)?d.mensagens:[];
  const el=$('messages');
@@ -249,14 +251,18 @@ function renderDetail(){
  const hint=$('composerHint');
  hint.className='composer-hint'+(humans&&!d.janela24hAberta?' warn':'');
  hint.textContent=x.modo==='IA'?'A IA está ativa. Assuma o atendimento para escrever.':
-  !humans?'Toque no botão Assumir no topo para responder por aqui. Se precisar consultar mensagens antigas, abra a conversa original no WhatsApp Business.':
+  !humans?(x.iaPausaManual?
+    'IA desativada manualmente: não voltará após 10 minutos. Para responder, toque em Assumir. Para reativar a IA, toque em Ativar IA.':
+    'Toque no botão Assumir no topo para responder por aqui. Se precisar consultar mensagens antigas, abra a conversa original no WhatsApp Business.'):
+
   !d.janela24hAberta?'A janela de 24h terminou. Responder requer modelo aprovado pela Meta.':
-  'Você assumiu a conversa. Suas respostas saem pelo WhatsApp oficial. Sem interação humana por 10 minutos, a IA retoma o atendimento.';
+  x.iaPausaManual?'IA desativada manualmente. Ela só voltará ao clicar em Ativar IA.':
+  'Você assumiu a conversa. Sem interação humana por 10 minutos, a IA retoma o atendimento.';
 }
-function setMode(id,mode){
+function setMode(id,mode,action='ASSUMIR'){
  if(state.working)return;
  state.working=true;state.loadingId=id;
- post('CONVERSAS_MODE',{id,modo:mode});
+ post('CONVERSAS_MODE',{id,modo:mode,acao:action});
 }
 function send(){
  const d=state.detail;if(!d?.conversa||state.working)return;
@@ -337,7 +343,7 @@ $('messages').addEventListener('click',ev=>{
 });
 $('list').addEventListener('click',ev=>{
  const action=ev.target.closest('[data-mode]');
- if(action){ev.stopPropagation();setMode(action.dataset.id,action.dataset.mode);return}
+ if(action){ev.stopPropagation();setMode(action.dataset.id,action.dataset.mode,action.dataset.action);return}
  const row=ev.target.closest('[data-open]');if(row)open(row.dataset.open);
 });
 $('list').addEventListener('keydown',ev=>{
