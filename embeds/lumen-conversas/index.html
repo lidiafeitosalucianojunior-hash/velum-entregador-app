@@ -96,7 +96,8 @@
 const $=id=>document.getElementById(id);
 const state={items:[],detail:null,selected:'',filter:'ALL',search:'',
   listing:false,opening:false,working:false,loadingId:'',lastList:'',lastDetail:'',
-  mediaCache:new Map(),mediaAttempted:new Set(),mediaInFlight:new Set()};
+  mediaCache:new Map(),mediaAttempted:new Set(),mediaInFlight:new Set(),
+  listRequestedAt:0,detailRequestedAt:0};
 function post(type,payload={}){window.parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]))}
 const initials=x=>String(x||'C').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
@@ -114,13 +115,24 @@ function live(text,isError=false){
  $('live').className='live'+(isError?' warn':'');
  $('live').querySelector('span').textContent=text;
 }
+// O iframe pode perder a primeira mensagem enquanto o controlador Wix troca
+// de pagina. Nunca deixar o lock de consulta preso indefinidamente.
 function listRequest(){
- if(state.listing)return;
- state.listing=true;post('CONVERSAS_LIST');
+ const now=Date.now();
+ if(state.listing&&now-state.listRequestedAt<10000)return;
+ if(state.listing){
+   live('Reconectando à central de conversas…',true);
+   if(!state.items.length)
+     $('list').innerHTML='<div class="list-empty">Sem resposta do Painel Lúmen. Reconectando automaticamente…</div>';
+ }
+ state.listing=true;state.listRequestedAt=now;post('CONVERSAS_LIST');
 }
 function detailRequest(){
- if(!state.selected||state.opening||state.working)return;
- state.opening=true;post('CONVERSAS_DETAIL',{id:state.selected});
+ if(!state.selected||state.working)return;
+ const now=Date.now();
+ if(state.opening&&now-state.detailRequestedAt<12000)return;
+ state.opening=true;state.detailRequestedAt=now;
+ post('CONVERSAS_DETAIL',{id:state.selected});
 }
 function visibleItems(){
  return state.items.filter(x=>{
@@ -136,7 +148,10 @@ function visibleItems(){
 }
 function renderList(){
  const visible=visibleItems();
- if(!visible.length){$('list').innerHTML='<div class="list-empty">Nenhuma conversa encontrada com esse filtro.</div>';return}
+ if(!visible.length){$('list').innerHTML='<div class="list-empty">'+
+   (state.items.length?'Nenhuma conversa encontrada com esse filtro.':
+    'Ainda não há conversas sincronizadas. Toque em atualizar para consultar novamente.')+
+   '</div>';return}
  $('list').innerHTML=visible.map(x=>{
   const edge=x.pagamentoConfirmado?' paid':x.aguardandoHumano?' waiting':'';
   const selected=x.id===state.selected?' selected':'';
@@ -296,7 +311,12 @@ function onResponse(data){
    state.items=Array.isArray(payload.items)?payload.items:[];
    renderCounts(payload.contadores);renderList();
    live('Atualizado às '+shortTime(payload.atualizadoEm)+' · a cada 10 segundos');
-  }else live(payload.mensagem||'Falha ao consultar conversas',true);
+  }else{
+   live(payload.mensagem||'Falha ao consultar conversas. Nova tentativa automática em 10 segundos.',true);
+   if(!state.items.length)
+     $('list').innerHTML='<div class="list-empty">'+esc(payload.mensagem||
+       'Não foi possível carregar conversas. Nova tentativa automática em 10 segundos.')+'</div>';
+  }
  }
  if(type==='CONVERSAS_MEDIA_RESULT'){
    if(payload.id!==state.selected)return;
@@ -371,6 +391,8 @@ $('send').addEventListener('click',send);
 $('text').addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();send()}});
 window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;onResponse(ev.data)});
 window.setInterval(()=>{if(document.hidden)return;listRequest();detailRequest()},10000);
+window.addEventListener('pageshow',()=>listRequest());
+window.addEventListener('focus',()=>{listRequest();detailRequest()});
 post('CONVERSAS_LIST');
 })();
 </script>
