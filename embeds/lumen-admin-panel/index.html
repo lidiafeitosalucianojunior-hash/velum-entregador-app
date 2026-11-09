@@ -343,13 +343,14 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 .lumen-order-compact-table .lumen-order-sync-warn{color:#a35312}
 @media(min-width:680px){.lumen-order-compact-table th{width:26%}.lumen-order-compact-table td{font-size:12px}}
 @media(max-width:400px){.lumen-order-overview-card{padding:11px!important}.lumen-order-compact-table th{width:34%;font-size:10px}.lumen-order-compact-table td{font-size:11px}.lumen-order-compact-table th,.lumen-order-compact-table td{padding-top:7px;padding-bottom:7px}}
+.lumen-inbox-card{grid-column:1/-1;background:#f6faf8;border:1px solid #cbe1d8;color:#184c3c}.lumen-inbox-card b{color:#194b3d}.lumen-inbox-card span{color:#567467;opacity:1}.lumen-inbox-card:focus-visible{outline:2px solid #16875f}
 </style>
 </head>
 <body><div class="app">
-<div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><div class="top-actions"><button id="velumAtendimentoIaOpen" class="ai-icon" type="button" title="Atendimento IA" aria-label="Abrir Atendimento IA">🤖</button><button id="logout" class="exit">Sair</button></div></div>
-<section class="quick"><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button><button class="card call lumen-orders-button" id="openLumenOrders" type="button"><b>📦 Pedidos recebidos</b><span>Compras da Lúmen • crédito e Mercado Pago</span></button></section>
+<div class="top"><div class="brand"><div class="logo">V</div><div><h1>VELUM</h1><p>Administrativo LÚMEN LUXOS</p></div></div><div class="top-actions"><button id="velumConversasOpen" class="ai-icon" type="button" title="Conversas WhatsApp" aria-label="Abrir Conversas WhatsApp">💬</button><button id="velumAtendimentoIaOpen" class="ai-icon" type="button" title="Atendimento IA" aria-label="Abrir Atendimento IA">🤖</button><button id="logout" class="exit">Sair</button></div></div>
+<section class="quick"><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button><button class="card call lumen-orders-button" id="openLumenOrders" type="button"><b>📦 Pedidos recebidos</b><span>Compras da Lúmen • crédito e Mercado Pago</span></button><button id="openConversationsCard" type="button" class="card call lumen-inbox-card"><b>💬 Conversas WhatsApp</b><span>Ver mensagens em tempo real, assumir e ativar IA</span></button></section>
 
-<section class="card callbox" id="callBox">
+<section class="card callbox" id="callBox"
 <h3>Chamar entregador</h3><p>Monte o trajeto em etapas. O endereço da LÚMEN vem preenchido por padrão e continua editável.</p>
 <div class="address-block" id="blingLookupPanel">
   <h4>Pesquisar cliente ou pedido no Bling</h4>
@@ -1829,6 +1830,10 @@ const readyRetry=setInterval(()=>{
   document.addEventListener('click',function(event){
     if(!event.target.closest('#velumAtendimentoIaOpen')) return;
     parent.postMessage({source: 'LUMEN_ADMIN_PANEL',type: 'OPEN_IA',payload: {}}, '*');
+  });
+  document.addEventListener('click',function(event){
+    if(!event.target.closest('#velumConversasOpen,#openConversationsCard'))return;
+    parent.postMessage({source:'LUMEN_ADMIN_PANEL',type:'OPEN_CONVERSAS',payload:{}},'*');
   });
 })();
 </script>
