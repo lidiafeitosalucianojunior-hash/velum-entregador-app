@@ -1340,7 +1340,10 @@ function nextRideActionButton(x){
   cls='dispatch-choice';
   label=status==='WAITING_DRIVER'?'Chamar entregador novamente':'Chamar entregador';
  }else if(status==='STORE_PICKUP_READY'){cls='store-complete';label='Confirmar retirada na loja'}
- else if(x.internalLogistics===true&&logistics[status]){
+ else if(status==='PREPARING'&&(x.storePickup===true||x.internalLogistics===true)){
+  cls='log-act';label=x.storePickup===true?'Marcar pronto para retirada':'Conferir e embalar';
+  attrs+=' data-action="MARK_PACKED"';
+ }else if(x.internalLogistics===true&&logistics[status]){
   cls='log-act';label=logistics[status][1];attrs+=' data-action="'+logistics[status][0]+'"';
  }else{disabled=true;label=status==='DELIVERED'?'✓ Corrida concluída':'Aguardando próxima etapa'}
  return '<button type="button" class="ride-record-next '+cls+'"'+attrs+(disabled?' disabled':'')+'>'+esc(label)+'</button>';
@@ -1392,7 +1395,7 @@ function renderRideSheet(list){
     '<div class="ride-record-field phone-column"><small>Telefone / WhatsApp</small>'+phoneHtml+'</div>'+
     '<div class="ride-record-field city-column"><small>Cidade</small><div class="ride-card-city">'+esc(city)+'<span>'+esc(mode)+'</span></div></div>'+
     '<div class="ride-record-field status-column"><small>Status</small><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></div>'+
-    '<div class="ride-record-field actions-column ride-record-actions">'+nextRideActionButton(x)+'<small>Ações</small>'+sheetActionButtons(x)+'</div>'+
+    '<div class="ride-record-field actions-column ride-record-actions">'+nextRideActionButton(x)+'</div>'+
    '</div></article>';
  }).join(''):'<div class="ride-sheet-empty">Nenhuma corrida encontrada nesta fase.</div>';
 }
