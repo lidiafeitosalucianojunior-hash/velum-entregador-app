@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Conversas • Lúmen Luxos</title>
+<style>
+:root{--ink:#20313a;--muted:#76838a;--line:#e8ecec;--bg:#f5f6f6;--white:#fff;--green:#16875f;--red:#e45256;--navy:#153e5c;--orange:#ed8a35;--cream:#faf7f3;--shadow:0 6px 23px #24313a0d}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg)}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}:focus-visible{outline:3px solid #d6b092;outline-offset:2px}
+.shell{max-width:1510px;margin:auto;min-height:100vh;background:white;display:grid;grid-template-columns:minmax(310px,405px) minmax(0,1fr);box-shadow:0 0 30px #183c4d0b}
+.sidebar{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:100vh;min-width:0;background:#fff}
+.side-header{padding:20px 17px 14px;background:#fff;border-bottom:1px solid var(--line)}
+.brandline{display:flex;align-items:center;gap:10px}.back{height:38px;width:38px;border:1px solid var(--line);background:#fff;border-radius:12px;color:var(--navy);font-size:21px;flex:none}
+.brandmark{height:43px;width:43px;border-radius:15px;background:#173d61;color:#fff;display:grid;place-items:center;font-size:19px;font-weight:900;letter-spacing:-1px}
+.brandcopy{flex:1;min-width:0}.brandcopy b{font-size:19px;display:block;letter-spacing:-.5px}.brandcopy small{font-size:11px;color:#78858e}.refresh{width:38px;height:38px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:20px;color:#456274}
+.live{display:flex;align-items:center;gap:7px;color:#528168;font-size:11px;margin:15px 2px 12px}.live i{height:7px;width:7px;border-radius:50%;background:#28bb7e;box-shadow:0 0 0 3px #dff8e9}.live.warn{color:var(--red)}.live.warn i{background:var(--red);box-shadow:0 0 0 3px #ffe5e5}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:14px}.stat{border:1px solid #e9eeef;background:#f9fbfb;border-radius:12px;padding:9px 8px;min-height:55px}.stat strong{display:block;font-size:18px;line-height:1;color:var(--navy)}.stat span{display:block;font-size:10px;color:var(--muted);margin-top:5px}.stat.red strong{color:var(--red)}.stat.green strong{color:var(--green)}
+.search{display:flex;align-items:center;gap:9px;background:#f1f3f4;border:1px solid #edf0f1;border-radius:12px;padding:10px 12px;margin-bottom:11px}.search span{font-size:18px;color:#839198}.search input{background:transparent;min-width:0;width:100%;border:0;outline:0;font-size:13px;color:var(--ink)}
+.filters{display:flex;gap:7px;overflow:auto;padding:2px 1px 4px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.filter{white-space:nowrap;border-radius:999px;background:#f3f5f6;color:#63737e;border:1px solid #edf0f1;padding:7px 10px;font-size:11px;font-weight:700}.filter.on{background:#e8f4ee;color:#14734e;border-color:#cfebdb}
+.list{overflow:auto;flex:1;padding:12px 12px 16px;min-height:250px}.list-empty{padding:32px 13px;color:var(--muted);text-align:center;font-size:13px;line-height:1.6}
+.conv{width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:15px;margin-bottom:9px;overflow:hidden;transition:border-color .1s,box-shadow .1s}.conv:hover{box-shadow:0 6px 18px #172b3310}.conv.selected{background:#f8fafb;border-color:#b6c7d1}.conv.waiting{border:2px solid var(--red);background:#fffafa}.conv.paid{border:2px solid #21a56e;background:#f8fffb}.conv.paid.selected{box-shadow:0 0 0 2px #cceddd}
+.conv-main{display:flex;gap:11px;padding:12px 12px 8px;align-items:flex-start;cursor:pointer}.avatar{height:43px;width:43px;flex:none;border-radius:50%;display:grid;place-items:center;color:#185341;background:#d6eee4;font-size:15px;font-weight:800;text-transform:uppercase}.conv.waiting .avatar{background:#ffe1e0;color:#a94b52}.conv.paid .avatar{background:#caefdc;color:#0b7850}
+.conv-info{min-width:0;flex:1}.conv-name{display:flex;align-items:center;justify-content:space-between;gap:7px}.conv-name b{font-size:14px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.conv-name time{font-size:10px;color:#819099;white-space:nowrap}.conv-preview{font-size:12px;color:#7c8991;margin:5px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.conv-bottom{display:flex;align-items:center;gap:7px;margin-top:7px;flex-wrap:wrap}
+.chip{font-size:10px;padding:5px 8px;font-weight:750;border-radius:7px;white-space:nowrap}.chip.verde{background:#ddf5e8;color:#16744c}.chip.vermelho{background:#ffe3e4;color:#af303b}.chip.amarelo{background:#fff3d4;color:#93600d}.chip.laranja{background:#fff0df;color:#aa6012}.chip.roxo{background:#efe7fd;color:#6b4d9a}.chip.azul{background:#e7f0fb;color:#355e9c}
+.mode-compact{font-size:10px;color:#77868f;white-space:nowrap}.conv-actions{display:flex;justify-content:flex-end;gap:7px;padding:0 11px 11px;align-items:center}.small-btn{border:1px solid #dce4e8;background:#fff;color:#31556b;border-radius:9px;padding:7px 9px;font-size:11px;font-weight:750}.small-btn.stop{border-color:#f6d3d4;color:#ba464d;background:#fffafa}.small-btn.start{border-color:#c8e7d5;color:#178357;background:#f5fff9}
+.chat{display:flex;flex-direction:column;min-width:0;min-height:100vh;background:#eae6df}.chat-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:45px;background:#fafaf9;color:#5b6c78}.chat-welcome .big{font-size:55px;line-height:1}.chat-welcome h2{font-size:22px;color:#26455b;margin:17px 0 5px}.chat-welcome p{max-width:330px;font-size:13px;line-height:1.7}
+.chat-head{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #dfe5e3;background:#f8faf9;min-height:74px}.chat-mobile-back{display:none;border:0;background:transparent;font-size:22px;color:var(--navy)}.chat-person{flex:1;min-width:0}.chat-person b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chat-person small{display:block;font-size:11px;color:#697982;margin-top:4px}.chat-head-actions{display:flex;gap:7px;align-items:center}
+.head-btn{border:1px solid #d3e2e0;border-radius:10px;font-size:11px;font-weight:800;background:#fff;color:#2d6153;padding:11px 12px}.head-btn.stop{border-color:#f3cdd0;color:#b3404b;background:#fff4f3}
+.chat-stage{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 17px;background:#fff;border-bottom:1px solid #e6edec;font-size:11px;color:#6e7e87}.chat-stage strong{color:#2c4452}.chat-stage .spacer{flex:1}.stage-border-wait{border-top:4px solid var(--red)}.stage-border-paid{border-top:4px solid var(--green)}
+.message-wrap{overflow:auto;flex:1;padding:20px 22px 25px;background-color:#ece7df;background-image:radial-gradient(#fff8 1px,transparent 1px);background-size:21px 21px;min-height:350px}.history-note{margin:0 auto 23px;max-width:510px;text-align:center;color:#6f8290;background:#fff9;border-radius:12px;padding:8px 14px;font-size:10px;line-height:1.45}.bubble-row{display:flex;margin:8px 0}.bubble-row.out{justify-content:flex-end}.bubble{max-width:min(76%,590px);min-width:84px;border-radius:13px;background:#fff;padding:10px 12px 7px;box-shadow:0 1px 2px #0001;overflow-wrap:anywhere}.bubble-row.out .bubble{background:#d8f7e4;border-bottom-right-radius:4px}.bubble-row.in .bubble{border-bottom-left-radius:4px}.bubble p{font-size:13px;line-height:1.52;margin:0;white-space:pre-wrap}.bubble .bfoot{font-size:10px;color:#7a898a;display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px}.bubble .bfoot .sent{color:#3e9880;font-weight:800}.bubble .hist{font-style:italic;color:#6e828a}
+.composer{border-top:1px solid #dfe5e3;background:#f8f9f9;padding:13px 18px 16px}.composer-row{display:flex;align-items:end;gap:10px}.compose{flex:1;min-height:48px;max-height:124px;resize:vertical;border:1px solid #dce3e4;border-radius:14px;outline:0;background:#fff;padding:13px 14px;font-size:14px}.compose:focus{border-color:#52a588}.send{background:#168760;color:#fff;border:0;border-radius:13px;min-height:47px;padding:0 18px;font-weight:850}.composer-hint{font-size:11px;color:#7a878c;margin:8px 3px 0}.composer-hint.warn{color:#b94750}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 17px;background:#193b4d;color:#fff;border-radius:12px;box-shadow:0 8px 30px #0003;font-size:12px;z-index:10;max-width:90vw;display:none}.toast.on{display:block}.toast.error{background:#a94349}
+@media(max-width:850px){.shell{grid-template-columns:minmax(280px,350px) minmax(0,1fr)}.chat-head{padding:10px 12px}.message-wrap{padding:18px 13px}.bubble{max-width:87%}}
+@media(max-width:700px){.shell{display:block;min-height:100dvh}.sidebar{min-height:100dvh;max-height:100dvh}.chat{display:none;min-height:100dvh;max-height:100dvh}.shell.chat-open .sidebar{display:none}.shell.chat-open .chat{display:flex}.chat-mobile-back{display:block}.chat-head{padding:8px 12px;min-height:68px}.chat-head .avatar{height:38px;width:38px}.head-btn{padding:8px;font-size:10px}.chat-person b{font-size:14px}.message-wrap{min-height:0}.composer{padding:11px 10px 13px}.side-header{padding-top:max(16px,env(safe-area-inset-top))}.list{min-height:0}.bubble{max-width:89%}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <aside class="sidebar" aria-label="Lista de conversas">
+    <header class="side-header">
+      <div class="brandline"><button class="back" type="button" id="backPanel" aria-label="Voltar ao Painel Lúmen">‹</button>
+        <div class="brandmark">L</div><div class="brandcopy"><b>Conversas</b><small>Lúmen Luxos · WhatsApp</small></div>
+        <button class="refresh" type="button" id="refresh" title="Atualizar conversas" aria-label="Atualizar">↻</button></div>
+      <div class="live" id="live"><i></i><span>Carregando conversas…</span></div>
+      <div class="stats"><div class="stat"><strong id="total">—</strong><span>Conversas</span></div>
+        <div class="stat red"><strong id="waitingCount">—</strong><span>Aguardando humano</span></div>
+        <div class="stat green"><strong id="paidCount">—</strong><span>Pagamento aprovado</span></div></div>
+      <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Pesquisar nome, telefone ou mensagem" autocomplete="off" aria-label="Buscar conversa"></label>
+      <nav class="filters" aria-label="Filtrar conversas">
+        <button type="button" class="filter on" data-filter="ALL">Todas</button>
+        <button type="button" class="filter" data-filter="HUMANO">Aguardando humano</button>
+        <button type="button" class="filter" data-filter="PAGO">Pagas</button>
+        <button type="button" class="filter" data-filter="IA">IA ativa</button>
+      </nav>
+    </header>
+    <section class="list" id="list" aria-live="polite"><div class="list-empty">Conectando à caixa de entrada oficial…</div></section>
+  </aside>
+  <main class="chat" aria-label="Janela da conversa">
+    <section id="welcome" class="chat-welcome"><div class="big">💬</div><h2>Atendimento Lúmen</h2>
+      <p>Selecione uma cliente para acompanhar as mensagens, assumir a conversa ou ativar a IA somente nesse atendimento.</p></section>
+    <div id="chatContent" hidden style="display:none;flex-direction:column;flex:1;min-height:0">
+      <header class="chat-head" id="chatHead"></header>
+      <section class="chat-stage" id="chatStage"></section>
+      <div class="message-wrap" id="messages" role="log" aria-live="polite" aria-relevant="additions">
+        <p class="history-note">Carregando histórico…</p></div>
+      <footer class="composer"><div class="composer-row">
+          <textarea id="text" class="compose" rows="2" placeholder="Escreva uma mensagem…" maxlength="1600" aria-label="Mensagem para a cliente"></textarea>
+          <button class="send" type="button" id="send">Enviar</button>
+        </div><p class="composer-hint" id="composerHint">Assuma a conversa para responder.</p></footer>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const state={items:[],detail:null,selected:'',filter:'ALL',search:'',
+  listing:false,opening:false,working:false,loadingId:'',lastList:'',lastDetail:''};
+function post(type,payload={}){window.parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]))}
+const initials=x=>String(x||'C').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+const fmtPhone=x=>{const s=String(x||'').replace(/\D/g,'');return s.length>=12?'+'+s.slice(0,2)+' ('+s.slice(2,4)+') '+s.slice(4,9)+'-'+s.slice(9):s};
+const shortTime=x=>{const d=new Date(x||'');return Number.isFinite(d.getTime())?d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''};
+const shortDate=x=>{const d=new Date(x||'');if(!Number.isFinite(d.getTime()))return '';
+ const today=new Date();return d.toDateString()===today.toDateString()?shortTime(x):
+  d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});};
+const stageChip=x=>'<span class="chip '+esc(x?.etapa?.cor||'azul')+'">'+esc(x?.etapa?.rotulo||'Em atendimento')+'</span>';
+function toast(message,isError=false){
+ const e=$('toast');e.textContent=String(message||'');e.className='toast on'+(isError?' error':'');
+ clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='toast',4600);
+}
+function live(text,isError=false){
+ $('live').className='live'+(isError?' warn':'');
+ $('live').querySelector('span').textContent=text;
+}
+function listRequest(){
+ if(state.listing)return;
+ state.listing=true;post('CONVERSAS_LIST');
+}
+function detailRequest(){
+ if(!state.selected||state.opening||state.working)return;
+ state.opening=true;post('CONVERSAS_DETAIL',{id:state.selected});
+}
+function visibleItems(){
+ return state.items.filter(x=>{
+  if(state.filter==='HUMANO'&&!x.aguardandoHumano)return false;
+  if(state.filter==='PAGO'&&!x.pagamentoConfirmado)return false;
+  if(state.filter==='IA'&&x.modo!=='IA')return false;
+  const terms=(x.nome+' '+x.numero+' '+x.ultimaMensagem).toLowerCase();
+  return !state.search||terms.includes(state.search.toLowerCase());
+ });
+}
+function renderList(){
+ const visible=visibleItems();
+ if(!visible.length){$('list').innerHTML='<div class="list-empty">Nenhuma conversa encontrada com esse filtro.</div>';return}
+ $('list').innerHTML=visible.map(x=>{
+  const edge=x.pagamentoConfirmado?' paid':x.aguardandoHumano?' waiting':'';
+  const selected=x.id===state.selected?' selected':'';
+  const mode=x.modo==='IA'?'🤖 IA ativa':'👩 Atendimento humano';
+  return '<article class="conv'+edge+selected+'" data-id="'+esc(x.id)+'">'+
+   '<div class="conv-main" role="button" tabindex="0" data-open="'+esc(x.id)+'" aria-label="Abrir conversa com '+esc(x.nome)+'">'+
+   '<div class="avatar">'+esc(initials(x.nome))+'</div><div class="conv-info">'+
+   '<div class="conv-name"><b>'+esc(x.nome)+'</b><time>'+esc(shortDate(x.ultimaAtualizacao))+'</time></div>'+
+   '<div class="conv-preview">'+esc(x.ultimaMensagem||'Nova conversa')+'</div>'+
+   '<div class="conv-bottom">'+stageChip(x)+'<span class="mode-compact">'+mode+'</span></div></div></div>'+
+   '<div class="conv-actions">'+
+   (x.aguardandoHumano?'<button class="small-btn stop" data-mode="HUMANO" data-id="'+esc(x.id)+'">Assumir</button>':'')+
+   (x.modo==='IA'?'<button class="small-btn stop" data-mode="HUMANO" data-id="'+esc(x.id)+'">Desativar IA</button>':
+     '<button class="small-btn start" data-mode="IA" data-id="'+esc(x.id)+'">Ativar IA</button>')+
+   '</div></article>';
+ }).join('');
+}
+function renderCounts(c){
+ $('total').textContent=String(c?.total??state.items.length);
+ $('waitingCount').textContent=String(c?.aguardandoHumano??state.items.filter(x=>x.aguardandoHumano).length);
+ $('paidCount').textContent=String(c?.pagamentosConfirmados??state.items.filter(x=>x.pagamentoConfirmado).length);
+}
+function open(id){
+ const exists=state.items.some(x=>x.id===id);if(!exists)return;
+ state.selected=id;state.detail=null;$('shell').classList.add('chat-open');
+ $('welcome').style.display='none';$('chatContent').hidden=false;$('chatContent').style.display='flex';
+ $('chatHead').innerHTML='<div class="chat-person"><b>Carregando…</b></div>';
+ $('messages').innerHTML='<p class="history-note">Buscando histórico…</p>';
+ renderList();detailRequest();
+}
+function backChat(){state.selected='';state.detail=null;$('shell').classList.remove('chat-open');$('chatContent').hidden=true;
+ $('chatContent').style.display='none';$('welcome').style.display='flex';renderList();}
+function renderDetail(){
+ const d=state.detail;if(!d||!d.conversa)return;
+ const x=d.conversa;const paid=x.pagamentoConfirmado,wait=x.aguardandoHumano;
+ const humans=x.modo==='HUMANO'&&x.assumidaPor==='LUMEN';
+ $('chatHead').innerHTML='<button class="chat-mobile-back" type="button" id="chatBack" aria-label="Voltar às conversas">‹</button>'+
+  '<div class="avatar">'+esc(initials(x.nome))+'</div>'+
+  '<div class="chat-person"><b>'+esc(x.nome)+'</b><small>'+esc(fmtPhone(x.numero))+'</small></div>'+
+  '<div class="chat-head-actions">'+(x.modo==='IA'?
+   '<button class="head-btn stop" id="headMode" data-mode="HUMANO">Assumir</button>':
+   '<button class="head-btn" id="headMode" data-mode="IA">Ativar IA</button>')+'</div>';
+ $('chatStage').className='chat-stage'+(paid?' stage-border-paid':wait?' stage-border-wait':'');
+ $('chatStage').innerHTML=stageChip(x)+'<span>'+esc(x.modo==='IA'?'🤖 IA respondendo':humans?'👩 Atendimento assumido':'🔴 Aguardando humano')+
+  '</span><span class="spacer"></span><strong>'+esc(d.janela24hAberta?'Janela de resposta aberta':'Janela de 24h encerrada')+'</strong>';
+ $('chatHead').querySelector('#chatBack')?.addEventListener('click',backChat);
+ $('chatHead').querySelector('#headMode')?.addEventListener('click',()=>{
+  setMode(x.id,$('headMode').dataset.mode);
+ });
+ const msgs=Array.isArray(d.mensagens)?d.mensagens:[];
+ const el=$('messages');
+ const bottom=el.scrollTop+el.clientHeight>=el.scrollHeight-120;
+ const oldCount=el.querySelectorAll('.bubble-row').length;
+ el.innerHTML='<p class="history-note">'+esc(d.avisoHistorico||'Histórico recente do WhatsApp')+'</p>'+
+  (msgs.length?msgs.map(m=>{
+   const out=m.direcao==='SAIDA';
+   const status=out?m.status==='LIDO_META'?'✓✓ Lida':
+      m.status==='ENTREGUE_META'?'✓✓ Entregue':
+      m.status==='ACEITO_META'?'✓ Aceita pela Meta':
+      m.status==='ENVIADO_META'?'✓ Enviada':
+      m.status==='TENTATIVA'?'⏳ Enviando':m.status==='SEM_CONFIRMACAO'?'⚠ Sem confirmação':
+      m.status==='RECUSADO_META'?'⚠ Recusada':'• '+m.status:'';
+   return '<div class="bubble-row '+(out?'out':'in')+'"><div class="bubble">'+
+    '<p'+(out&&!m.conteudoHistoricoDisponivel?' class="hist"':'')+'>'+esc(m.texto)+'</p>'+
+    '<div class="bfoot"><span>'+esc(shortTime(m.quando))+'</span><span class="'+(out?'sent':'')+'">'+esc(status)+'</span></div>'+
+    '</div></div>';
+  }).join(''):'<p class="history-note">Ainda não há mensagens recentes registradas.</p>');
+ if(bottom||msgs.length!==oldCount)el.scrollTop=el.scrollHeight;
+ $('text').disabled=!humans||!d.janela24hAberta||state.working;
+ $('send').disabled=!humans||!d.janela24hAberta||state.working;
+ const hint=$('composerHint');
+ hint.className='composer-hint'+(humans&&!d.janela24hAberta?' warn':'');
+ hint.textContent=x.modo==='IA'?'A IA está ativa. Assuma o atendimento para escrever.':
+  !humans?'Toque em Assumir atendimento para responder.':
+  !d.janela24hAberta?'A janela de 24h terminou. Responder requer modelo aprovado pela Meta.':
+  'Você assumiu a conversa. Suas respostas são enviadas pelo WhatsApp oficial da Lúmen.';
+}
+function setMode(id,mode){
+ if(state.working)return;
+ state.working=true;state.loadingId=id;
+ post('CONVERSAS_MODE',{id,modo:mode});
+}
+function send(){
+ const d=state.detail;if(!d?.conversa||state.working)return;
+ const value=$('text').value.trim();if(!value)return;
+ if(value.length>1600){toast('Máximo de 1.600 caracteres.',true);return}
+ const bytes=new Uint8Array(16);
+ if(!window.crypto?.getRandomValues){toast('Este navegador não suporta envio seguro.',true);return}
+ window.crypto.getRandomValues(bytes);
+ const key=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+ state.working=true;
+ $('send').disabled=true;
+ post('CONVERSAS_SEND',{id:d.conversa.id,requestId:key,texto:value});
+}
+function onResponse(data){
+ if(data?.source!=='LUMEN_ADMIN_PANEL_PAGE')return;
+ const {type,payload={}}=data;
+ if(type==='CONVERSAS_LIST_RESULT'){
+  state.listing=false;if(payload.ok){
+   state.items=Array.isArray(payload.items)?payload.items:[];
+   renderCounts(payload.contadores);renderList();
+   live('Atualizado às '+shortTime(payload.atualizadoEm)+' · a cada 10 segundos');
+  }else live(payload.mensagem||'Falha ao consultar conversas',true);
+ }
+ if(type==='CONVERSAS_DETAIL_RESULT'){
+  state.opening=false;
+  if(payload.ok&&payload.conversa?.id===state.selected){
+   state.detail=payload;renderDetail();
+  }else if(!payload.ok){toast(payload.mensagem||'Não foi possível abrir a conversa.',true);}
+ }
+ if(type==='CONVERSAS_MODE_RESULT'){
+  state.working=false;
+  if(payload.ok){
+   toast(payload.mensagem||'Modo atualizado.');
+   listRequest();detailRequest();
+  }else{toast(payload.mensagem||'Não foi possível alterar a IA.',true);detailRequest();}
+ }
+ if(type==='CONVERSAS_SEND_RESULT'){
+  state.working=false;
+  if(payload.ok){
+   $('text').value='';toast('Mensagem aceita pela Meta. Aguardando entrega.');
+  }else toast(payload.mensagem||'Envio não confirmado. Não será repetido automaticamente.',true);
+  detailRequest();listRequest();
+ }
+}
+$('list').addEventListener('click',ev=>{
+ const action=ev.target.closest('[data-mode]');
+ if(action){ev.stopPropagation();setMode(action.dataset.id,action.dataset.mode);return}
+ const row=ev.target.closest('[data-open]');if(row)open(row.dataset.open);
+});
+$('list').addEventListener('keydown',ev=>{
+ if(ev.key==='Enter'){const row=ev.target.closest('[data-open]');if(row){ev.preventDefault();open(row.dataset.open)}}
+});
+$('search').addEventListener('input',ev=>{state.search=ev.target.value.trim();renderList()});
+document.querySelectorAll('.filter').forEach(btn=>btn.addEventListener('click',()=>{
+ state.filter=btn.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('on',x===btn));renderList()
+}));
+$('backPanel').addEventListener('click',()=>post('CONVERSAS_BACK'));
+$('refresh').addEventListener('click',()=>{listRequest();detailRequest()});
+$('send').addEventListener('click',send);
+$('text').addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();send()}});
+window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;onResponse(ev.data)});
+window.setInterval(()=>{if(document.hidden)return;listRequest();detailRequest()},10000);
+post('CONVERSAS_LIST');
+})();
+</script>
+</body>
+</html>
