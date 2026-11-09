@@ -128,7 +128,7 @@ function listRequest(){
  state.listing=true;state.listRequestedAt=now;post('CONVERSAS_LIST');
  // Compatibilidade com controladores Wix publicados antes desta tela.
  // A rota antiga consulta a mesma colecao, sem alterar conversas.
- window.setTimeout(()=>{
+ setTimeout(()=>{
    if(state.listing&&state.listRequestedAt===now)post('IA_LIST');
  },3500);
 }
