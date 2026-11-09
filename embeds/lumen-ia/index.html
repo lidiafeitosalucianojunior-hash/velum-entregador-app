@@ -925,7 +925,12 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       loading=false;
       byId('refresh').disabled=false;
       const data=msg.payload||{};
-      items=data.ok===true && Array.isArray(data.items)?data.items.map(x=>({...x,cliente:x.nome||x.cliente||'Cliente'})):[];
+      const respostaLegada=msg.type==='IA_LIST_RESULT'&&
+        Array.isArray(data.items)&&data.items.length>0&&!data.items[0]?.etapa;
+      items=data.ok===true && Array.isArray(data.items)?data.items.map(x=>({
+        ...x,cliente:x.nome||x.cliente||'Cliente',
+        somenteLeitura:x.somenteLeitura===true||respostaLegada
+      })):[];
       byId('notice').textContent=data.aviso||data.mensagem||'Não foi possível consultar a caixa de entrada.';
       if(data.ok===true)renderList();
       else {
