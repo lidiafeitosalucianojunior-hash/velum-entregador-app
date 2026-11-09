@@ -544,11 +544,12 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
   function updateHumanActions(item,windowOpen=true){
     const human=item.modo==='HUMANO';
     const mine=human&&item.assumidaPor==='LUMEN';
-    byId('humanReply').disabled=!mine||!windowOpen;
-    byId('sendHuman').disabled=!mine||!windowOpen||!byId('humanReply').value.trim();
-    byId('toggleIa').disabled=item.status==='ENCERRADA';
+    const readonly=item.somenteLeitura===true||item.canal==='INSTAGRAM';
+    byId('humanReply').disabled=readonly||!mine||!windowOpen;
+    byId('sendHuman').disabled=readonly||!mine||!windowOpen||!byId('humanReply').value.trim();
+    byId('toggleIa').disabled=readonly||item.status==='ENCERRADA';
     byId('toggleIa').textContent=human?'Ativar IA':'Desativar IA';
-    byId('take').disabled=item.status==='ENCERRADA'||mine;
+    byId('take').disabled=readonly||item.status==='ENCERRADA'||mine;
     byId('take').textContent=mine?'Conversa assumida':human?'Assumir atendimento pendente':'Assumir atendimento';
   }
   function selectItem(item){
@@ -562,7 +563,9 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const wa=byId('openWhatsApp');
     wa.hidden=!/^55[1-9]\d{9,10}$/.test(tel);
     if(!wa.hidden)wa.href='https://wa.me/'+tel;
-    send('CONVERSAS_DETAIL',{id:selectedId});
+    if(item.somenteLeitura===true && item.canal!=='INSTAGRAM')
+      byId('historyNotice').textContent='Lista recuperada parcialmente. O histórico completo e os botões da IA exigem reconexão.';
+    else send('CONVERSAS_DETAIL',{id:selectedId});
     byId('aiDraft').value='';
     previewRequestedId='';
     previewLoading=false;
@@ -615,13 +618,15 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId('notice').textContent='Consultando as conversas do VELUM...';
     send('CONVERSAS_LIST');
     const aguardando=()=>loading&&cycle===listCycle;
+    setTimeout(()=>{if(aguardando())send('IA_LIST');},3500);
     setTimeout(()=>{
       if(!aguardando())return;
       byId('notice').textContent='Conexão demorada. Tentando novamente, sem alterar mensagens...';
       send('IA_PING');
+      send('IA_LIST');
       send('CONVERSAS_LIST');
     },9000);
-    setTimeout(()=>{if(aguardando())send('CONVERSAS_LIST');},20000);
+    setTimeout(()=>{if(aguardando()){send('IA_LIST');send('CONVERSAS_LIST');}},20000);
     setTimeout(()=>{
       if(!aguardando())return;
       loading=false;
