@@ -39,6 +39,15 @@
 .bubble .media-note{font-size:11px;color:#73828b;line-height:1.45;margin-top:7px;display:block}
 .bubble .media-view audio,.bubble .media-view video{display:block;max-width:100%;width:310px;margin-top:9px;border-radius:10px}
 .bubble .origin-tag{font-size:10px;color:#536c62;margin-top:5px;display:block}
+
+.chat-head-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.chat-head-actions .head-btn{min-height:34px;padding:7px 9px;font-size:12px}
+.history-wa{display:inline-flex;align-items:center;gap:6px;color:#14664f;text-decoration:underline;font-weight:750;font-size:12px;margin-top:8px}
+.history-note{text-align:left}
+@media(max-width:490px){
+ .chat-head-actions{max-width:120px}
+ .chat-head-actions .head-btn{min-height:32px;padding:5px 7px}
+}
 </style>
 </head>
 <body>
@@ -161,19 +170,26 @@ function renderDetail(){
   '<div class="chat-person"><b>'+esc(x.nome)+'</b><small>'+esc(fmtPhone(x.numero))+'</small></div>'+
   '<div class="chat-head-actions">'+(x.modo==='IA'?
    '<button class="head-btn stop" id="headMode" data-mode="HUMANO">Assumir</button>':
-   '<button class="head-btn" id="headMode" data-mode="IA">Ativar IA</button>')+'</div>';
+   (x.assumidaPor!=='LUMEN'?
+    '<button class="head-btn stop" id="headTake" data-mode="HUMANO">Assumir</button>':'')+
+    '<button class="head-btn" id="headMode" data-mode="IA">Ativar IA</button>')+'</div>';
  $('chatStage').className='chat-stage'+(paid?' stage-border-paid':wait?' stage-border-wait':'');
  $('chatStage').innerHTML=stageChip(x)+'<span>'+esc(x.modo==='IA'?'🤖 IA respondendo':humans?'👩 Atendimento assumido':'🔴 Aguardando humano')+
   '</span><span class="spacer"></span><strong>'+esc(d.janela24hAberta?'Janela de resposta aberta':'Janela de 24h encerrada')+'</strong>';
  $('chatHead').querySelector('#chatBack')?.addEventListener('click',backChat);
- $('chatHead').querySelector('#headMode')?.addEventListener('click',()=>{
-  setMode(x.id,$('headMode').dataset.mode);
+ $('chatHead').querySelectorAll('[data-mode]').forEach(btn=>{
+  btn.addEventListener('click',()=>setMode(x.id,btn.dataset.mode));
  });
  const msgs=Array.isArray(d.mensagens)?d.mensagens:[];
  const el=$('messages');
  const bottom=el.scrollTop+el.clientHeight>=el.scrollHeight-120;
  const oldCount=el.querySelectorAll('.bubble-row').length;
- el.innerHTML='<p class="history-note">'+esc(d.avisoHistorico||'Histórico recente do WhatsApp')+'</p>'+
+ const wa=String(x.numero||'').replace(/\D/g,'');
+ const sourceLink=/^55[1-9]\d{9,10}$/.test(wa)?
+   '<a class="history-wa" href="https://wa.me/'+encodeURIComponent(wa)+
+   '" rel="noopener noreferrer" target="_blank">Ver conversa original no WhatsApp Business</a>':'';
+ el.innerHTML='<p class="history-note">'+esc(d.avisoHistorico||'Histórico recente do WhatsApp')+
+  (sourceLink?'<div>'+sourceLink+'</div>':'')+'</p>'+
   (msgs.length?msgs.map(m=>{
    const out=m.direcao==='SAIDA';
    const status=out?m.status==='LIDO_META'?'✓✓ Lida':
@@ -209,9 +225,9 @@ function renderDetail(){
  const hint=$('composerHint');
  hint.className='composer-hint'+(humans&&!d.janela24hAberta?' warn':'');
  hint.textContent=x.modo==='IA'?'A IA está ativa. Assuma o atendimento para escrever.':
-  !humans?'Toque em Assumir atendimento para responder.':
+  !humans?'Toque no botão Assumir no topo para responder por aqui. Se precisar consultar mensagens antigas, abra a conversa original no WhatsApp Business.':
   !d.janela24hAberta?'A janela de 24h terminou. Responder requer modelo aprovado pela Meta.':
-  'Você assumiu a conversa. Suas respostas são enviadas pelo WhatsApp oficial da Lúmen.';
+  'Você assumiu a conversa. Suas respostas saem pelo WhatsApp oficial. Sem interação humana por 10 minutos, a IA retoma o atendimento.';
 }
 function setMode(id,mode){
  if(state.working)return;
