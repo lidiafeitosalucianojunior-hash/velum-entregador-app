@@ -90,6 +90,23 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 .templates-entry .status-pronto{color:#127147}
 .templates-entry .status-analise{color:#955900}
 .templates-entry .status-pendente{color:#af4848}
+
+.chat-history{min-height:160px;max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;background:#f3f5f2;white-space:normal}
+.chat-bubble{max-width:88%;align-self:flex-start;background:#fff;border-radius:13px 13px 13px 3px;padding:10px 12px;border:1px solid #e3e9e4;overflow-wrap:anywhere;white-space:pre-wrap;font-size:13px;line-height:1.45;color:#243f58}
+.chat-bubble.sent{align-self:flex-end;background:#d9f8d5;border-color:#bfe2bd;border-radius:13px 13px 3px 13px}
+.chat-bubble small{display:block;text-align:right;color:#688079;font-size:10px;margin-top:7px}
+.history-note{font-size:11px;color:#6b7a8d;margin:-6px 0 10px}
+#openWhatsApp{display:inline-block;padding:6px 0 12px;color:#116f58;font-size:12px;text-decoration:underline}
+#openWhatsApp[hidden]{display:none}
+.human-compose{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.human-compose textarea{flex:1 1 100%;min-height:64px;padding:11px;border:1px solid #cbdce8;border-radius:10px;font:inherit;resize:vertical}
+.human-compose button{border:0;background:#173f65;color:#fff;border-radius:9px;padding:10px 12px;font-weight:700;cursor:pointer}
+.human-compose #toggleIa{background:#e9eff5;color:#173f65}
+.human-compose button:disabled,.human-compose textarea:disabled{opacity:.5;cursor:not-allowed}
+.conv.waiting-human{outline:2px solid #d84545;outline-offset:-2px}
+.conv.paid-conversation{border-left:5px solid #168b51}
+.conv.waiting-human.selected{outline:2px solid #d84545}
+@media(min-width:720px){.chat-history{max-height:65vh}}
 </style></head><body>
 <header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Lúmen Luxos • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
 <main class="container"><div class="heading"><div><h1>Central de conversas</h1><p>Acompanhe mensagens e assuma o atendimento quando necessário.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="smoke" type="button" title="Usa uma pequena quantidade de créditos da OpenAI e não envia mensagem a clientes">Testar IA (usa créditos)</button><button class="refresh" id="modelsQuick" type="button" title="Conferir aprovação dos modelos WhatsApp sem enviar mensagens">Verificar modelos agora</button><button class="refresh" id="refresh" type="button">Atualizar</button></div></div>
@@ -159,7 +176,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 </section>
 
 <div class="workspace"><section class="panel" aria-label="Lista de conversas"><div class="panel-title">Conversas <small id="counter">0 conversas</small></div><div id="conversationList" class="empty">Carregando conversas...</div></section>
-<section class="panel" aria-label="Detalhes da conversa"><div class="panel-title">Atendimento <small>Selecione uma conversa para visualizar detalhes</small></div><div class="detail"><h2 id="client">Nenhuma conversa selecionada</h2><p id="channel">As mensagens aparecerão aqui após conectar Instagram e WhatsApp.</p><div class="details" id="message">Nenhum histórico sincronizado.</div>
+<section class="panel" aria-label="Detalhes da conversa"><div class="panel-title">Atendimento <small>Selecione uma conversa para visualizar detalhes</small></div><div class="detail"><h2 id="client">Nenhuma conversa selecionada</h2><p id="channel">As mensagens aparecerão aqui após conectar Instagram e WhatsApp.</p><div class="details chat-history" id="message" role="log" aria-label="Histórico de mensagens">Nenhum histórico sincronizado.</div><p id="historyNotice" class="history-note">Abra uma conversa para carregar as mensagens registradas no VELUM.</p><a id="openWhatsApp" target="_blank" rel="noopener noreferrer" hidden>Ver mídias e mensagens antigas no WhatsApp</a><div class="human-compose"><textarea id="humanReply" maxlength="1600" placeholder="Assuma o atendimento para responder à cliente pelo WhatsApp" disabled></textarea><button type="button" id="sendHuman" disabled>Enviar WhatsApp</button><button type="button" id="toggleIa" disabled>Ativar IA</button></div>
 <label class="draft-label" for="aiDraft">Rascunho da LUMEN IA — revise antes de usar</label>
 <textarea class="draft-input" id="aiDraft" placeholder="Selecione uma conversa e gere uma sugestão. Nenhuma resposta será enviada automaticamente." maxlength="900"></textarea>
 <div class="draft-actions"><button type="button" id="suggest" disabled>✨ Sugerir resposta com IA</button><button type="button" id="copyReply" disabled>Copiar resposta</button><button type="button" id="sendApproved" disabled>Enviar resposta aprovada no WhatsApp</button></div>
@@ -459,11 +476,48 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const msg=String(mensagem||'').trim();
     return !msg || /^\[\s*(?:imagem|vídeo|video|áudio|audio|documento|mídia|midia|mensagem|interação|interacao)[^\]]*\]/i.test(msg);
   }
+  function renderThread(data){
+    const box=byId('message');
+    box.replaceChildren();
+    const arr=Array.isArray(data.mensagens)?data.mensagens:[];
+    if(!arr.length){box.textContent='Nenhuma mensagem recuperada nesta conversa.';return}
+    for(const msg of arr){
+      const bubble=document.createElement('article');
+      bubble.className='chat-bubble'+(msg.direcao==='SAIDA'?' sent':'');
+      const body=document.createElement('div');
+      body.textContent=String(msg.texto||'[Mídia recebida]').slice(0,1800);
+      bubble.appendChild(body);
+      const small=document.createElement('small');
+      const when=Date.parse(msg.quando);
+      small.textContent=(Number.isFinite(when)?new Date(when).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')+
+        (msg.direcao==='SAIDA'?' · '+String(msg.status||'Enviado'):'');
+      bubble.appendChild(small);
+      box.appendChild(bubble);
+    }
+    box.scrollTop=box.scrollHeight;
+  }
+  function updateHumanActions(item,windowOpen=true){
+    const human=item.modo==='HUMANO';
+    const mine=human&&item.assumidaPor==='LUMEN';
+    byId('humanReply').disabled=!mine||!windowOpen;
+    byId('sendHuman').disabled=!mine||!windowOpen||!byId('humanReply').value.trim();
+    byId('toggleIa').disabled=item.status==='ENCERRADA';
+    byId('toggleIa').textContent=human?'Ativar IA':'Desativar IA';
+    byId('take').disabled=item.status==='ENCERRADA'||mine;
+    byId('take').textContent=mine?'Conversa assumida':human?'Assumir atendimento pendente':'Assumir atendimento';
+  }
   function selectItem(item){
     selectedId=String(item.id||'');
     byId('client').textContent=item.cliente||'Cliente';
     byId('channel').textContent=(item.canal||'Canal não informado')+' • '+(item.modo==='HUMANO'?'Atendimento humano':'Atendimento IA');
-    byId('message').textContent=item.ultimaMensagem||'Aguardando histórico da conversa.';
+    byId('message').textContent='Carregando mensagens recebidas e enviadas...';
+    byId('historyNotice').textContent='Consultando a conversa no VELUM...';
+    byId('humanReply').value='';
+    const tel=String(item.numero||'').replace(/\D/g,'');
+    const wa=byId('openWhatsApp');
+    wa.hidden=!/^55[1-9]\d{9,10}$/.test(tel);
+    if(!wa.hidden)wa.href='https://wa.me/'+tel;
+    send('CONVERSAS_DETAIL',{id:selectedId});
     byId('aiDraft').value='';
     previewRequestedId='';
     previewLoading=false;
@@ -478,8 +532,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId('feedback').textContent=semTexto
       ? 'Esta mensagem não contém texto legível para a IA. A mídia não é analisada nesta etapa; confira no WhatsApp Business e atenda manualmente.'
       : '';
-    byId('take').disabled=item.modo==='HUMANO'||item.status==='ENCERRADA';
-    byId('take').textContent=item.modo==='HUMANO'?'Conversa em atendimento humano':'Assumir conversa';
+    updateHumanActions(item);
     renderList();
   }
   function renderList(){
@@ -495,11 +548,12 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     for(const item of items){
       const button=document.createElement('button');
       button.type='button';
-      button.className='conv'+(selectedId===String(item.id)?' selected':'');
+      button.className='conv'+(selectedId===String(item.id)?' selected':'')+(item.aguardandoHumano?' waiting-human':'')+(item.pagamentoConfirmado?' paid-conversation':'');
       const name=document.createElement('b');name.textContent=item.cliente||'Cliente';button.appendChild(name);
       const teaser=document.createElement('p');teaser.textContent=item.ultimaMensagem||'Sem prévia de mensagem';button.appendChild(teaser);
       const badges=document.createElement('div');badges.className='meta';
-      for(const label of [item.canal||'Canal', item.modo==='HUMANO'?'Humano':'IA']){
+      for(const label of [item.canal||'Canal', item.modo==='HUMANO'?'Humano':'IA',item.etapa?.rotulo||'']){
+        if(!label)continue;
         const badge=document.createElement('span');badge.className='chip'+(label==='Humano'?' human':label==='IA'?' ia':'');
         badge.textContent=label;badges.appendChild(badge);
       }
@@ -514,15 +568,15 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const cycle=++listCycle;
     byId('refresh').disabled=true;
     byId('notice').textContent='Consultando as conversas do VELUM...';
-    send('IA_LIST');
+    send('CONVERSAS_LIST');
     const aguardando=()=>loading&&cycle===listCycle;
     setTimeout(()=>{
       if(!aguardando())return;
       byId('notice').textContent='Conexão demorada. Tentando novamente, sem alterar mensagens...';
       send('IA_PING');
-      send('IA_LIST');
+      send('CONVERSAS_LIST');
     },9000);
-    setTimeout(()=>{if(aguardando())send('IA_LIST');},20000);
+    setTimeout(()=>{if(aguardando())send('CONVERSAS_LIST');},20000);
     setTimeout(()=>{
       if(!aguardando())return;
       loading=false;
@@ -531,8 +585,25 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       byId('conversationList').textContent='Conexão indisponível. Nenhuma conversa foi alterada.';
     },36000);
   }
-  byId('back').addEventListener('click',()=>send('IA_BACK'));
+  byId('back').addEventListener('click',()=>send('CONVERSAS_BACK'));
   byId('refresh').addEventListener('click',reload);
+  byId('humanReply').addEventListener('input',()=>{const item=items.find(x=>x.id===selectedId);if(item)updateHumanActions(item)});
+  byId('toggleIa').addEventListener('click',()=>{
+    const item=items.find(x=>x.id===selectedId);
+    if(!item)return;
+    byId('toggleIa').disabled=true;
+    send('CONVERSAS_MODE',{id:selectedId,modo:item.modo==='HUMANO'?'IA':'HUMANO'});
+  });
+  byId('sendHuman').addEventListener('click',()=>{
+    const item=items.find(x=>x.id===selectedId);
+    const texto=byId('humanReply').value.trim();
+    if(!item||item.modo!=='HUMANO'||item.assumidaPor!=='LUMEN'||!texto)return;
+    const a=new Uint8Array(16);window.crypto.getRandomValues(a);
+    const requestId=Array.from(a,x=>x.toString(16).padStart(2,'0')).join('');
+    byId('sendHuman').disabled=true;
+    byId('feedback').textContent='Enviando uma única vez à Meta...';
+    send('CONVERSAS_SEND',{id:selectedId,requestId,texto});
+  });
   byId('templatesPanel').addEventListener('toggle',()=>{
     if(byId('templatesPanel').open&&!modelsShown)conferirModelos();
   });
@@ -602,7 +673,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     if(!selectedId)return;
     byId('take').disabled=true;
     byId('feedback').textContent='Transferindo para atendimento humano...';
-    send('IA_ASSUME',{id:selectedId});
+    send('CONVERSAS_MODE',{id:selectedId,modo:'HUMANO'});
   });
   function atualizarDiagnostico(canal,data){
     const key=canal==='whatsapp'?'wa':'ig';
@@ -666,7 +737,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
       bridgeConfirmed=msg.payload?.ok===true;
       if(bridgeConfirmed){
-        if(loading)send('IA_LIST');
+        if(loading)send('CONVERSAS_LIST');
         if(!metaStatusAnswered)send('IA_META_STATUS');
         if(!metaConfigAnswered)send('IA_META_CONFIG_REQUEST');
       }
@@ -748,11 +819,35 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       atualizarDiagnostico('whatsapp',v.ok?v.whatsapp:null);
       atualizarDiagnostico('instagram',v.ok?v.instagram:null);
     }
-    if(msg.type==='IA_LIST_RESULT'){
+    if(msg.type==='CONVERSAS_DETAIL_RESULT'){
+      const d=msg.payload||{};
+      if(d.ok!==true){
+        byId('message').textContent=d.mensagem||'Não foi possível abrir o histórico.';
+      }else if(d.conversa?.id===selectedId){
+        renderThread(d);
+        byId('historyNotice').textContent=String(d.avisoHistorico||'Mensagens registradas no VELUM.');
+        const item=items.find(x=>x.id===selectedId);
+        if(item)updateHumanActions(item,d.janela24hAberta!==false);
+      }
+    }
+    if(msg.type==='CONVERSAS_MODE_RESULT'){
+      const d=msg.payload||{};
+      byId('feedback').textContent=d.mensagem||'Atualização de atendimento concluída.';
+      if(d.ok)reload();
+      else {const item=items.find(x=>x.id===selectedId);if(item)updateHumanActions(item)}
+    }
+    if(msg.type==='CONVERSAS_SEND_RESULT'){
+      const d=msg.payload||{};
+      byId('feedback').textContent=d.mensagem||(d.ok?'Envio aceito pela Meta.':'Envio não confirmado. Confira antes de tentar de novo.');
+      if(d.ok){byId('humanReply').value='';send('CONVERSAS_DETAIL',{id:selectedId})}
+      const item=items.find(x=>x.id===selectedId);
+      if(item)updateHumanActions(item);
+    }
+    if(msg.type==='IA_LIST_RESULT'||msg.type==='CONVERSAS_LIST_RESULT'){
       loading=false;
       byId('refresh').disabled=false;
       const data=msg.payload||{};
-      items=data.ok===true && Array.isArray(data.items)?data.items:[];
+      items=data.ok===true && Array.isArray(data.items)?data.items.map(x=>({...x,cliente:x.nome||x.cliente||'Cliente'})):[];
       byId('notice').textContent=data.aviso||data.mensagem||'Não foi possível consultar a caixa de entrada.';
       if(data.ok===true)renderList();
       else {
