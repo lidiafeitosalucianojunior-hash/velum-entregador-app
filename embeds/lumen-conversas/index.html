@@ -91,7 +91,8 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const state={items:[],detail:null,selected:'',filter:'ALL',search:'',
-  listing:false,opening:false,working:false,loadingId:'',lastList:'',lastDetail:''};
+  listing:false,opening:false,working:false,loadingId:'',lastList:'',lastDetail:'',
+  mediaCache:new Map(),mediaAttempted:new Set(),mediaInFlight:new Set()};
 function post(type,payload={}){window.parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]))}
 const initials=x=>String(x||'C').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
@@ -153,7 +154,7 @@ function renderCounts(c){
 }
 function open(id){
  const exists=state.items.some(x=>x.id===id);if(!exists)return;
- state.selected=id;state.detail=null;$('shell').classList.add('chat-open');
+ state.selected=id;state.detail=null;state.mediaCache.clear();state.mediaAttempted.clear();state.mediaInFlight.clear();state.lastDetail='';$('shell').classList.add('chat-open');
  $('welcome').style.display='none';$('chatContent').hidden=false;$('chatContent').style.display='flex';
  $('chatHead').innerHTML='<div class="chat-person"><b>Carregando…</b></div>';
  $('messages').innerHTML='<p class="history-note">Buscando histórico…</p>';
@@ -206,11 +207,23 @@ function renderDetail(){
        (f.legenda?'<p>'+esc(String(f.legenda).slice(0,550))+'</p>':'');
    }).join('');
    const mediaFlag=m.midiaDisponivel===true;
-   const media=mediaFlag?'<div class="media-view"><button type="button" class="media-button" data-media="'+esc(m.id)+'">'+
+   const saved=state.mediaCache.get(String(m.id||''));
+   const safeSrc=saved?.src && (
+     /^data:(?:image\/(?:jpeg|png|webp)|audio\/(?:ogg|mpeg|mp4|aac|wav|x-wav)|video\/mp4|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(saved.src)||
+     /^https:\/\/download-files\.wix\.com\//.test(saved.src)
+   )?saved.src:'';
+   const existing=safeSrc?'<div class="media-view">'+
+     (m.tipo==='image'?'<img class="media-preview" loading="lazy" alt="Foto da cliente" src="'+esc(safeSrc)+'">':
+       m.tipo==='video'?'<video class="media-preview" controls playsinline preload="none" src="'+esc(safeSrc)+'"></video>'+
+         '<a class="media-button" href="'+esc(safeSrc)+'" target="_blank" rel="noopener noreferrer">Abrir vídeo fora do painel</a>':
+       m.tipo==='audio'?'<audio controls preload="none" src="'+esc(safeSrc)+'"></audio>':
+       '<a href="'+esc(safeSrc)+'" target="_blank" rel="noopener noreferrer">Abrir documento</a>')+
+     '</div>':'';
+   const media=existing|| (mediaFlag?'<div class="media-view"><button type="button" class="media-button" data-media="'+esc(m.id)+'">'+
      esc(m.tipo==='image'?'📷 Abrir imagem':m.tipo==='audio'?'▶ Reproduzir áudio':m.tipo==='video'?'▶ Abrir vídeo':'📄 Abrir arquivo')+
      '</button></div>':
      ['image','audio','video','document'].includes(m.tipo)&&!photos?
-       '<span class="media-note">Arquivo original não registrado no VELUM. Confira no WhatsApp Business.</span>':'';
+       '<span class="media-note">Arquivo original não registrado no VELUM. Confira no WhatsApp Business.</span>':'');
    const origin=out?(m.origem==='WHATSAPP_BUSINESS_APP'?'WhatsApp Business':
      m.origem==='ATENDENTE_LUMEN'?'Atendente':'Lúmen IA'):'';
    return '<div class="bubble-row '+(out?'out':'in')+'"><div class="bubble">'+
@@ -220,6 +233,17 @@ function renderDetail(){
     '</div></div>';
   }).join(''):'<p class="history-note">Ainda não há mensagens recentes registradas.</p>');
  if(bottom||msgs.length!==oldCount)el.scrollTop=el.scrollHeight;
+ // Fotos recentes: buscar apenas arquivos autorizados e somente uma vez
+ // enquanto a pessoa navega nesta conversa. Não transferir bytes em polling.
+ const photosToLoad=msgs.filter(m=>m.tipo==='image'&&m.midiaDisponivel&&
+   !state.mediaCache.has(String(m.id))&&!state.mediaAttempted.has(String(m.id)))
+   .slice(-3);
+ for(const pic of photosToLoad){
+   const mid=String(pic.id||'');
+   if(!mid)continue;
+   state.mediaAttempted.add(mid);state.mediaInFlight.add(mid);
+   post('CONVERSAS_MEDIA',{id:x.id,mensagemId:mid});
+ }
  $('text').disabled=!humans||!d.janela24hAberta||state.working;
  $('send').disabled=!humans||!d.janela24hAberta||state.working;
  const hint=$('composerHint');
@@ -262,27 +286,30 @@ function onResponse(data){
      .find(b=>b.dataset.media===String(payload.mensagemId||''));
    if(!btn)return;
    btn.disabled=false;
-   const content=String(payload.dataUrl||'');
-   if(payload.ok!==true||!/^data:(?:image\/(?:jpeg|png|webp)|audio\/(?:ogg|mpeg|mp4|aac|wav|x-wav)|video\/mp4|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(content)){
+   const content=String(payload.dataUrl||payload.url||'');
+   const safe=/^data:(?:image\/(?:jpeg|png|webp)|audio\/(?:ogg|mpeg|mp4|aac|wav|x-wav)|video\/mp4|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(content)||
+     /^https:\/\/download-files\.wix\.com\//.test(content);
+   state.mediaInFlight.delete(String(payload.mensagemId||''));
+   if(payload.ok!==true||!safe){
      btn.textContent='Tentar abrir mídia';
      toast(payload.mensagem||'Mídia indisponível. Confira no WhatsApp Business.',true);
      return;
    }
-   const type=String(payload.tipo||'');
-   const el=document.createElement(type==='image'?'img':type==='audio'?'audio':type==='video'?'video':'a');
-   if(type==='document'){
-     el.href=content;el.textContent='Abrir PDF';el.target='_blank';el.rel='noopener noreferrer';
-   }else {
-     el.src=content;
-     if(type==='image'){el.alt='Foto recebida';el.className='media-preview'}
-     else el.controls=true;
-   }
-   btn.replaceWith(el);
+   state.mediaCache.set(String(payload.mensagemId||''),{
+     src:content,kind:String(payload.tipo||''),
+     savedAt:Date.now()
+   });
+   renderDetail();
  }
  if(type==='CONVERSAS_DETAIL_RESULT'){
   state.opening=false;
   if(payload.ok&&payload.conversa?.id===state.selected){
-   state.detail=payload;renderDetail();
+   const signature=JSON.stringify({c:payload.conversa,m:payload.mensagens,
+      j:payload.janela24hAberta});
+   state.detail=payload;
+   if(signature!==state.lastDetail){
+     state.lastDetail=signature;renderDetail();
+   }
   }else if(!payload.ok){toast(payload.mensagem||'Não foi possível abrir a conversa.',true);}
  }
  if(type==='CONVERSAS_MODE_RESULT'){
@@ -304,6 +331,8 @@ $('messages').addEventListener('click',ev=>{
  const button=ev.target.closest('[data-media]');
  if(!button||button.disabled||!state.selected)return;
  button.disabled=true;button.textContent='Abrindo mídia protegida...';
+ state.mediaAttempted.add(button.dataset.media);
+ state.mediaInFlight.add(button.dataset.media);
  post('CONVERSAS_MEDIA',{id:state.selected,mensagemId:button.dataset.media});
 });
 $('list').addEventListener('click',ev=>{
