@@ -126,6 +126,11 @@ function listRequest(){
      $('list').innerHTML='<div class="list-empty">Sem resposta do Painel Lúmen. Reconectando automaticamente…</div>';
  }
  state.listing=true;state.listRequestedAt=now;post('CONVERSAS_LIST');
+ // Compatibilidade com controladores Wix publicados antes desta tela.
+ // A rota antiga consulta a mesma colecao, sem alterar conversas.
+ window.setTimeout(()=>{
+   if(state.listing&&state.listRequestedAt===now)post('IA_LIST');
+ },3500);
 }
 function detailRequest(){
  if(!state.selected||state.working)return;
@@ -155,7 +160,9 @@ function renderList(){
  $('list').innerHTML=visible.map(x=>{
   const edge=x.pagamentoConfirmado?' paid':x.aguardandoHumano?' waiting':'';
   const selected=x.id===state.selected?' selected':'';
-  const mode=x.somenteLeitura?'Instagram Direct (consulta)':x.modo==='IA'?'🤖 IA ativa':x.iaPausaManual?'⛔ IA pausada manualmente':'👩 Atendimento humano';
+  const mode=x.somenteLeitura?
+    (x.canal==='INSTAGRAM'?'Instagram Direct (consulta)':'Consulta temporária — controles indisponíveis'):
+    x.modo==='IA'?'🤖 IA ativa':x.iaPausaManual?'⛔ IA pausada manualmente':'👩 Atendimento humano';
   return '<article class="conv'+edge+selected+'" data-id="'+esc(x.id)+'">'+
    '<div class="conv-main" role="button" tabindex="0" data-open="'+esc(x.id)+'" aria-label="Abrir conversa com '+esc(x.nome)+'">'+
    '<div class="avatar">'+esc(initials(x.nome))+'</div><div class="conv-info">'+
@@ -164,7 +171,8 @@ function renderList(){
    '<div class="conv-bottom"><span class="channel-pill '+(x.canal==='INSTAGRAM'?'ig':'wa')+'">'+
     (x.canal==='INSTAGRAM'?'Instagram':'WhatsApp')+'</span>'+stageChip(x)+'<span class="mode-compact">'+mode+'</span></div></div></div>'+
    '<div class="conv-actions">'+
-   (x.somenteLeitura?'<span class="small-btn" title="Envio bloqueado até homologação">Somente leitura</span>':
+   (x.somenteLeitura?'<span class="small-btn" title="Ações indisponíveis durante consulta temporária">'+
+     (x.canal==='INSTAGRAM'?'Somente leitura':'Aguardando conexão')+'</span>':
    ((x.aguardandoHumano?'<button class="small-btn stop" data-mode="HUMANO" data-action="ASSUMIR" data-id="'+esc(x.id)+'">Assumir</button>':'')+
    (x.modo==='IA'?'<button class="small-btn stop" data-mode="HUMANO" data-action="PAUSA_MANUAL" data-id="'+esc(x.id)+'">Desativar IA</button>':
      '<button class="small-btn start" data-mode="IA" data-id="'+esc(x.id)+'">Ativar IA</button>')))+
@@ -189,8 +197,9 @@ function backChat(){state.selected='';state.detail=null;$('shell').classList.rem
 function renderDetail(){
  const d=state.detail;if(!d||!d.conversa)return;
  const x=d.conversa;const paid=x.pagamentoConfirmado,wait=x.aguardandoHumano;
- const ig=x.canal==='INSTAGRAM'||x.somenteLeitura===true;
- const humans=!ig&&x.modo==='HUMANO'&&x.assumidaPor==='LUMEN';
+ const ig=x.canal==='INSTAGRAM';
+ const somenteLeitura=x.somenteLeitura===true;
+ const humans=!somenteLeitura&&!ig&&x.modo==='HUMANO'&&x.assumidaPor==='LUMEN';
  $('chatHead').innerHTML='<button class="chat-mobile-back" type="button" id="chatBack" aria-label="Voltar às conversas">‹</button>'+
   '<div class="avatar">'+esc(initials(x.nome))+'</div>'+
   '<div class="chat-person"><b>'+esc(x.nome)+'</b><small>'+esc(ig?'Instagram Direct':fmtPhone(x.numero))+'</small></div>'+
@@ -306,11 +315,20 @@ function send(){
 function onResponse(data){
  if(data?.source!=='LUMEN_ADMIN_PANEL_PAGE')return;
  const {type,payload={}}=data;
- if(type==='CONVERSAS_LIST_RESULT'){
+ if(type==='CONVERSAS_LIST_RESULT'||type==='IA_LIST_RESULT'){
+  // Nao substituir lista rica por retorno legado se ambos chegarem.
+  if(type==='IA_LIST_RESULT'&&!state.listing&&state.items.length)return;
   state.listing=false;if(payload.ok){
-   state.items=Array.isArray(payload.items)?payload.items:[];
+   state.items=(Array.isArray(payload.items)?payload.items:[]).map(x=>
+     x&&x.etapa?x:{...x,nome:x.nome||x.cliente||'Cliente',
+       numero:x.numero||'',ultimaAtualizacao:x.ultimaAtualizacao||x.atualizadoEm,
+       somenteLeitura:true,etapa:{rotulo:'Consulta temporária',cor:'amarelo'},
+       aguardandoHumano:x.modo==='HUMANO'&&!x.assumidaPor,
+       pagamentoConfirmado:false});
    renderCounts(payload.contadores);renderList();
-   live('Atualizado às '+shortTime(payload.atualizadoEm)+' · a cada 10 segundos');
+   live(payload.degradado?'Lista recuperada em consulta. Controles aguardam reconexão.':
+     'Atualizado às '+shortTime(payload.atualizadoEm)+' · a cada 10 segundos',
+     payload.degradado===true||type==='IA_LIST_RESULT'&&!payload.items?.[0]?.etapa);
   }else{
    live(payload.mensagem||'Falha ao consultar conversas. Nova tentativa automática em 10 segundos.',true);
    if(!state.items.length)
