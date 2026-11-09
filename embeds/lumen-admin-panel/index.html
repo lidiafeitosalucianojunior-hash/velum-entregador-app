@@ -1091,15 +1091,55 @@ function resetEditMode(){
   $('calc').disabled=false;
   $('create').textContent='GERAR ETIQUETA';
 }
- let dispatchSelection=null,dispatchTimer=null,dispatchSeq=0;
+ let dispatchSelection=null,dispatchTimer=null,dispatchProbeTimer=null,dispatchSeq=0;
+ // Status probe is READ-ONLY. Nunca reenvia chamada para tentar confirmar.
+ function dispatchProbeClear(){
+   if(dispatchProbeTimer){clearTimeout(dispatchProbeTimer);dispatchProbeTimer=null}
+ }
+ function dispatchProbe(state,delay=5000){
+   dispatchProbeClear();
+   dispatchProbeTimer=setTimeout(()=>{
+     if(dispatchSelection!==state||!state.requestId)return;
+     send('DISPATCH_STATUS',{
+       deliveryId:state.deliveryId,driverIds:state.targetIds||[],
+       requestId:state.requestId
+     });
+   },delay);
+ }
+ function dispatchStatusResult(data){
+   const state=dispatchSelection;
+   if(!state||String(data.deliveryId||'')!==state.deliveryId||
+      String(data.requestId||'')!==state.requestId)return;
+   if(data.ok===true&&data.confirmada===true){
+     dispatchProbeClear();dispatchTimerClear();
+     const id=state.deliveryId;
+     dispatchClose(true);
+     if(rideById(id))openRideDetail(id);
+     notice(data.mensagem||'Oferta registrada. Aguardando aceite do entregador.',true);
+     send('REFRESH');return;
+   }
+   if(data.ok===true&&data.status==='WAITING_DRIVER'&&data.mesmaSelecao===false){
+     dispatchProbeClear();dispatchTimerClear();
+     state.sending=false;state.uncertain=true;
+     $('driverDispatchConfirm').textContent='Atualizar corridas';
+     $('driverDispatchMessage').textContent=data.mensagem||
+       'Existe um chamado com outra seleção. Confira antes de reenviar.';
+     dispatchUpdateMode();return;
+   }
+   if(state.sending&&(state.probeCount||0)<2){
+     state.probeCount=(state.probeCount||0)+1;
+     dispatchProbe(state,7000);
+   }
+ }
  function dispatchTimerClear(){if(dispatchTimer){clearTimeout(dispatchTimer);dispatchTimer=null}}
  function dispatchWatchdog(state,phase,waitMs){
    dispatchTimerClear();
    dispatchTimer=setTimeout(()=>{
      if(dispatchSelection!==state||state.phase!==phase||!state.sending)return;
      state.sending=false;state.uncertain=true;
-     $('driverDispatchConfirm').textContent='Atualizar corridas antes de tentar';
-     $('driverDispatchMessage').textContent='Não recebemos a confirmação. O chamado pode ter sido processado. Atualize as corridas antes de tentar novamente para evitar notificações duplicadas.';
+     $('driverDispatchConfirm').textContent='Conferir corrida atualizada';
+     $('driverDispatchMessage').textContent='A resposta demorou. Estou consultando o estado do chamado, sem enviar nova notificação. Confira as corridas antes de repetir.';
+     dispatchProbe(state,100);
      dispatchUpdateMode();
    },waitMs);
  }
@@ -1107,8 +1147,9 @@ function dispatchOpen(id){
  const ride=rideById(id);
   if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(ride.status))return;
   if(ride.customerPickupAtCenter===true&&(!(Number(ride.deliveryFee)>0)||!String(ride.deliveryAddress||'').trim()))return notice('Retirada no centro sem frete. Para chamar entregador, primeiro altere para entrega, informe o destino e calcule o frete.',false);
-  dispatchTimerClear();
- dispatchSelection={deliveryId:String(id),status:String(ride.status),sending:false};
+  dispatchTimerClear();dispatchProbeClear();
+ dispatchSelection={deliveryId:String(id),status:String(ride.status),
+   sending:false,probeCount:0};
  const overlay=$('driverDispatchOverlay');
  $('driverDispatchTitle').textContent=ride.status==='WAITING_DRIVER'?'Chamar entregador novamente':'Chamar entregador';
  $('driverDispatchOrder').textContent='Pedido '+String(ride.orderNumber||ride.deliveryId)+' · '+String(ride.customerName||'Cliente');
@@ -1141,7 +1182,7 @@ function dispatchUpdateMode(){
 }
 function dispatchClose(force=false){
   const pending=dispatchSelection?.sending;
-  dispatchTimerClear();
+  dispatchTimerClear();dispatchProbeClear();
   $('driverDispatchOverlay').hidden=true;
   dispatchSelection=null;
   if(pending&&!force){
@@ -1161,9 +1202,10 @@ function dispatchClose(force=false){
   state.requestId='driver-'+(++dispatchSeq)+'-'+Date.now();
   state.targetIds=specific?[target]:[];
   $('driverDispatchConfirm').textContent='Preparando chamado...';
-  $('driverDispatchMessage').textContent='Aguarde a confirmação. A tela será liberada se houver demora.';
+  $('driverDispatchMessage').textContent='Registrando sua solicitação. Se a confirmação demorar, consultaremos a corrida sem duplicar o chamado.';
   dispatchUpdateMode();
   dispatchWatchdog(state,'selecting',25000);
+  dispatchProbe(state,5000);
   send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
 }
 function dispatchSelectionResult(data){
@@ -1178,11 +1220,13 @@ function dispatchSelectionResult(data){
   dispatchUpdateMode();return;
  }
  if(state.status==='WAITING_DRIVER'){
-  // SELECT_DRIVERS synchronizes pending offers (and push) for this existing call.
-  const id=state.deliveryId;
-  dispatchClose(true);
-  if(rideById(id))openRideDetail(id);
-  notice('Chamado atualizado para '+(state.targetIds.length?'o entregador selecionado.':'todos os entregadores disponíveis.'),true);
+  // O estado da oferta deve ser reconciliado no servidor antes de afirmar
+  // que a solicitação ficou pendente. A resposta do push não é comprovada.
+  state.phase='confirming';
+  $('driverDispatchConfirm').textContent='Verificando oferta...';
+  $('driverDispatchMessage').textContent='Seleção salva. Conferindo a oferta pendente do entregador...';
+  dispatchWatchdog(state,'confirming',16000);
+  dispatchProbe(state,50);
   return;
  }
   state.phase='dispatching';
@@ -1205,10 +1249,13 @@ function dispatchFinalResult(data,kind){
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
  }
- const id=state.deliveryId;
- dispatchClose(true);
- if(rideById(id))openRideDetail(id);
- notice(data.mensagem||'Entregador chamado.',true);
+ // A resposta confirma a ação no backend, mas a tela só conclui quando
+ // uma oferta realmente PENDING (ou aceite) constar na base de entregas.
+ state.phase='confirming';
+ $('driverDispatchConfirm').textContent='Conferindo oferta...';
+ $('driverDispatchMessage').textContent='Solicitação processada. Conferindo o registro para não duplicar o chamado.';
+ dispatchWatchdog(state,'confirming',16000);
+ dispatchProbe(state,50);
 }
 $('driverDispatchOverlay').querySelectorAll('input[name="driverDispatchMode"]').forEach(i=>i.onchange=dispatchUpdateMode);
 $('driverDispatchSelect').onchange=dispatchUpdateMode;
@@ -1767,6 +1814,7 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
   notice('Corrida criada. Reabra a corrida para imprimir a etiqueta.',false);
  }
  notice(d.mensagem||'Processo criado.',true);currentFee=0;stops=[];$('centerPickupMode').checked=false;renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
+ if(m.type==='DISPATCH_STATUS_RESULT')dispatchStatusResult(d);
  if(m.type==='LOGISTICS_RESULT'){document.querySelectorAll('.log-act').forEach(b=>b.disabled=false);dispatchFinalResult(d,'LOGISTICS');notice(d.mensagem||'Processo atualizado.',d.ok===true)}
  if(m.type==='ACTION_RESULT'){
    if(d.action==='SELECT_DRIVERS')dispatchSelectionResult(d);
