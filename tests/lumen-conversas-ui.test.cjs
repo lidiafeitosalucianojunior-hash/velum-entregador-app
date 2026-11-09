@@ -5,7 +5,7 @@ const html=fs.readFileSync(path.resolve(__dirname,'../embeds/lumen-conversas/ind
 const panel=fs.readFileSync(path.resolve(__dirname,'../embeds/lumen-admin-panel/index.html'),'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script&&script.length>3000);
-function make(){
+function make(clock={value:Date.now()}){
  const sent=[],listeners={};
  class E{
   constructor(id){this.id=id;this.innerHTML='';this.className='';this.style={};
@@ -31,10 +31,11 @@ function make(){
  };
  const doc={getElementById:id=>els[id],querySelectorAll:sel=>
    sel==='.filter'?filters:[],hidden:false};
- vm.runInNewContext(script,{window:win,document:doc,Date,Math,String,
+ vm.runInNewContext(script,{window:win,document:doc,
+  Date:class extends Date{static now(){return clock.value}},Math,String,
   Array,Number,Object,JSON,RegExp,Uint8Array,clearTimeout:()=>{},
   setTimeout:()=>1});
- return {els,sent,win,listeners,filters};
+ return {els,sent,win,listeners,filters,clock};
 }
 function emit(t,data){t.listeners.message({source:t.win.parent,data})}
 const id='a'.repeat(32),id2='b'.repeat(32);
@@ -94,6 +95,19 @@ test('abrir conversa carrega histórico; ativar/desativar IA e responder são a�
  assert.equal(t.sent.at(-1).type,'CONVERSAS_SEND');
  assert.equal(t.sent.at(-1).payload.texto,'Boa tarde, em que posso ajudar?');
  assert.match(t.sent.at(-1).payload.requestId,/^[0-9a-f]{32}$/);
+});
+test('responde a perda da primeira consulta Wix com nova busca, sem travar lista',()=>{
+ const t=make();
+ assert.equal(t.sent.filter(x=>x.type==='CONVERSAS_LIST').length,1);
+ t.clock.value+=11000;
+ t.listeners.interval.fn();
+ assert.equal(t.sent.filter(x=>x.type==='CONVERSAS_LIST').length,2);
+ assert.match(t.els.list.innerHTML,/Reconectando automaticamente/);
+ emit(t,{source:'LUMEN_ADMIN_PANEL_PAGE',type:'CONVERSAS_LIST_RESULT',
+  payload:{ok:true,items:[waiting],contadores:{
+   total:1,aguardandoHumano:1,pagamentosConfirmados:0}}});
+ assert.match(t.els.list.innerHTML,/Cliente Aguardando/);
+ assert.match(t.els.list.innerHTML,/Desativar IA|Ativar IA/);
 });
 test('painel Lumen oferece entrada para nova pagina de conversas',()=>{
  assert.match(panel,/id="velumConversasOpen"/);
