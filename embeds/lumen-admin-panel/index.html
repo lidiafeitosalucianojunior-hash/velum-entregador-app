@@ -1881,7 +1881,12 @@ const readyRetry=setInterval(()=>{
   });
   document.addEventListener('click',function(event){
     if(!event.target.closest('#velumConversasOpen,#openConversationsCard'))return;
+    // Solicitar a rota protegida ao Wix. Se um controlador antigo ignorar
+    // a mensagem, navegar dentro do mesmo componente HTML (sem token na URL).
     parent.postMessage({source:'LUMEN_ADMIN_PANEL',type:'OPEN_CONVERSAS',payload:{}},'*');
+    window.setTimeout(function(){
+      window.location.replace('https://app.vaidevelum.com/embeds/lumen-conversas/?v=20261109-conversas-bridge-recovery-v9');
+    },1400);
   });
 })();
 </script>
