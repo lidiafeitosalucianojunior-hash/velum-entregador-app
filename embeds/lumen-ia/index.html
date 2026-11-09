@@ -107,6 +107,13 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
 .conv.paid-conversation{border-left:5px solid #168b51}
 .conv.waiting-human.selected{outline:2px solid #d84545}
 @media(min-width:720px){.chat-history{max-height:65vh}}
+
+.media-preview{width:100%;max-width:340px;max-height:420px;object-fit:contain;border-radius:11px;margin-top:9px;display:block;background:#f5f6f8}
+.chat-media-button{margin-top:8px;display:block;background:#fff;color:#15456a;border:1px solid #b2cadd;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:750;cursor:pointer}
+.chat-media-button:disabled{opacity:.5;cursor:wait}
+.chat-media-hint{display:block;margin:6px 0 2px;color:#647688;font-size:11px}
+.chat-bubble.sent .chat-media-button{background:#f7fff7}
+.chat-media-slot audio,.chat-media-slot video{display:block;width:100%;max-width:340px;margin-top:8px;border-radius:10px}
 </style></head><body>
 <header class="top"><div class="top-inner"><div><b>🤖 Atendimento IA</b><small>Lúmen Luxos • WhatsApp e Instagram</small></div><button id="back" class="back" type="button">← Voltar ao painel</button></div></header>
 <main class="container"><div class="heading"><div><h1>Central de conversas</h1><p>Acompanhe mensagens e assuma o atendimento quando necessário.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="smoke" type="button" title="Usa uma pequena quantidade de créditos da OpenAI e não envia mensagem a clientes">Testar IA (usa créditos)</button><button class="refresh" id="modelsQuick" type="button" title="Conferir aprovação dos modelos WhatsApp sem enviar mensagens">Verificar modelos agora</button><button class="refresh" id="refresh" type="button">Atualizar</button></div></div>
@@ -476,7 +483,9 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const msg=String(mensagem||'').trim();
     return !msg || /^\[\s*(?:imagem|vídeo|video|áudio|audio|documento|mídia|midia|mensagem|interação|interacao)[^\]]*\]/i.test(msg);
   }
+  const mediaSlots=new Map();
   function renderThread(data){
+    mediaSlots.clear();
     const box=byId('message');
     box.replaceChildren();
     const arr=Array.isArray(data.mensagens)?data.mensagens:[];
@@ -487,6 +496,42 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       const body=document.createElement('div');
       body.textContent=String(msg.texto||'[Mídia recebida]').slice(0,1800);
       bubble.appendChild(body);
+      if(Array.isArray(msg.imagens))for(const foto of msg.imagens.slice(0,8)){
+        if(!/^https:\/\//.test(String(foto.link||'')))continue;
+        const img=document.createElement('img');
+        img.className='media-preview';img.loading='lazy';
+        img.alt='Foto enviada pela Lúmen IA';
+        img.referrerPolicy='no-referrer';
+        img.src=String(foto.link);
+        img.onerror=()=>{img.replaceWith(document.createTextNode('Foto não disponível neste momento. Confira no WhatsApp.'))};
+        bubble.appendChild(img);
+        if(foto.legenda){const legenda=document.createElement('div');
+          legenda.textContent=String(foto.legenda).slice(0,550);
+          bubble.appendChild(legenda)}
+      }
+      if(msg.midiaDisponivel===true){
+        const slot=document.createElement('div');
+        slot.className='chat-media-slot';
+        const load=document.createElement('button');
+        load.type='button';load.className='chat-media-button';
+        load.textContent=msg.tipo==='image'?'📷 Abrir foto':
+          msg.tipo==='audio'?'▶ Ouvir áudio':
+          msg.tipo==='video'?'▶ Ver vídeo':'📄 Abrir arquivo';
+        const mid=String(msg.id||'');
+        mediaSlots.set(mid,{slot,button:load,conversation:selectedId});
+        load.addEventListener('click',()=>{
+          if(selectedId!==mediaSlots.get(mid)?.conversation)return;
+          load.disabled=true;load.textContent='Carregando mídia protegida...';
+          send('CONVERSAS_MEDIA',{id:selectedId,mensagemId:mid});
+        });
+        slot.appendChild(load);bubble.appendChild(slot);
+      }else if(['image','audio','video','document'].includes(msg.tipo)&&
+        !(Array.isArray(msg.imagens)&&msg.imagens.length)){
+        const hint=document.createElement('span');
+        hint.className='chat-media-hint';
+        hint.textContent='O VELUM não recebeu o arquivo original desta mensagem. Confira no WhatsApp.';
+        bubble.appendChild(hint);
+      }
       const small=document.createElement('small');
       const when=Date.parse(msg.quando);
       small.textContent=(Number.isFinite(when)?new Date(when).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')+
@@ -818,6 +863,34 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       const v=msg.payload||{};
       atualizarDiagnostico('whatsapp',v.ok?v.whatsapp:null);
       atualizarDiagnostico('instagram',v.ok?v.instagram:null);
+    }
+    if(msg.type==='CONVERSAS_MEDIA_RESULT'){
+      const d=msg.payload||{};
+      if(d.id!==selectedId)return;
+      const item=mediaSlots.get(String(d.mensagemId||''));
+      if(!item||item.conversation!==selectedId)return;
+      item.button.disabled=false;
+      if(!d.ok||!/^data:(?:image\/(?:jpeg|png|webp)|audio\/(?:ogg|mpeg|mp4|aac|wav|x-wav)|video\/mp4|application\/pdf);base64,[a-zA-Z0-9+/=]+$/.test(String(d.dataUrl||''))){
+        item.button.textContent='Tentar abrir novamente';
+        const status=document.createElement('div');status.className='chat-media-hint';
+        status.textContent=String(d.mensagem||'Mídia indisponível. Confira no WhatsApp Business.');
+        item.slot.replaceChildren(item.button,status);
+        return;
+      }
+      const tipo=String(d.tipo||'');
+      if(tipo==='document'){
+        const a=document.createElement('a');
+        a.href=d.dataUrl;a.target='_blank';a.rel='noopener noreferrer';
+        a.textContent='Abrir documento PDF';
+        item.slot.replaceChildren(a);
+      }else{
+        const media=document.createElement(tipo==='image'?'img':tipo==='audio'?'audio':'video');
+        media.src=d.dataUrl;
+        if(tipo==='image'){
+          media.className='media-preview';media.alt='Foto recebida da cliente';
+        }else media.controls=true;
+        item.slot.replaceChildren(media);
+      }
     }
     if(msg.type==='CONVERSAS_DETAIL_RESULT'){
       const d=msg.payload||{};

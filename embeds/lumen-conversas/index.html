@@ -33,6 +33,12 @@
 @media(max-width:850px){.shell{grid-template-columns:minmax(280px,350px) minmax(0,1fr)}.chat-head{padding:10px 12px}.message-wrap{padding:18px 13px}.bubble{max-width:87%}}
 @media(max-width:700px){.shell{display:block;min-height:100dvh}.sidebar{min-height:100dvh;max-height:100dvh}.chat{display:none;min-height:100dvh;max-height:100dvh}.shell.chat-open .sidebar{display:none}.shell.chat-open .chat{display:flex}.chat-mobile-back{display:block}.chat-head{padding:8px 12px;min-height:68px}.chat-head .avatar{height:38px;width:38px}.head-btn{padding:8px;font-size:10px}.chat-person b{font-size:14px}.message-wrap{min-height:0}.composer{padding:11px 10px 13px}.side-header{padding-top:max(16px,env(safe-area-inset-top))}.list{min-height:0}.bubble{max-width:89%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+.bubble .media-preview{display:block;max-width:100%;max-height:340px;object-fit:contain;border-radius:9px;margin-top:8px;background:#f6f8f8}
+.bubble .media-button{display:block;border:1px solid #b5cfc6;color:#165c48;background:#f6fffb;border-radius:10px;padding:9px 12px;margin-top:9px;font-size:12px;font-weight:750;cursor:pointer}
+.bubble .media-note{font-size:11px;color:#73828b;line-height:1.45;margin-top:7px;display:block}
+.bubble .media-view audio,.bubble .media-view video{display:block;max-width:100%;width:310px;margin-top:9px;border-radius:10px}
+.bubble .origin-tag{font-size:10px;color:#536c62;margin-top:5px;display:block}
 </style>
 </head>
 <body>
@@ -176,8 +182,24 @@ function renderDetail(){
       m.status==='ENVIADO_META'?'✓ Enviada':
       m.status==='TENTATIVA'?'⏳ Enviando':m.status==='SEM_CONFIRMACAO'?'⚠ Sem confirmação':
       m.status==='RECUSADO_META'?'⚠ Recusada':'• '+m.status:'';
+   const sentPhotos=Array.isArray(m.imagens)?m.imagens.slice(0,8):[];
+   const photos=sentPhotos.map(f=>{
+     const link=String(f?.link||'');
+     if(!/^https:\/\//i.test(link)||link.length>4096)return '';
+     return '<img class="media-preview" loading="lazy" referrerpolicy="no-referrer" alt="Foto enviada" src="'+esc(link)+'">'+
+       (f.legenda?'<p>'+esc(String(f.legenda).slice(0,550))+'</p>':'');
+   }).join('');
+   const mediaFlag=m.midiaDisponivel===true;
+   const media=mediaFlag?'<div class="media-view"><button type="button" class="media-button" data-media="'+esc(m.id)+'">'+
+     esc(m.tipo==='image'?'📷 Abrir imagem':m.tipo==='audio'?'▶ Reproduzir áudio':m.tipo==='video'?'▶ Abrir vídeo':'📄 Abrir arquivo')+
+     '</button></div>':
+     ['image','audio','video','document'].includes(m.tipo)&&!photos?
+       '<span class="media-note">Arquivo original não registrado no VELUM. Confira no WhatsApp Business.</span>':'';
+   const origin=out?(m.origem==='WHATSAPP_BUSINESS_APP'?'WhatsApp Business':
+     m.origem==='ATENDENTE_LUMEN'?'Atendente':'Lúmen IA'):'';
    return '<div class="bubble-row '+(out?'out':'in')+'"><div class="bubble">'+
     '<p'+(out&&!m.conteudoHistoricoDisponivel?' class="hist"':'')+'>'+esc(m.texto)+'</p>'+
+    photos+media+(origin?'<span class="origin-tag">'+esc(origin)+'</span>':'')+
     '<div class="bfoot"><span>'+esc(shortTime(m.quando))+'</span><span class="'+(out?'sent':'')+'">'+esc(status)+'</span></div>'+
     '</div></div>';
   }).join(''):'<p class="history-note">Ainda não há mensagens recentes registradas.</p>');
@@ -218,6 +240,29 @@ function onResponse(data){
    live('Atualizado às '+shortTime(payload.atualizadoEm)+' · a cada 10 segundos');
   }else live(payload.mensagem||'Falha ao consultar conversas',true);
  }
+ if(type==='CONVERSAS_MEDIA_RESULT'){
+   if(payload.id!==state.selected)return;
+   const btn=Array.from($('messages').querySelectorAll('[data-media]'))
+     .find(b=>b.dataset.media===String(payload.mensagemId||''));
+   if(!btn)return;
+   btn.disabled=false;
+   const content=String(payload.dataUrl||'');
+   if(payload.ok!==true||!/^data:(?:image\/(?:jpeg|png|webp)|audio\/(?:ogg|mpeg|mp4|aac|wav|x-wav)|video\/mp4|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(content)){
+     btn.textContent='Tentar abrir mídia';
+     toast(payload.mensagem||'Mídia indisponível. Confira no WhatsApp Business.',true);
+     return;
+   }
+   const type=String(payload.tipo||'');
+   const el=document.createElement(type==='image'?'img':type==='audio'?'audio':type==='video'?'video':'a');
+   if(type==='document'){
+     el.href=content;el.textContent='Abrir PDF';el.target='_blank';el.rel='noopener noreferrer';
+   }else {
+     el.src=content;
+     if(type==='image'){el.alt='Foto recebida';el.className='media-preview'}
+     else el.controls=true;
+   }
+   btn.replaceWith(el);
+ }
  if(type==='CONVERSAS_DETAIL_RESULT'){
   state.opening=false;
   if(payload.ok&&payload.conversa?.id===state.selected){
@@ -239,6 +284,12 @@ function onResponse(data){
   detailRequest();listRequest();
  }
 }
+$('messages').addEventListener('click',ev=>{
+ const button=ev.target.closest('[data-media]');
+ if(!button||button.disabled||!state.selected)return;
+ button.disabled=true;button.textContent='Abrindo mídia protegida...';
+ post('CONVERSAS_MEDIA',{id:state.selected,mensagemId:button.dataset.media});
+});
 $('list').addEventListener('click',ev=>{
  const action=ev.target.closest('[data-mode]');
  if(action){ev.stopPropagation();setMode(action.dataset.id,action.dataset.mode);return}
