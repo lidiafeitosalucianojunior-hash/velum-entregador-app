@@ -324,7 +324,9 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 .driver-dispatch-help{font-size:10px;line-height:1.4;color:#63758c;margin:0}
 .driver-dispatch-confirm{width:100%;min-height:47px;background:#ff7a00;color:#fff;border:0;border-radius:12px;font-size:13px;font-weight:900;cursor:pointer}
 .driver-dispatch-confirm:disabled{background:#ecf1f5;color:#74859a;cursor:wait}
-.driver-dispatch-message{font-size:11px;line-height:1.5;min-height:18px;color:#a33b3e;margin:9px 0 0}
+.driver-dispatch-message{font-size:11px;line-height:1.5;min-height:18px;color:#64758a;margin:9px 0 0}
+.driver-dispatch-message[data-state="error"]{color:#b5363a}
+.driver-dispatch-message[data-state="ok"]{color:#147b50}
 @media(max-width:650px){.ride-record-toolbar{margin:0 0 10px}.ride-record-next{font-size:12px;min-height:45px}.ride-record-actions{grid-column:2 / -1!important;max-width:100%}.ride-record-body{min-width:0}}
 </style>
 
@@ -1092,6 +1094,19 @@ function resetEditMode(){
   $('create').textContent='GERAR ETIQUETA';
 }
  let dispatchSelection=null,dispatchTimer=null,dispatchProbeTimer=null,dispatchSeq=0;
+function dispatchMessage(message,level='neutral'){
+ const el=$('driverDispatchMessage');
+ if(!el)return;
+ el.textContent=String(message||'');
+ el.dataset.state=level;
+}
+function dispatchPushSummary(state){
+ const count=Number(state?.pushProviderAccepted)||0;
+ return count>0?
+  'Oferta registrada. O serviço de notificações aceitou '+count+' envio(s). Aguardando o entregador aceitar no aplicativo.':
+  'Oferta registrada, porém nenhuma notificação foi aceita pelo serviço de envio. O entregador pode consultar o painel; verifique as permissões do aplicativo.';
+}
+
  // Status probe is READ-ONLY. Nunca reenvia chamada para tentar confirmar.
  function dispatchProbeClear(){
    if(dispatchProbeTimer){clearTimeout(dispatchProbeTimer);dispatchProbeTimer=null}
@@ -1107,42 +1122,54 @@ function resetEditMode(){
    },delay);
  }
  function dispatchStatusResult(data){
-   const state=dispatchSelection;
-   if(!state||String(data.deliveryId||'')!==state.deliveryId||
-      String(data.requestId||'')!==state.requestId)return;
-   if(data.ok===true&&data.confirmada===true){
-     dispatchProbeClear();dispatchTimerClear();
-     const id=state.deliveryId;
-     dispatchClose(true);
-     if(rideById(id))openRideDetail(id);
-     notice(data.mensagem||'Oferta registrada. Aguardando aceite do entregador.',true);
-     send('REFRESH');return;
-   }
-   if(data.ok===true&&data.status==='WAITING_DRIVER'&&data.mesmaSelecao===false){
-     dispatchProbeClear();dispatchTimerClear();
-     state.sending=false;state.uncertain=true;
-     $('driverDispatchConfirm').textContent='Atualizar corridas';
-     $('driverDispatchMessage').textContent=data.mensagem||
-       'Existe um chamado com outra seleção. Confira antes de reenviar.';
-     dispatchUpdateMode();return;
-   }
-   if(state.sending&&(state.probeCount||0)<2){
-     state.probeCount=(state.probeCount||0)+1;
-     dispatchProbe(state,7000);
-   }
+ const state=dispatchSelection;
+ if(!state||String(data.deliveryId||'')!==state.deliveryId||
+    String(data.requestId||'')!==state.requestId)return;
+ if(data.ok===true&&data.aceita===true){
+  dispatchProbeClear();dispatchTimerClear();
+  const id=state.deliveryId;
+  dispatchClose(true);
+  if(rideById(id))openRideDetail(id);
+  notice('Entregador aceitou a corrida. Consulte o status atualizado.',true);
+  send('REFRESH');return;
  }
- function dispatchTimerClear(){if(dispatchTimer){clearTimeout(dispatchTimer);dispatchTimer=null}}
+ if(data.ok===true&&data.confirmada===true){
+  state.offerConfirmed=true;
+  if(state.backendAck===true){
+   dispatchProbeClear();dispatchTimerClear();
+   const id=state.deliveryId;
+   dispatchClose(true);
+   if(rideById(id))openRideDetail(id);
+   notice(dispatchPushSummary(state),(Number(state.pushProviderAccepted)||0)>0);
+   send('REFRESH');return;
+  }
+  $('driverDispatchConfirm').textContent='Conferindo notificação...';
+  dispatchMessage('Oferta registrada no painel. Conferindo o envio da notificação; o recebimento no celular ainda não está confirmado.');
+ }
+ if(data.ok===true&&data.status==='WAITING_DRIVER'&&data.mesmaSelecao===false){
+  dispatchProbeClear();dispatchTimerClear();
+  state.sending=false;state.uncertain=true;
+  $('driverDispatchConfirm').textContent='Atualizar corridas';
+  dispatchMessage(data.mensagem||'Existe um chamado com outra seleção. Confira antes de reenviar.','error');
+  dispatchUpdateMode();return;
+ }
+ if(state.sending&&(state.probeCount||0)<6){
+  state.probeCount=(state.probeCount||0)+1;
+  dispatchProbe(state,6500);
+ }
+}
+function dispatchTimerClear(){if(dispatchTimer){clearTimeout(dispatchTimer);dispatchTimer=null}}
  function dispatchWatchdog(state,phase,waitMs){
-   dispatchTimerClear();
-   dispatchTimer=setTimeout(()=>{
-     if(dispatchSelection!==state||state.phase!==phase||!state.sending)return;
-     state.sending=false;state.uncertain=true;
-     $('driverDispatchConfirm').textContent='Conferir corrida atualizada';
-     $('driverDispatchMessage').textContent='A resposta demorou. Estou consultando o estado do chamado, sem enviar nova notificação. Confira as corridas antes de repetir.';
-     dispatchProbe(state,100);
-     dispatchUpdateMode();
-   },waitMs);
- }
+ dispatchTimerClear();
+ dispatchTimer=setTimeout(()=>{
+  if(dispatchSelection!==state||state.phase!==phase||!state.sending)return;
+  state.sending=false;state.uncertain=true;
+  $('driverDispatchConfirm').textContent='Conferir corrida atualizada';
+  dispatchMessage('A verificação está demorando. Confira a corrida atualizada antes de tentar outra chamada. Nenhum novo disparo foi feito.');
+  dispatchProbe(state,100);
+  dispatchUpdateMode();
+ },waitMs);
+}
 function dispatchOpen(id){
  const ride=rideById(id);
   if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(ride.status))return;
@@ -1169,7 +1196,7 @@ function dispatchOpen(id){
     input.checked=picked&&input.value===selected[0];
   });
  dispatchUpdateMode();
- $('driverDispatchMessage').textContent='';
+ dispatchMessage('');
   $('driverDispatchConfirm').textContent='Confirmar chamada';
   overlay.hidden=false;
   dispatchUpdateMode();
@@ -1199,62 +1226,62 @@ function dispatchClose(force=false){
   $('driverDispatchMessage').textContent='Selecione um entregador aprovado.';return;
  }
   state.sending=true;state.uncertain=false;state.phase='selecting';
+ state.backendAck=false;state.pushProviderAccepted=null;state.offerConfirmed=false;
   state.requestId='driver-'+(++dispatchSeq)+'-'+Date.now();
   state.targetIds=specific?[target]:[];
   $('driverDispatchConfirm').textContent='Preparando chamado...';
   $('driverDispatchMessage').textContent='Registrando sua solicitação. Se a confirmação demorar, consultaremos a corrida sem duplicar o chamado.';
   dispatchUpdateMode();
-  dispatchWatchdog(state,'selecting',25000);
+  dispatchWatchdog(state,'selecting',45000);
   dispatchProbe(state,5000);
   send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
 }
 function dispatchSelectionResult(data){
  const state=dispatchSelection;
-  if(!state||!state.sending||state.phase!=='selecting')return;
-  if(String(data.deliveryId||'')!==state.deliveryId||String(data.requestId||'')!==state.requestId)return;
-  dispatchTimerClear();
+ if(!state||state.phase!=='selecting')return;
+ if(String(data.deliveryId||'')!==state.deliveryId||String(data.requestId||'')!==state.requestId)return;
+ dispatchTimerClear();
  if(!data.ok){
   state.sending=false;
-  $('driverDispatchMessage').textContent=data.mensagem||'Não foi possível selecionar o entregador.';
+  dispatchMessage(data.mensagem||'Não foi possível selecionar o entregador.','error');
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
  }
+ state.backendAck=state.status==='WAITING_DRIVER';
+ if(state.backendAck)state.pushProviderAccepted=Number(data.pushProviderAccepted)||0;
  if(state.status==='WAITING_DRIVER'){
-  // O estado da oferta deve ser reconciliado no servidor antes de afirmar
-  // que a solicitação ficou pendente. A resposta do push não é comprovada.
   state.phase='confirming';
-  $('driverDispatchConfirm').textContent='Verificando oferta...';
-  $('driverDispatchMessage').textContent='Seleção salva. Conferindo a oferta pendente do entregador...';
-  dispatchWatchdog(state,'confirming',16000);
-  dispatchProbe(state,50);
-  return;
+  $('driverDispatchConfirm').textContent='Conferindo oferta...';
+  dispatchMessage('Solicitação registrada. Conferindo o status real e a notificação...');
+  dispatchWatchdog(state,'confirming',22000);
+  dispatchProbe(state,50);return;
  }
-  state.phase='dispatching';
-  $('driverDispatchConfirm').textContent='Chamando entregador...';
-  $('driverDispatchMessage').textContent='A seleção foi confirmada. Registrando o chamado...';
-  dispatchWatchdog(state,'dispatching',35000);
-  if(state.status==='LOGISTICS_READY_FOR_DRIVER')
-   send('LOGISTICS_ACTION',{deliveryId:state.deliveryId,action:'CALL_DRIVER',requestId:state.requestId});
-  else send('DISPATCH_PREPARED',{deliveryId:state.deliveryId,requestId:state.requestId});
+ state.phase='dispatching';
+ $('driverDispatchConfirm').textContent='Chamando entregador...';
+ dispatchMessage('Seleção confirmada. Registrando a oferta e verificando o envio da notificação...');
+ dispatchWatchdog(state,'dispatching',45000);
+ if(state.status==='LOGISTICS_READY_FOR_DRIVER')
+  send('LOGISTICS_ACTION',{deliveryId:state.deliveryId,action:'CALL_DRIVER',requestId:state.requestId});
+ else send('DISPATCH_PREPARED',{deliveryId:state.deliveryId,requestId:state.requestId});
 }
 function dispatchFinalResult(data,kind){
  const state=dispatchSelection;
-  if(!state||!state.sending||state.phase!=='dispatching')return;
-  const valid=kind==='LOGISTICS'?state.status==='LOGISTICS_READY_FOR_DRIVER':state.status==='READY_TO_DISPATCH';
-  if(!valid||String(data.deliveryId||'')!==state.deliveryId||String(data.requestId||'')!==state.requestId)return;
-  dispatchTimerClear();
+ if(!state||state.phase!=='dispatching')return;
+ const valid=kind==='LOGISTICS'?state.status==='LOGISTICS_READY_FOR_DRIVER':state.status==='READY_TO_DISPATCH';
+ if(!valid||String(data.deliveryId||'')!==state.deliveryId||String(data.requestId||'')!==state.requestId)return;
+ dispatchTimerClear();
  if(!data.ok){
   state.sending=false;
-  $('driverDispatchMessage').textContent=data.mensagem||'Não foi possível chamar o entregador.';
+  dispatchMessage(data.mensagem||'Não foi possível chamar o entregador.','error');
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
  }
- // A resposta confirma a ação no backend, mas a tela só conclui quando
- // uma oferta realmente PENDING (ou aceite) constar na base de entregas.
+ state.backendAck=true;
+ state.pushProviderAccepted=Number(data.pushProviderAccepted)||0;
  state.phase='confirming';
  $('driverDispatchConfirm').textContent='Conferindo oferta...';
- $('driverDispatchMessage').textContent='Solicitação processada. Conferindo o registro para não duplicar o chamado.';
- dispatchWatchdog(state,'confirming',16000);
+ dispatchMessage('Conferindo a oferta no VELUM. O recebimento no celular só é confirmado pelo próprio entregador.');
+ dispatchWatchdog(state,'confirming',22000);
  dispatchProbe(state,50);
 }
 $('driverDispatchOverlay').querySelectorAll('input[name="driverDispatchMode"]').forEach(i=>i.onchange=dispatchUpdateMode);
