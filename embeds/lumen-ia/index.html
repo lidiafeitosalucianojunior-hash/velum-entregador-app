@@ -149,6 +149,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       <small id="igMissing">Aguarde a verificação segura das credenciais.</small>
       <span class="meta-url" id="igUrl">https://www.vaidevelum.com/_functions/metaInstagramWebhook</span>
       <button type="button" id="igCopy">Copiar URL do Instagram</button>
+      <button type="button" id="igSubscribe" disabled>Verificar e conectar Instagram Direct</button>
     </div>
   </div>
   <small style="display:block;margin:10px 0 0;color:#627b93">Credenciais cadastradas não significam conexão concluída. O webhook deve ser verificado pela Meta e o aplicativo habilitado para produção. Nenhuma mensagem será enviada automaticamente.</small>
@@ -732,22 +733,27 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       byId(key+'Missing').textContent='Confira a sessão e use Atualizar.';
       return;
     }
-    const total=Number(data.totalCount)||(canal==='whatsapp'?6:3);
+    const total=Number(data.totalCount)||(canal==='whatsapp'?6:4);
     const count=Number(data.completeCount)||0;
-    const inscricao=canal==='whatsapp'?String(data.integracao?.estado||'PENDENTE'):'PENDENTE';
+    const inscricao=String(data.integracao?.estado||'PENDENTE');
     if(canal==='whatsapp'){
       const inscrito=inscricao==='OK';
       byId('waSubscribe').disabled=count!==6||inscrito;
       byId('waSubscribe').textContent=inscrito?'✓ Aplicativo inscrito na Meta':'Ativar recebimento de mensagens';
     }
+    if(canal==='instagram'){
+      const inscrito=inscricao==='OK';
+      byId('igSubscribe').disabled=count!==total||inscricao!=='NAO_INSCRITO';
+      byId('igSubscribe').textContent=inscrito?'✓ Instagram Direct inscrito':'Conectar recebimento do Direct';
+    }
     const situacao=inscricao==='OK'?'Inscrição Meta confirmada':
-      inscricao==='NAO_INSCRITO'?'Aplicativo não inscrito na Meta':
+      inscricao==='NAO_INSCRITO'?'Conta ainda não inscrita':
+      inscricao==='CONTA_DIVERGENTE'?'Conta Instagram diferente do token':
       inscricao==='ERRO'?'Erro na consulta à Meta':'Inscrição não verificada';
-    byId(key+'State').textContent=count+'/'+total+' credenciais cadastradas'+
-      (canal==='whatsapp'?' | '+situacao:' | Meta não verificada');
+    byId(key+'State').textContent=count+'/'+total+' credenciais cadastradas | '+situacao;
     byId(key+'Missing').textContent=Array.isArray(data.missing)&&data.missing.length
       ? 'Faltam: '+data.missing.join(', ')
-      : canal==='whatsapp'&&data.integracao?.detalhe
+      : data.integracao?.detalhe
         ? String(data.integracao.detalhe)+' Teste de mensagem real ainda necessário.'
         : 'Aguardando validação de webhook e autorização da Meta.';
   }
@@ -774,6 +780,13 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     send('IA_META_SUBSCRIBE');
   });
   byId('igCopy').addEventListener('click',()=>copiarUrl('instagram'));
+  byId('igSubscribe').addEventListener('click',()=>{
+    if(byId('igSubscribe').disabled)return;
+    if(!window.confirm('Inscrever a conta autorizada LÚMEN no recebimento de mensagens Instagram Direct? Esta ação não envia mensagens.'))return;
+    byId('igSubscribe').disabled=true;
+    byId('igMissing').textContent='Verificando autorização e inscrição da conta Instagram na Meta...';
+    send('IA_META_SUBSCRIBE_INSTAGRAM');
+  });
 
   window.addEventListener('message',event=>{
     if(event.data?.source!==answerFrom)return;
@@ -793,7 +806,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       }
       return;
     }
-    if(['IA_META_CONFIG_RESULT','IA_META_COEX_RESULT','IA_META_SUBSCRIBE_RESULT','IA_META_STATUS_RESULT'].includes(msg.type)){
+    if(['IA_META_CONFIG_RESULT','IA_META_COEX_RESULT','IA_META_SUBSCRIBE_RESULT','IA_META_SUBSCRIBE_INSTAGRAM_RESULT','IA_META_STATUS_RESULT'].includes(msg.type)){
       if(event.origin!==trustedParentOrigin || event.source!==window.parent)return;
     }
     if(msg.type==='IA_LAB_DIAG_RESULT'){
@@ -862,6 +875,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       const data=msg.payload||{};
       byId('waMissing').textContent=String(data.mensagem||'Configuração da Meta não confirmada.');
       byId('waSubscribe').disabled=true;
+    }
+    if(msg.type==='IA_META_SUBSCRIBE_INSTAGRAM_RESULT'){
+      const data=msg.payload||{};
+      byId('igMissing').textContent=String(data.mensagem||'Conexão do Instagram ainda não confirmada.');
+      byId('igSubscribe').disabled=true;
     }
     if(msg.type==='IA_META_STATUS_RESULT'){
       metaStatusAnswered=true;
