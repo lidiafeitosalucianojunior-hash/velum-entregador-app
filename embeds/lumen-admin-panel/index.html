@@ -482,7 +482,7 @@ let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSe
 
 function send(type,payload={}){parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function dt(v){if(!v)return'—';try{return new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(_){return'—'}}
-function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',AVAILABLE_FOR_CUSTOMER_PICKUP:'Disponível para retirada no centro',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Mercadoria a caminho',GOING_TO_STORE:'Mercadoria a caminho',AT_STORE:'Mercadoria a caminho',COLLECTED:'Mercadoria a caminho',OUT_FOR_DELIVERY:'Mercadoria a caminho',DELIVERED:'Concluída'})[s]||s||'Corrida'}
+function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',AVAILABLE_FOR_CUSTOMER_PICKUP:'Disponível para retirada no centro',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Mercadoria a caminho',GOING_TO_STORE:'Mercadoria a caminho',AT_STORE:'Mercadoria a caminho',COLLECTED:'Pedido em rota de entrega',OUT_FOR_DELIVERY:'Mercadoria a caminho',DELIVERED:'Concluída'})[s]||s||'Corrida'}
 let lumenOrders=[],lumenOrdersLoading=false,lumenOrdersLoaded=false,lumenOrdersTimer=null;
 const lumenOrderPayLabel=v=>v==='VELUM_CREDIT'?'Crédito VELUM':'Mercado Pago';
 function lumenOrderStatusKey(o){
@@ -1475,11 +1475,17 @@ function renderRideSheet(list){
   const id=esc(x.deliveryId),person=esc(x.customerName||x.recipientName||'Não informado');
   const phone=String(x.customerPhone||'').trim();
   const wa=ridePhoneWhatsApp(phone);
-  const isCenterPickup=x.status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||x.completedByCenter===true;
+  // For centre pickup, the destination is the FINAL logistics centre, not the store's origin.
+  const isCenterPickup=x.customerPickupAtCenter===true||x.completedByCenter===true||
+    x.status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||/retirada no centro/i.test(String(x.deliveryType||''))||
+    String(x.customerPickupMode||'').toUpperCase()==='CENTER';
   const lastCenter=Array.isArray(x.logisticsStages)?x.logisticsStages[x.logisticsStages.length-1]:null;
-  const city=isCenterPickup?String(lastCenter?.city||x.finalLogisticsCenterCity||'—'):
-    String(x.deliveryType||'').toLowerCase().includes('retirada')||x.storePickup===true||x.status==='STORE_PICKUP_READY'?String(x.pickupCity||x.deliveryCity||'—'):String(x.deliveryCity||'—');
-  const mode=isCenterPickup?'Retirada no centro':String(x.deliveryType||x.type||(x.storePickup?'Retirada':'Entrega'));
+  const storePickup=x.storePickup===true||x.status==='STORE_PICKUP_READY'||x.deliveryType==='Retirada em loja';
+  const city=isCenterPickup?String(x.finalLogisticsCenterCity||lastCenter?.city||'—'):
+    storePickup?String(x.pickupCity||x.originalPickupCity||'—'):
+    String(x.deliveryCity||'—');
+  const mode=isCenterPickup?'Retirada no centro logístico':String(x.deliveryType||x.type||(storePickup?'Retirada em loja':'Entrega'));
+
   const phoneHtml=wa?'<a class="ride-card-phone" href="'+wa+'" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de '+person+'">'+esc(phone)+'</a>':
    '<span class="ride-card-phone-blank">'+esc(phone||'Não informado')+'</span>';
   return '<article class="ride-record" role="listitem" data-ride-id="'+id+'" tabindex="0" aria-label="Abrir detalhes da corrida de '+person+'">'+
@@ -1494,7 +1500,7 @@ function renderRideSheet(list){
    '</div></article>';
  }).join(''):'<div class="ride-sheet-empty">Nenhuma corrida encontrada nesta fase.</div>';
 }
-function rideMatchesTerm(x,term){return !term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName,x.deliveryCity,x.pickupCity,x.deliveryType,statusLabel(x.status)].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))}
+function rideMatchesTerm(x,term){return !term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName,x.deliveryCity,x.pickupCity,x.finalLogisticsCenterCity,x.deliveryType,statusLabel(x.status)].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))}
 function filteredRideSheet(){const term=String($('rideSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');return currentVisibleRides().filter(x=>rideMatchesTerm(x,term))}
 
 function closeRideDetail(){
@@ -1507,39 +1513,35 @@ function closeRideDetail(){
   if(focus?.isConnected&&typeof focus.focus==='function')focus.focus();
 }
 function detailProgress(x){
-  const status=String(x.status||'');
-  const afterCall=['WAITING_DRIVER','DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
-  const accepted=['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
-  const inRoute=accepted;
-  const finished=status==='DELIVERED';
-  const steps=[];
-  if(status==='STORE_PICKUP_READY'||x.storePickup===true||x.deliveryType==='Retirada em loja'){
-    steps.push({name:'Pronto na loja',done:true},{name:'Retirada confirmada',done:finished});
-  }else if(status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||(finished&&x.completedByCenter===true)){
-    steps.push({name:'Preparação',done:true});
-    (Array.isArray(x.logisticsStages)?x.logisticsStages:[]).forEach(st=>steps.push({name:st.name||'Centro logístico',done:true}));
-    steps.push({name:'Retirada no centro',done:finished},{name:'Concluída',done:finished});
-  }else{
-    if(x.internalLogistics===true){
-      const packed=status!=='PREPARING';
-      steps.push({name:'Preparação',done:packed},{name:'Conferido',done:packed});
-      const centers=Array.isArray(x.logisticsStages)?x.logisticsStages:[];
-      centers.forEach((st,i)=>{
-        const passed=afterCall||['LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(status);
-        steps.push({name:st.name||'Centro '+(i+1),done:st.status==='ARRIVED'||passed});
-      });
-    }else steps.push({name:'Etiqueta pronta',done:true});
-    steps.push({name:'Entregador chamado',done:afterCall},
-      {name:'Corrida aceita',done:accepted},
-      {name:'Mercadoria a caminho • rastreio ativo',done:inRoute},
-      {name:'Concluída',done:finished});
-  }
-  const active=steps.findIndex(s=>!s.done);
-  return '<div class="detail-section-title">Linha do tempo da entrega</div><div class="detail-progress-wrap"><ol class="detail-progress" aria-label="Etapas da corrida">'+steps.map((s,i)=>{
-    const current=i===active;
-    return '<li class="'+(s.done?'done':current?'current':'pending')+'"'+(current?' aria-current="step"':'')+'><span class="detail-step-dot">'+(s.done?'✓':i+1)+'</span><span>'+esc(s.name)+'</span></li>';
-  }).join('')+'</ol></div>';
+ const status=String(x.status||'');
+ const afterCall=['WAITING_DRIVER','DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
+ const accepted=['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
+ const inRoute=status==='DELIVERED';
+ const finished=status==='DELIVERED';
+ const centerPickup=x.customerPickupAtCenter===true||status==='AVAILABLE_FOR_CUSTOMER_PICKUP'||x.completedByCenter===true;
+ const storePickup=x.storePickup===true||status==='STORE_PICKUP_READY'||x.deliveryType==='Retirada em loja';
+ const stages=Array.isArray(x.logisticsStages)?x.logisticsStages:[];
+ const steps=[{name:'Pedido conferido e embalado',done:status!=='PREPARING'}];
+ stages.forEach((st,i)=>{
+  const passed=afterCall||['LOGISTICS_READY_FOR_DRIVER','AVAILABLE_FOR_CUSTOMER_PICKUP'].includes(status);
+  steps.push({name:'Parada logística: '+String(st.name||'Centro '+(i+1)),done:st.status==='ARRIVED'||passed});
+ });
+ if(centerPickup||storePickup){
+  steps.push({name:'Disponível para retirada',done:finished});
+  steps.push({name:'Finalizado',done:finished});
+ }else{
+  steps.push({name:'Chamando entregador',done:afterCall},
+    {name:'Corrida aceita — rastreio em tempo real',done:accepted},
+    {name:'Pedido em rota de entrega',done:inRoute},
+    {name:'Finalizado',done:finished});
+ }
+ const active=steps.findIndex(step=>!step.done);
+ return '<div class="detail-section-title">Linha do tempo da entrega</div><div class="detail-progress-wrap"><ol class="detail-progress" aria-label="Etapas da corrida">'+steps.map((step,i)=>{
+  const current=i===active;
+  return '<li class="'+(step.done?'done':current?'current':'pending')+'"'+(current?' aria-current="step"':'')+'><span class="detail-step-dot">'+(step.done?'✓':i+1)+'</span><span>'+esc(step.name)+'</span></li>';
+ }).join('')+'</ol></div>';
 }
+
 function detailPrimaryAction(x){
   const id=esc(x.deliveryId),status=String(x.status||'');
   const phases={
