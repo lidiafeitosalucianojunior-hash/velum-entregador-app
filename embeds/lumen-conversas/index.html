@@ -332,7 +332,9 @@ function onResponse(data){
        aguardandoHumano:x.modo==='HUMANO'&&!x.assumidaPor,
        pagamentoConfirmado:false});
    renderCounts(payload.contadores);renderList();
-   if(antigo)$('paidCount').textContent='—';
+   if(antigo||payload.degradado===true||
+      payload.contadores?.pagamentosConfirmados===null)
+     $('paidCount').textContent='—';
    live(payload.degradado||antigo?
      'Conversas recuperadas • ações confirmadas individualmente pelo VELUM':
      'Atualizado às '+(shortTime(payload.atualizadoEm)||'agora')+' · a cada 10 segundos',
