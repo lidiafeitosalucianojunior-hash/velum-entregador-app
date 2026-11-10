@@ -109,6 +109,28 @@ test('responde a perda da primeira consulta Wix com nova busca, sem travar lista
  assert.match(t.els.list.innerHTML,/Cliente Aguardando/);
  assert.match(t.els.list.innerHTML,/Desativar IA|Ativar IA/);
 });
+test('recuperacao por IA_LIST mantem botao de desativar IA sem inventar pagamento',()=>{
+ const t=make();
+ emit(t,{source:'LUMEN_ADMIN_PANEL_PAGE',type:'IA_LIST_RESULT',payload:{
+  ok:true,items:[{id,cliente:'Cliente Recuperada',canal:'WHATSAPP',
+   modo:'IA',ultimaMensagem:'Oi',atualizadoEm:'2026-11-09T20:30:00Z'}]}});
+ assert.match(t.els.list.innerHTML,/Cliente Recuperada/);
+ assert.match(t.els.list.innerHTML,/Desativar IA/);
+ assert.doesNotMatch(t.els.list.innerHTML,/Consulta temporária/);
+ assert.equal(t.els.paidCount.textContent,'—');
+});
+test('fallback enriquecido preserva pausa manual e nao habilita acao Instagram',()=>{
+ const t=make();
+ emit(t,{source:'LUMEN_ADMIN_PANEL_PAGE',type:'IA_LIST_RESULT',payload:{
+  ok:true,items:[{...waiting,iaPausaManual:true,
+   canal:'WHATSAPP',etapa:waiting.etapa},{
+   ...paid,id:'c'.repeat(32),canal:'INSTAGRAM',somenteLeitura:true,
+   etapa:{codigo:'INSTAGRAM_LEITURA',rotulo:'Instagram · consulta',cor:'roxo'},
+   pagamentoConfirmado:false}]}});
+ assert.match(t.els.list.innerHTML,/IA pausada manualmente/);
+ assert.match(t.els.list.innerHTML,/Ativar IA/);
+ assert.match(t.els.list.innerHTML,/Somente leitura/);
+});
 test('painel Lumen oferece entrada para nova pagina de conversas',()=>{
  assert.match(panel,/id="velumConversasOpen"/);
  assert.match(panel,/id="openConversationsCard"/);
