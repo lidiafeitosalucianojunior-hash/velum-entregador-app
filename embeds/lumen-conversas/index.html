@@ -411,7 +411,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;onRes
 window.setInterval(()=>{if(document.hidden)return;listRequest();detailRequest()},10000);
 window.addEventListener('pageshow',()=>listRequest());
 window.addEventListener('focus',()=>{listRequest();detailRequest()});
-post('CONVERSAS_LIST');
+listRequest();
 })();
 </script>
 </body>
