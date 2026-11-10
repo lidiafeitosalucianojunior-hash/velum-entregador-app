@@ -150,6 +150,8 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       <span class="meta-url" id="igUrl">https://www.vaidevelum.com/_functions/metaInstagramWebhook</span>
       <button type="button" id="igCopy">Copiar URL do Instagram</button>
       <button type="button" id="igSubscribe" disabled>Verificar e conectar Instagram Direct</button>
+      <button type="button" id="igRecover" disabled>Sincronizar Direct agora</button>
+      <small id="igRecoverStatus" role="status" aria-live="polite">Recuperação automática de mensagens recentes sem duplicar respostas.</small>
     </div>
   </div>
   <small style="display:block;margin:10px 0 0;color:#627b93">Credenciais cadastradas não significam conexão concluída. O webhook deve ser verificado pela Meta e o aplicativo habilitado para produção. Nenhuma mensagem será enviada automaticamente.</small>
@@ -745,6 +747,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       const inscrito=inscricao==='OK';
       byId('igSubscribe').disabled=count!==total||inscricao!=='NAO_INSCRITO';
       byId('igSubscribe').textContent=inscrito?'✓ Instagram Direct inscrito':'Conectar recebimento do Direct';
+      byId('igRecover').disabled=!inscrito;
     }
     const situacao=inscricao==='OK'?'Inscrição Meta confirmada':
       inscricao==='NAO_INSCRITO'?'Conta ainda não inscrita':
@@ -786,6 +789,12 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     byId('igSubscribe').disabled=true;
     byId('igMissing').textContent='Verificando autorização e inscrição da conta Instagram na Meta...';
     send('IA_META_SUBSCRIBE_INSTAGRAM');
+  });
+  byId('igRecover').addEventListener('click',()=>{
+    if(byId('igRecover').disabled)return;
+    byId('igRecover').disabled=true;
+    byId('igRecoverStatus').textContent='Consultando mensagens recentes na Meta e verificando duplicidades...';
+    send('IA_META_RECUPERAR_INSTAGRAM');
   });
 
   window.addEventListener('message',event=>{
@@ -880,6 +889,16 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
       const data=msg.payload||{};
       byId('igMissing').textContent=String(data.mensagem||'Conexão do Instagram ainda não confirmada.');
       byId('igSubscribe').disabled=true;
+    }
+    if(msg.type==='IA_META_RECUPERAR_INSTAGRAM_RESULT'){
+      const data=msg.payload||{};
+      byId('igRecover').disabled=false;
+      byId('igRecoverStatus').textContent=data.ok
+        ? 'Sincronização concluída: '+Number(data.recuperadas||0)+
+          ' mensagens recuperadas, '+Number(data.respondidas||0)+
+          ' respostas confirmadas, '+Number(data.falhas||0)+' falhas.'
+        : 'Não foi possível sincronizar: '+String(data.motivo||'Consulte a integração Meta.');
+      if(data.ok)send('CONVERSAS_LIST');
     }
     if(msg.type==='IA_META_STATUS_RESULT'){
       metaStatusAnswered=true;
