@@ -319,16 +319,24 @@ function onResponse(data){
   // Nao substituir lista rica por retorno legado se ambos chegarem.
   if(type==='IA_LIST_RESULT'&&!state.listing&&state.items.length)return;
   state.listing=false;if(payload.ok){
+   const antigo=type==='IA_LIST_RESULT'&&!payload.items?.[0]?.etapa;
    state.items=(Array.isArray(payload.items)?payload.items:[]).map(x=>
      x&&x.etapa?x:{...x,nome:x.nome||x.cliente||'Cliente',
        numero:x.numero||'',ultimaAtualizacao:x.ultimaAtualizacao||x.atualizadoEm,
-       somenteLeitura:true,etapa:{rotulo:'Consulta temporária',cor:'amarelo'},
+       // As ações de WhatsApp são validadas por sessão e ID no servidor;
+       // o modo alternativo não modifica o atendimento por conta própria.
+       somenteLeitura:x.canal!=='WHATSAPP',iaPausaManual:x.iaPausaManual===true,
+       etapa:x.modo==='HUMANO'&&!x.assumidaPor?
+         {codigo:'AGUARDANDO_HUMANO',rotulo:'Aguardando humano',cor:'vermelho',borda:'vermelha'}:
+         {codigo:'CONVERSANDO',rotulo:x.modo==='HUMANO'?'Atendimento humano':'Em atendimento IA',cor:'azul'},
        aguardandoHumano:x.modo==='HUMANO'&&!x.assumidaPor,
        pagamentoConfirmado:false});
    renderCounts(payload.contadores);renderList();
-   live(payload.degradado?'Lista recuperada em consulta. Controles aguardam reconexão.':
-     'Atualizado às '+shortTime(payload.atualizadoEm)+' · a cada 10 segundos',
-     payload.degradado===true||type==='IA_LIST_RESULT'&&!payload.items?.[0]?.etapa);
+   if(antigo)$('paidCount').textContent='—';
+   live(payload.degradado||antigo?
+     'Conversas recuperadas • ações confirmadas individualmente pelo VELUM':
+     'Atualizado às '+(shortTime(payload.atualizadoEm)||'agora')+' · a cada 10 segundos',
+     payload.degradado===true||antigo||payload.etapasParciais===true);
   }else{
    live(payload.mensagem||'Falha ao consultar conversas. Nova tentativa automática em 10 segundos.',true);
    if(!state.items.length)
