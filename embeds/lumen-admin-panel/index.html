@@ -1322,7 +1322,15 @@ async function anexarEtiquetaPdfDaCorrida(b){
 }
 
 function bindRideActions(){
- document.querySelectorAll('.log-act').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.logistica-meta-send').forEach(b=>b.onclick=()=>{
+    const x=rideById(b.dataset.id);
+    if(!x||b.disabled)return;
+    if(!window.confirm('Enviar para a logistica (+55 88 99606-7657) comanda, comprovante e etiqueta PDF deste pedido pago?'))return;
+    b.disabled=true;
+    notice('Solicitando envio ao WhatsApp da logistica...',true);
+    send('LOGISTICA_META_SEND',{deliveryId:b.dataset.id});
+  });
+  document.querySelectorAll('.log-act').forEach(b=>b.onclick=()=>{
   if(b.dataset.action==='COMPLETE_CENTER_PICKUP'&&!confirm('Confirma que a cliente recebeu fisicamente o pedido no centro logístico?'))return;
   if(b.dataset.action==='CENTER_PICKUP_AVAILABLE'&&!confirm('Liberar retirada no centro sem chamar entregador?'))return;
   b.disabled=true;send('LOGISTICS_ACTION',{deliveryId:b.dataset.id,action:b.dataset.action});
@@ -1576,6 +1584,13 @@ function detailQuickActions(x){
   let buttons='';
   if(x.comandaLumen&&x.etiquetaPdfConfirmada&&x.etiquetaPrintUrl)
     buttons+=button('label-pdf-link','print','Imprimir PDF',' data-url="'+esc(x.etiquetaPrintUrl)+'"');
+  const pagoLumen=x.comandaLumen?.origem==='LUMEN_WHATSAPP'&&x.storePickup===true&&
+    x.comandaLumenStatus==='COMANDA_COMPLETA'&&x.etiquetaPdfConfirmada&&
+    x.etiquetaKitDuasPaginas===true&&x.etiquetaKitStatus==='PRONTA';
+  if(pagoLumen){
+    const metaOk=x.comandaMetaStatus==='ACEITO_META'&&x.etiquetaMetaStatus==='ACEITO_META';
+    buttons+=button('logistica-meta-send','dispatch',metaOk?'WhatsApp aceito pela Meta':'Enviar comanda + etiqueta',' data-id="'+id+'"',metaOk);
+  }
   buttons+=button('ride-edit','edit','Editar',' data-id="'+id+'"',!editable);
   buttons+=button('ride-delete','trash','Excluir',' data-id="'+id+'"',!removable);
   return '<footer class="detail-footer"><h4>Ações rápidas</h4><div class="detail-mini-actions">'+buttons+'</div></footer>';
@@ -1795,6 +1810,13 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
   if(lumenOrdersLoaded)lumenOrdersRequest();
  }
  if(m.type==='ORDERS_RESULT')lumenOrdersReceive(d);
+  if(m.type==='LOGISTICA_META_SEND_RESULT'){
+    document.querySelectorAll('.logistica-meta-send').forEach(b=>b.disabled=false);
+    const text=d.ok?'Meta aceitou comanda, comprovante e etiqueta. Confirme o recebimento no celular.':(d.mensagem||'Envio nao confirmado. Verifique antes de repetir.');
+    notice(text,d.ok===true);
+    const box=document.getElementById('detailFeedback');
+    if(box)box.textContent=text+' | Comanda: '+(d.comandaStatus||'PENDENTE')+' | Etiqueta: '+(d.etiquetaStatus||'PENDENTE');
+  }
  if(m.type==='ERROR')notice(d.message||m.message||'Não foi possível carregar.',false);
  if(m.type==='UPLOAD_LABEL_PDF_RESULT'){
   const msg=d.ok?(d.pdfConfirmado?'Etiqueta PDF real arquivada no VELUM.':'PDF recebido; aguardando processamento do Wix.'):
