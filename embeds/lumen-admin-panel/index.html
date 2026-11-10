@@ -369,7 +369,7 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 
 <div class="address-block" id="deliveryAddressBlock"><h4>2. Endereço de entrega</h4><p>Digite rua e número. A VELUM mostra sugestões de endereços existentes.</p>
 <div class="field" style="position:relative"><label>Rua, número e bairro</label><input id="deliveryAddress" autocomplete="off" placeholder="Ex.: Rua Santa Cecília, 515"><div id="deliverySuggestions" class="suggestions"></div></div>
-<div class="grid three"><div class="field"><label>CEP</label><input id="deliveryZipCode"></div><div class="field"><label>Cidade</label><input id="deliveryCity"></div><div class="field"><label>UF</label><input id="deliveryState" maxlength="2"></div></div></div>
+<div class="grid three"><div class="field"><label>CEP</label><input id="deliveryZipCode"></div><div class="field"><label>Cidade</label><input id="deliveryCity"></div><div class="field"><label>UF</label><input id="deliveryState" maxlength="2"></div></div><div class="field"><label>Complemento do endereço (Bling)</label><input id="deliveryComplement" placeholder="Apto, bloco, sala ou referência"></div></div>
 
 <div class="address-block"><h4>3. Recebedor</h4>
 <div class="grid"><div class="field"><label>Nome do recebedor</label><input id="customerName"></div><div class="field"><label>WhatsApp / telefone</label><input id="customerPhone"></div></div>
@@ -482,7 +482,7 @@ let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSe
 
 function send(type,payload={}){parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function dt(v){if(!v)return'—';try{return new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(_){return'—'}}
-function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',AVAILABLE_FOR_CUSTOMER_PICKUP:'Disponível para retirada no centro',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Entrega aceita',GOING_TO_STORE:'Indo para a retirada',AT_STORE:'Na retirada',COLLECTED:'Pedido coletado',OUT_FOR_DELIVERY:'Saiu para entrega',DELIVERED:'Concluída'})[s]||s||'Corrida'}
+function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',AVAILABLE_FOR_CUSTOMER_PICKUP:'Disponível para retirada no centro',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Mercadoria a caminho',GOING_TO_STORE:'Mercadoria a caminho',AT_STORE:'Mercadoria a caminho',COLLECTED:'Mercadoria a caminho',OUT_FOR_DELIVERY:'Mercadoria a caminho',DELIVERED:'Concluída'})[s]||s||'Corrida'}
 let lumenOrders=[],lumenOrdersLoading=false,lumenOrdersLoaded=false,lumenOrdersTimer=null;
 const lumenOrderPayLabel=v=>v==='VELUM_CREDIT'?'Crédito VELUM':'Mercado Pago';
 function lumenOrderStatusKey(o){
@@ -684,6 +684,7 @@ function lumenOrderLabelPayload(o,ride=null){
   deliveryCity:o.deliveryCity||'',
   deliveryState:o.deliveryState||'',
   deliveryZipCode:o.deliveryZipCode||'',
+  deliveryComplement:o.deliveryComplement||o.addressComplement||'',
   // Never include pickupAddress / owner address in a reseller's label.
   deliveryFee:activeRide?Number(activeRide.deliveryFee||0):(o.shippingType==='PICKUP_LUMEN'?0:null),
   labelCode:activeRide?activeRide.labelCode:'',
@@ -722,6 +723,7 @@ function lumenOrderCallDriver(asCourier=false){
  $('deliveryCity').value=o.deliveryCity||'';
  $('deliveryState').value=o.deliveryState||'';
  $('deliveryZipCode').value=o.deliveryZipCode||'';
+ $('deliveryComplement').value=o.deliveryComplement||o.addressComplement||'';
  $('instructions').value='Pedido VELUM '+o.orderId+' • Produtos Lúmen';
  $('blingSearch').value=o.orderId;
  $('blingSearchStatus').textContent='Pedido VELUM '+o.orderId+' vinculado. Revise endereço, frete e paradas antes de gerar a etiqueta.';
@@ -897,7 +899,7 @@ function labelWhatsappLink(phone){
 function labelHtml(x){
  const orderLabel=x.orderLabel===true;
  const isPickup=!orderLabel&&(x.storePickup===true||x.deliveryType==='Retirada em loja'||x.status==='STORE_PICKUP_READY');
- const isCenterPickup=!orderLabel&&x.customerPickupAtCenter===true;
+ const isCenterPickup=!orderLabel&&(x.customerPickupAtCenter===true||String(x.customerPickupMode||'').toUpperCase()==='CENTER');
  const malaDireta=orderLabel&&x.isMalaDireta===true;
  const isBasePickup=orderLabel&&x.shippingType==='PICKUP_LUMEN';
  const labelMode=malaDireta?'MALA DIRETA':isBasePickup?'RETIRADA NA BASE':isPickup?'RETIRADA':isCenterPickup?'RETIRADA NO CENTRO':'ENTREGA';
@@ -911,13 +913,14 @@ function labelHtml(x){
  const state=isCenterPickup?(lastCenter?.state||x.finalLogisticsCenterState):isPickup?x.pickupState:x.deliveryState;
  const postcode=isCenterPickup?(lastCenter?.zipCode||x.finalLogisticsCenterZipCode):isPickup?x.pickupZipCode:x.deliveryZipCode;
  const addressHtml=[address,[city,state].filter(Boolean).join(' - '),postcode&&('CEP '+postcode)].filter(Boolean).map(esc).join('<br>');
+ const complement=String(x.deliveryComplement||x.blingComplement||x.addressComplement||'').trim();
  const amount=Number(x.deliveryFee||0);
  const payer=isCenterPickup?'Sem taxa de entrega':String(x.payerLabel|| (isPickup?'Sem taxa de entrega':x.deliveryPaymentMode==='PAY_AT_PICKUP'?'LÚMEN paga na retirada':x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'Destinatário paga na entrega':'A confirmar'));
  const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));
  // A native-camera QR is a URL: the driver can open it without a separate barcode scanner.
  // A signed-in approved driver must explicitly confirm collection; ownership and version are validated by the existing backend.
  const collectionUrl=orderQrOnly?'VELUM:PEDIDO:'+String(x.orderId||x.orderNumber||''):
-  'https://www.vaidevelum.com/painel-entregador?coleta='+encodeURIComponent(code);
+  'https://www.vaidevelum.com/painel-entregador?corrida='+encodeURIComponent(String(x.deliveryId||''));
  const largeQr='https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=5&padding=2&text='+encodeURIComponent(collectionUrl);
  const smallQr=whatsapp?'https://bwipjs-api.metafloor.com/?bcid=qrcode&scale=4&padding=1&text='+encodeURIComponent(whatsapp):'';
  const section=(cls,icon,heading,value)=>'<div class="label-fact '+cls+'"><span class="label-fact-icon">'+labelIcon(icon)+'</span><div class="label-fact-text"><small>'+heading+'</small><b>'+value+'</b></div></div>';
@@ -928,20 +931,21 @@ function labelHtml(x){
   '</section>':'';
  const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):isCenterPickup?'Sem taxa de entrega':money(amount);
  const shippingPayer=orderLabel?(isBasePickup?'Retirada na base':malaDireta?'A confirmar na corrida':'Consultar a corrida'):esc(payer);
- return '<article class="shipping-label'+(orderLabel?' order-logistic':'')+'">'+
+ return '<article class="shipping-label'+(orderLabel?' order-logistic':'')+(complement?' has-complement':'')+'">'+
   '<header class="label-header"><div class="label-brand"><strong>'+(orderLabel?'VELUM LOGÍSTICA':'LÚMEN LUXOS')+'</strong><span>'+(orderLabel?'Pedido '+esc(x.orderId||x.orderNumber||''):'Exclusividade, Poder e Presença')+'</span></div><div class="label-mode">'+labelIcon((isPickup||isBasePickup||isCenterPickup)?'store':'truck')+'<b>'+labelMode+'</b></div></header>'+
   senderHtml+
   '<section class="label-recipient"><div class="label-recipient-info"><small class="label-eyebrow">DESTINATÁRIO</small><div class="label-name-row"><span class="label-icon-square">'+labelIcon('person')+'</span><strong class="label-name">'+esc(name)+'</strong></div><div class="label-phone-row"><span class="label-icon-square">'+labelIcon('phone')+'</span><div><small>TELEFONE / WHATSAPP</small><b>'+esc(phone||'Não informado')+'</b></div></div></div>'+
   '<div class="label-qr-whats">'+(smallQr?'<img src="'+smallQr+'" alt="QR Code para WhatsApp da destinatária"><b>FALAR NO<br>WHATSAPP</b>':'<span>WhatsApp<br>indisponível</span>')+'</div></section>'+
   '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isBasePickup?'ENDEREÇO DA CLIENTE · RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):(isPickup?'ENDEREÇO DE RETIRADA':isCenterPickup?'ENDEREÇO DO CENTRO DE RETIRADA':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
+  (complement?'<section class="label-complement-block"><small>COMPLEMENTO DO ENDEREÇO · BLING</small><b>'+esc(complement)+'</b></section>':'')+
   (orderLabel?'':'<section class="label-facts">'+
   section('fact-mode',(isPickup||isBasePickup||isCenterPickup)?'store':'truck','TIPO DE ENTREGA',labelMode)+
   section('fact-cost','coins',(isPickup||isCenterPickup)?'VALOR DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
   section('fact-payer','card','QUEM PAGA',shippingPayer)+'</section>')+
-  '<section class="label-collection"><div class="label-collection-code"><img src="'+largeQr+'" alt="QR Code de coleta pela câmera do celular"></div>'+
-  '<div class="label-collection-info"><div class="label-collection-heading">'+labelIcon('box')+'<div><small>'+(orderQrOnly?'QR DO PEDIDO':'QR DE COLETA')+'</small><strong>'+(orderQrOnly?'IDENTIFICAÇÃO<br>DO PEDIDO':'PARA O<br>ENTREGADOR')+'</strong></div></div>'+
-  '<p>'+(orderQrOnly?'Identificação logística do pedido. A confirmação de coleta será liberada após criar a corrida.':'Escaneie este QR Code com a câmera do celular para identificar e confirmar a coleta.')+'</p>'+
-  '<div class="label-collection-steps"><span><b>1</b>Abra a câmera</span><span><b>2</b>Aponte para o QR</span><span><b>3</b>'+(orderQrOnly?'Confira o pedido':'Confirme a coleta')+'</span></div></div></section>'+
+  '<section class="label-collection"><div class="label-collection-code"><img src="'+largeQr+'" alt="QR Code para consultar a corrida"></div>'+
+  '<div class="label-collection-info"><div class="label-collection-heading">'+labelIcon('box')+'<div><small>'+(orderQrOnly?'QR DO PEDIDO':'QR DA CORRIDA')+'</small><strong>'+(orderQrOnly?'IDENTIFICAÇÃO<br>DO PEDIDO':'CONSULTAR<br>DADOS DA CORRIDA')+'</strong></div></div>'+
+  '<p>'+(orderQrOnly?'Identificação logística do pedido antes de gerar uma corrida.':'Abra o QR Code para visualizar a corrida no painel autorizado. Não confirma retirada.')+'</p>'+
+  '<div class="label-collection-steps"><span><b>1</b>Abra a câmera</span><span><b>2</b>Aponte para o QR</span><span><b>3</b>'+(orderQrOnly?'Confira o pedido':'Consulte os dados')+'</span></div></div></section>'+
   '</article>';
 }
 function printLabels(items,existingWindow=null){
@@ -997,6 +1001,13 @@ function printLabels(items,existingWindow=null){
   '.label-address-block .label-icon-square{background:#fff1e6;color:#e86616}',
   '.label-address-block>div{min-width:0;flex:1}',
   '.label-address-block b{display:block;font-size:10pt;line-height:1.14;letter-spacing:-.1pt;margin-top:2mm;overflow-wrap:anywhere}',
+  '.label-complement-block{margin-top:1.2mm;border:1px solid #d9e2ed;border-radius:2mm;background:#f8fafc;padding:1.2mm 2mm;min-height:9mm;max-height:15mm;overflow:hidden;flex-shrink:0}',
+  '.label-complement-block small{display:block;color:#65758a;font-size:6.5pt;font-weight:900}',
+  '.label-complement-block b{display:block;font-size:8.4pt;line-height:1.08;margin-top:.8mm;overflow-wrap:anywhere}',
+  '.shipping-label.has-complement .label-recipient{min-height:27mm}',
+  '.shipping-label.has-complement .label-address-block{min-height:19mm}',
+  '.shipping-label.has-complement .label-collection{min-height:29mm}',
+  '.shipping-label.order-logistic.has-complement .label-collection{margin-top:1mm;min-height:30mm}',
   '.label-facts{display:flex;gap:1.1mm;margin-top:2mm;flex-shrink:0;min-height:18mm}',
   '.label-fact{display:flex;align-items:center;gap:1.3mm;padding:1.6mm 1mm;border:1px solid #d9e2ed;border-radius:2.7mm;min-width:0;flex:1}',
   '.label-fact-icon{height:7.5mm;width:7.5mm;flex:none;background:#edf3f9;color:#183d69;border-radius:2mm;padding:1.6mm}',
@@ -1392,6 +1403,7 @@ function applyBlingRecord(r){
   if(r.deliveryCity)$('deliveryCity').value=r.deliveryCity;
   if(r.deliveryState)$('deliveryState').value=r.deliveryState;
   if(r.deliveryZipCode)$('deliveryZipCode').value=r.deliveryZipCode;
+  $('deliveryComplement').value=String(r.deliveryComplement||r.complement||r.addressComplement||'');
   selectedBlingOrderId=String(r.blingOrderId||'');
   selectedBlingOrderNumber=String(r.orderNumber||'');
   const label=selectedBlingOrderNumber?'Pedido Bling nº '+selectedBlingOrderNumber:'Cliente encontrado no Bling';
@@ -1498,8 +1510,7 @@ function detailProgress(x){
   const status=String(x.status||'');
   const afterCall=['WAITING_DRIVER','DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
   const accepted=['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
-  const collected=['COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(status);
-  const inRoute=['OUT_FOR_DELIVERY','DELIVERED'].includes(status);
+  const inRoute=accepted;
   const finished=status==='DELIVERED';
   const steps=[];
   if(status==='STORE_PICKUP_READY'||x.storePickup===true||x.deliveryType==='Retirada em loja'){
@@ -1520,8 +1531,7 @@ function detailProgress(x){
     }else steps.push({name:'Etiqueta pronta',done:true});
     steps.push({name:'Entregador chamado',done:afterCall},
       {name:'Corrida aceita',done:accepted},
-      {name:'Pedido coletado',done:collected},
-      {name:'Em entrega',done:inRoute},
+      {name:'Mercadoria a caminho • rastreio ativo',done:inRoute},
       {name:'Concluída',done:finished});
   }
   const active=steps.findIndex(s=>!s.done);
@@ -1683,7 +1693,7 @@ function render(d){
   if(openedRideId)renderRideDetail();
 }
 function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);if(!stops.length)$('centerPickupMode').checked=false;renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
-function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryAddress').value.trim(),deliveryCity:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryCity').value.trim(),deliveryState:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryZipCode').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
+function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryAddress').value.trim(),deliveryCity:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryCity').value.trim(),deliveryState:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryZipCode').value.trim(),deliveryComplement:$('deliveryComplement').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
 function routeReview(){
  const centerPickup=$('centerPickupMode').checked;
  const pts=[['Retirada',[$('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],
