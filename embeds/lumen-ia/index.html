@@ -893,11 +893,17 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     if(msg.type==='IA_META_RECUPERAR_INSTAGRAM_RESULT'){
       const data=msg.payload||{};
       byId('igRecover').disabled=false;
+      const motivo=String(data.motivo||'');
+      const erroAmigavel=motivo==='META_NEGOU_LEITURA_DIRECT_CONFERIR_PERMISSOES_PAGINA'
+        ? 'A Meta negou acesso ao conteúdo das mensagens. Reautorize a Página do Facebook ligada ao Instagram no aplicativo LUMEN IA, com permissão para mensagens.'
+        : String(motivo||'Consulte a integração Meta.');
       byId('igRecoverStatus').textContent=data.ok
-        ? 'Sincronização concluída: '+Number(data.recuperadas||0)+
+        ? 'Sincronização concluída: '+Number(data.consultadas||0)+
+          ' conversas examinadas, '+Number(data.recuperadas||0)+
           ' mensagens recuperadas, '+Number(data.respondidas||0)+
           ' respostas confirmadas, '+Number(data.falhas||0)+' falhas.'
-        : 'Não foi possível sincronizar: '+String(data.motivo||'Consulte a integração Meta.');
+        : 'Não foi possível sincronizar: '+erroAmigavel+
+          ' ('+Number(data.consultadas||0)+' conversas examinadas).';
       if(data.ok)send('CONVERSAS_LIST');
     }
     if(msg.type==='IA_META_STATUS_RESULT'){
