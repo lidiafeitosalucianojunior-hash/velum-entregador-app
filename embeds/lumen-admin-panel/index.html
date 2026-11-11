@@ -326,7 +326,13 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 .driver-dispatch-confirm:disabled{background:#ecf1f5;color:#74859a;cursor:wait}
 .driver-dispatch-message{font-size:11px;line-height:1.5;min-height:18px;color:#64758a;margin:9px 0 0}
 .driver-dispatch-message[data-state="error"]{color:#b5363a}
-.driver-dispatch-message[data-state="ok"]{color:#147b50}
+.driver-dispatch-message[data-state="ok"],.driver-dispatch-message[data-state="success"]{color:#147b50}
+.driver-dispatch-confirm.is-ringing,.driver-dispatch-confirm.is-ringing:disabled{
+ background:#ff7a00!important;color:#fff!important;cursor:progress!important;
+ animation:lumenDispatchPulse 1.5s ease-in-out infinite;
+}
+@keyframes lumenDispatchPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,122,0,.1)}
+ 50%{box-shadow:0 0 0 6px rgba(255,122,0,.20)}}
 @media(max-width:650px){.ride-record-toolbar{margin:0 0 10px}.ride-record-next{font-size:12px;min-height:45px}.ride-record-actions{grid-column:2 / -1!important;max-width:100%}.ride-record-body{min-width:0}}
 </style>
 
@@ -1178,10 +1184,12 @@ function dispatchPushSummary(state){
  }
  function dispatchStatusResult(data){
  const state=dispatchSelection;
- if(!state||String(data.deliveryId||'')!==state.deliveryId||
+ if(!state||state.phase==='accepted'||state.phase==='canceled'||
+  String(data.deliveryId||'')!==state.deliveryId||
   String(data.requestId||'')!==state.requestId)return;
  if(data.ok===true&&(data.aceita===true||data.finalizada===true&&data.driverId)){
   dispatchRingStop();dispatchProbeClear();dispatchTimerClear();
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   state.sending=false;state.phase='accepted';
   $('driverDispatchConfirm').textContent='Corrida aceita ✓';
   $('driverDispatchConfirm').disabled=true;
@@ -1199,6 +1207,7 @@ function dispatchPushSummary(state){
  }
  if(data.ok===true&&data.recusada===true){
   dispatchRingStop();dispatchProbeClear();dispatchTimerClear();
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   state.sending=false;state.phase='declined';state.uncertain=false;
   state.refusedDriverIds=[...(state.targetIds||[])];
   $('driverDispatchConfirm').textContent='Escolher outro entregador';
@@ -1208,6 +1217,7 @@ function dispatchPushSummary(state){
  }
  if(data.ok===true&&data.cancelada===true){
   dispatchRingStop();dispatchProbeClear();dispatchTimerClear();
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   state.sending=false;state.phase='canceled';
   $('driverDispatchConfirm').textContent='Corrida cancelada';
   $('driverDispatchConfirm').disabled=true;
@@ -1251,6 +1261,7 @@ function dispatchTimerClear(){if(dispatchTimer){clearTimeout(dispatchTimer);disp
   if(state.offerConfirmed)return;
   state.sending=false;state.uncertain=true;
   dispatchRingStop();
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   $('driverDispatchConfirm').textContent='Conferir corrida atualizada';
   dispatchMessage('A verificação está demorando. A oferta pode ter sido registrada: confira a corrida atualizada antes de tentar outro chamado.');
   dispatchProbe(state,100);
@@ -1285,8 +1296,14 @@ function dispatchOpen(id){
  dispatchUpdateMode();
  dispatchMessage('');
   $('driverDispatchConfirm').textContent='Confirmar chamada';
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   overlay.hidden=false;
   dispatchUpdateMode();
+  // Verificar um chamado anterior sem registrar outra oferta.
+  const initial=dispatchSelection;
+  initial.requestId='driver-open-'+(++dispatchSeq)+'-'+Date.now();
+  initial.targetIds=picked?selected:[];
+  dispatchProbe(initial,180);
  $('driverDispatchConfirm').focus();
 }
 function dispatchUpdateMode(){
@@ -1297,6 +1314,7 @@ function dispatchUpdateMode(){
 function dispatchClose(force=false){
   const pending=dispatchSelection?.sending;
   dispatchTimerClear();dispatchProbeClear();dispatchRingStop();
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   $('driverDispatchOverlay').hidden=true;
   dispatchSelection=null;
   if(pending&&!force){
@@ -1322,6 +1340,7 @@ function dispatchClose(force=false){
  }
   state.sending=true;state.uncertain=false;
   state.backendAck=false;state.pushProviderAccepted=null;state.offerConfirmed=false;
+  $('driverDispatchConfirm').classList.add('is-ringing');
   dispatchRingStart();
   state.requestId='driver-'+(++dispatchSeq)+'-'+Date.now();
   state.targetIds=specific?[target]:[];
@@ -1355,6 +1374,7 @@ function dispatchSelectionResult(data){
  if(!data.ok){
   state.sending=false;
   dispatchRingStop();
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   dispatchMessage(data.mensagem||'Não foi possível selecionar o entregador.','error');
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
@@ -1390,6 +1410,7 @@ function dispatchFinalResult(data,kind){
  if(!data.ok){
   state.sending=false;
   dispatchRingStop();
+  $('driverDispatchConfirm').classList.remove('is-ringing');
   dispatchMessage(data.mensagem||'Não foi possível chamar o entregador.','error');
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
