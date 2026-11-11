@@ -1,0 +1,327 @@
+(function(){
+ 'use strict';
+ const ROOT=window;
+ if(ROOT.__lumenShareV5&&ROOT.__lumenShareV5.ready)return;
+ const old=ROOT.__lumenShareV2Teardown;
+ if(typeof old==='function')try{old()}catch(_){}
+ const catalogItems=[["SCHUTZ X TRICÔ (OFF)","9542","1e8b62_4680de83054548aca8c2bd390ac6913e~mv2.jpeg",["34","35","36","37","38","39"]],["SCHUTZ X TRICÔ (NUDE)","9549","1e8b62_3b0268d71a484600aa8d097ca5eae861~mv2.jpeg",["34","35","36","37","38","39"]],["SCHUTZ X TRICÔ (PRETO)","9556","ae34e2_acd57758404f4f83aa24caa0b1edd11c~mv2.jpg",["34","35","36","38","39"]],["TAMANCO PRADA (BRANCO )","9521","1e8b62_a8e86aab05ad4427ae7f30777f9aa603~mv2.png",["35","36","37","38","34","39"]],["TAMANCO PRADA (PRETO )","9528","1e8b62_7c30b23c5fad4661a5ef74d6dd1bd5a4~mv2.png",["35","36","37","38","34","39"]],["TAMANCO PRADA (CARAMELO )","9535","1e8b62_ebb2bead96c74a4c929cb8563f69d4ae~mv2.png",["35","36","37","38","34","39"]],["Tamanco Laço Di Valentini ( OURO)","9493","1e8b62_87973ca640fe4e618cb004bcec66fe4e~mv2.png",["35","36","37","38","34","39"]],["Tamanco Laço Di Valentini (PRATA )","9500","1e8b62_37b01110f4534feebc3bd73144bf52ab~mv2.png",["35","36","37","38","34","39"]],["Tamanco Laço Di Valentini (PRETO )","9507","1e8b62_6a6c05e795c64bd9b5a5c39bd48058c2~mv2.png",["35","36","37","38","34","39"]],["Tamanco Laço Di Valentini (BRANCO )","9514","1e8b62_85c1f76bc5f2446c90ccdea7863d37f1~mv2.png",["35","36","37","38","39"]],["Sapatilha Gucci Telinha (PRETO )","9486","1e8b62_ea4b59969c8447b69ed3994c93b3bac2~mv2.png",["35","36","37"]],["Sapatilha Gucci Telinha (MAROM)","9479","1e8b62_37f3097241aa4b159a0950a9e58286f0~mv2.png",["37","38"]],["TAMANCO BIQUEIRA (PRETO)","9472","1e8b62_7203f86c1305441d96e335579726fc5c~mv2.png",["35","38","34","39"]],["TAMANCO (OURO)","9465","1e8b62_f75f554578374833a4473c097266bd44~mv2.png",["36","37","38","34","39"]],["SALTINHO TIRA (PRETO )","9458","1e8b62_11da3bdd631143dc8dd1fd8fe38b3074~mv2.png",["36","37","38","34","39"]],["Tênis NB  1080 v15 (RORA)","9416","1e8b62_0e64adefe7304d9e98a2f06ed3924f28~mv2.png",["34","35","36","37","38","39"]],["Tênis NB  1080 v15 (COBRE)","9423","1e8b62_64d7ccb1d15d4f129b8d3fb4b061a5f4~mv2.png",["35","36"]],["Tênis Adidas Super Nova V3 ","9430","1e8b62_8fbd253f09724a2592866387d48349d9~mv2.png",["34","35","36","37","38"]],["Tênis NB 9060 R","9437","1e8b62_6068d84f1d394ab8856b161fd311f922~mv2.png",["34","36","37"]],["Tênis NIKEV 7 ( CAFÉ)","9444","1e8b62_99b390cda46b4c75b078abe306e1a6df~mv2.png",["34","35","36","37","38","39"]],["Tênis NIKEV 7 (OFF)","9451","1e8b62_a5cb9df850454ea0852d552fd9630615~mv2.png",["35","36","37","38"]],["TAMANCO  (PRATA)","9374","1e8b62_c81a59e688ee49ae9ece440dada27401~mv2.png",["35","36","38","34"]],["TAMANCO LUXO (PRETO)","9381","1e8b62_d1db65c269754da298788259bffcfddc~mv2.png",["35","38","34"]],["TAMANCO LUXO (Whisky )","9388","1e8b62_32db3cf5ac3342a9a78e5d50f07dac86~mv2.png",["35","36","37","38","34"]],["TAMANCO LUXO (OURO )","9395","1e8b62_3759bcafa27d4334affff36eb36a2e0b~mv2.png",["35","34"]],["TAMANCO TARÇA (OURO )","9402","1e8b62_9ede069c3a8644859fd10a354d50a17d~mv2.png",["35","39"]],["SALTINHO TIRA (OURO )","9409","1e8b62_2147cbd3925d4fc897ad061414cea0a8~mv2.png",["35","36","38","34","39"]],["PAPETE SERPENTE","9367","1e8b62_85b09ebe5d8549a68713961dae443754~mv2.jpeg",["35","38","39"]],["RASTEIRA RAFIA (PRETA)","9345","ae34e2_9ac28066ead24cf4bd542673da18ba2d~mv2.jpg",[]],["RASTEIRA RAFIA (CARAMELO )","9352","ae34e2_504ea0bd32594d8cb4361f58d6396bec~mv2.jpg",[]],["RASTEIRA ESFERAS (PRATA)","9338","ae34e2_9461f634c0ac4855b8ee35cb67fd371c~mv2.jpg",["34","35","36","37","38","39"]],["PAPETE BIRKEN SCHUTZ (PRETO)","9317","ae34e2_18739cda471f4889b62f96a7ab94a7a5~mv2.jpg",[]],["PAPETE BIRKEN SCHUTZ (OFF)","9324","ae34e2_6c4a6b0318be4dc094432c62ccb9248c~mv2.jpg",["35","37"]],["PAPETE BIRKEN SCHUTZ (WISK )","9331","ae34e2_a7a22024bd534baeab18565ef8cc29dd~mv2.jpg",[]],["Flat SCHUTZ FIVELA (CARAMELO )","9296","ae34e2_49d64fc340b94a9a97fe18eb5344cb33~mv2.jpg",["35","36","37","38"]],["Flat SCHUTZ FIVELA (PRETO)","9303","ae34e2_1d872b18afa54e5db76c398b9d9699ed~mv2.jpg",["35","36","37","38"]],["Flat SCHUTZ FIVELA (BRANCO )","9310","ae34e2_d76ae94c5b8a4ed6a7eb9e50c2e07480~mv2.jpg",["35","36","37","38","39"]],["RASTEIRA STRASS (OURO)","9289","1e8b62_85ddd436e12f49bab9cf21ffabb38263~mv2.jpeg",["34","36","37","38","39"]],["SLINGBACK TELINHA (PRETO)","9268","1e8b62_ccab0122920748afbef4fc67e1363eb3~mv2.jpeg",["34"]],["SLINGBACK TELINHA (CAFÉ )","9275","1e8b62_cb83c68056924717a77326da77953b03~mv2.jpeg",[]],["SLINGBACK TELINHA (CARAMELO )","9282","1e8b62_3a8489a12cc74cff92194b4341a1a236~mv2.jpeg",["35","38"]],["BOLSA LUXO (CARAMELO)","9258","1e8b62_b65b0c7137244b76bc77cb52dd390530~mv2.jpeg",[]],["TAMANCO LUMEN (CARAMELO )","9223","1e8b62_e3cea18e7fce47b68b91f2be0ba98050~mv2.jpeg",["35","36","37","38","34","39"]],["TAMANCO LUMEN (CAFE )","9230","1e8b62_fe8d333e0f8b48e08445d3bd32bc11ed~mv2.jpeg",["35","36","37","38","34","39"]],["TAMANCO LUMEN (OURO )","9237","1e8b62_95bbaa859d124c0a9c968a6e36c2b162~mv2.jpeg",["35","36","37","38","39"]],["TAMANCO LUMEN (BRANCO )","9244","1e8b62_2386e3f3b3f340de84bbf4066caac632~mv2.jpeg",["35","37","38"]],["TAMANCO LUMEN (PRETO )","9251","1e8b62_12307b4f8354417eb6094cdc9327dfbd~mv2.jpeg",["36","37","38","39"]],["PAPETE PRADA","9216","1e8b62_b9797cbab9314a798d874f812f04b8cf~mv2.png",["34","35"]],["PAPETE SCHUTS (CARAMELO)","9202","1e8b62_287cf13ee639426baf73fbd485495693~mv2.jpeg",["37"]],["PAPETE SCHUTS (PRETA)","9209","1e8b62_003c394d935e4a839c26b54f41706aba~mv2.jpeg",["36","39"]],["SCHUTZ (PRETA)","9181","1e8b62_f9880b91b1a84f33921a83f88f91a445~mv2.jpeg",["34","35","36","38"]],["SCHUTZ (CARAMELO )","9188","1e8b62_ccac0d15277e4bec894cd11a6134651a~mv2.jpeg",["34","35","36","37"]],["SCHUTZ (OFF )","9195","1e8b62_3d2a55164b3142509d94858a39fcf91f~mv2.jpeg",["34","37","38","39"]],["Tênis NB  (PRETO)","9160","1e8b62_f628b980644f492589b55298b7cdd8ee~mv2.jpeg",["34","35","36"]],["Tênis NB 9060 (BRANCO/PRETO)","9167","1e8b62_a669c5dbfbe64b24bd0ca9913a7b0d0b~mv2.jpeg",["35","36","38"]],["Tênis NB 9060 (BRANCO)","9174","1e8b62_cc24c394653c4d6cb5fe07788715645b~mv2.jpeg",["35"]],["COBRA SCHUTZ STRASS II (DOURADA)","9146","1e8b62_6b5535ad796c4007a702b0c302b916af~mv2.jpeg",["36"]],["RASTEIRA AREZZO (OURO)","9139","1e8b62_94cbaacd1193411cb7abb6bd02f29d32~mv2.jpeg",["36","39"]],["RASTEIRA AREZZO (PRATA)","9132","1e8b62_1d65a9c50eef469cb53a245a6ce0a0b2~mv2.jpeg",["38","39"]],["PAPETE VITÓRIA (OFF)","9111","1e8b62_f2ca705600df4fe7bd6dcf7f58f5ebad~mv2.png",["39"]],["PAPETE VITÓRIA (OURO)","9118","1e8b62_8b67187611d34e70a468deeb63b8f794~mv2.png",[]],["PAPETE VITÓRIA (MARON)","9125","1e8b62_653def5e81334a7995dad052b07b8f8b~mv2.png",[]],["PAPETE AURORA (CARAMELO)","9090","1e8b62_0b24c2e5e48547babf72f20c5d124394~mv2.png",["34","38"]],["PAPETE AURORA (OURO)","9097","1e8b62_6f549fb9c893450184928da4c206b026~mv2.png",[]],["PAPETE AURORA (OFF)","9104","1e8b62_c4db3640d3d0424da55078ca468cb959~mv2.png",["34","36","38"]],["Tênis ADIDAS SAMBA ( OFF)","9083","1e8b62_463ab46b878d40e2a2efb6c02b1f5414~mv2.png",[]],["TAMANCO SCHUTS (OFF )","9055","1e8b62_e52b0a1dc0944bd59f0b3e10151d4ed6~mv2.png",["36","37","38","39"]],["TAMANCO SCHUTS (PRETO )","9062","1e8b62_c97ffd4cc9a7455ab8a09a3a1a593608~mv2.png",["35","36","37","38","34","39"]],["TAMANCO SCHUTS (PRATA )","9069","1e8b62_e7132938065844cdba4ec936f6fc4892~mv2.png",["35","36","38"]],["TAMANCO SCHUTS (CARAMELO )","9076","1e8b62_771beeb413a841238008918fd542aa2f~mv2.png",["35","37","38","39"]],["BRIZZA AREZZO  (CARAMELO )","9036","1e8b62_0ac02b1a593542da8c0a1da62e2fd972~mv2.png",["39-40"]],["PAPETE LUXO SCHUTS ( PRETO)","9022","1e8b62_108b10b9d5c741f4af306c5acaf2257b~mv2.png",["34","36","37"]],["PAPETE LUXO SCHUTS (CARAMELO)","9029","1e8b62_32ed83adf6f441e99c8e1959654feb53~mv2.png",["35","37","38"]],["RASTEIRA SCHUTZ","9015","1e8b62_c1fbd1ab48f048e3a9010f9d8ac0d324~mv2.png",[]],["RASTEIRA  BOUTIQUE  (OURO)","8980","1e8b62_5c685e22938f4dca80888418ef410df9~mv2.png",["39"]],["RASTEIRA SERPENTE (MARROM)","8973","1e8b62_6bb930d6ddcb4d698f8d53a522b6f647~mv2.png",["35","38"]],["Tênis NB 9060 (MARROM )","8987","1e8b62_f70e59402129473fa088ac83f3e0b7ec~mv2.png",["35","36","37","38"]],["Tênis NB 9060 (OFF/CURCUMAN )","8994","1e8b62_2a1b5b91ccf84e2ca8340967810edf31~mv2.png",["34","35","37"]],["Tênis NB 9060 (OFF/VINHO )","9001","1e8b62_06df435c46d4481c9fba3e629183a8de~mv2.png",["34"]],["RASTEIRA ESFERAS (OURO)","8959","1e8b62_168f7f8ff2de41799069130391a26672~mv2.png",["34","35","36","37","38","39"]],["RASTEIRA PREMIUM OLHO GREGO (PRATA)","8945","1e8b62_26e6610c5e6f4682b1cf6973708d3e2e~mv2.png",["34","35","38"]],["COBRA SCHUTZ STRASS (PRATA)","8931","1e8b62_036bef5736a340cb9590a67d377e82bc~mv2.png",["37","38"]],["COBRA SCHUTZ STRASS (DOURADA)","8938","1e8b62_e6bf0a30da3e42e28337620ccdb4b6bb~mv2.png",["38","39"]],["TÊNIS NIKE FIT (OFF/CINZA)","8924","1e8b62_b7ca450b1770491080b55596a9c9aa73~mv2.jpg",["35","36"]],["NIKE FIT (CAFE )","8903","1e8b62_6f638fc2bbd14909a4e9b3275a503a08~mv2.png",["34","35"]],["ADIDAS ( café)","8910","1e8b62_9e48873f184f4484808ad1c01a96ff05~mv2.png",["34","35"]],["Tênis NB 9060 (BRANCO/PRATA)","8882","1e8b62_0182ef11b8404ecc86bff4fc84e4ccd6~mv2.png",["34"]],["TAMANQUINHO BLOCO  (PRATA )","8875","1e8b62_2b1060305a9c40809b5f6e35dc36ed8a~mv2.png",["35","36","37","38","39"]],["RASTEIRA BICO FOLHA","8861","1e8b62_231009f1f2a24bdeb789eeca6b763954~mv2.jpeg",["35"]],["RASTEIRA LUXO ( OFF)","8833","1e8b62_fe7309e921404b4b881d23cc55b49258~mv2.png",["37","39"]],["RASTEIRA LUXO ( PRETO)","8840","1e8b62_594e222b09eb43d8a44395634f2dae31~mv2.png",["35","37","39"]],["RASTEIRA LUXO (CAFÉ )","8847","1e8b62_71a85fd61f844fa1beb8310c8e22020e~mv2.png",["39"]],["TAMANQUINHO BLOCO  (CARAMELO )","8805","1e8b62_a7a9699650c04fb580f066eb3c8c4433~mv2.png",["36","38","39"]],["TAMANQUINHO BLOCO  (PRETO )","8812","1e8b62_061e3a67d6d94df1833733058de6de4a~mv2.png",["37","38","39"]],["TAMANQUINHO BLOCO  (OFF )","8819","1e8b62_44aebd598d3b4695864b602ea81d0c21~mv2.png",["36","37","38","39"]],["TAMANQUINHO BLOCO  (OURO )","8826","1e8b62_1d3138531a554100a47537001bbaa8bc~mv2.png",["35","37","38","39"]],["ANABELA MÔNACO (MALBEC )","8784","1e8b62_26d2d1b47e59478f8d852432a5dbf8de~mv2.jpg",["35","36","37"]],["ANABELA MÔNACO (PRETO)","8791","1e8b62_38d421eb8d7445889e2b2ecf7b41717c~mv2.jpeg",["38"]],["ANABELA MÔNACO (CARAMELO)","8798","1e8b62_60e95f91eeaa45f48d9c95075c39ada3~mv2.jpeg",["35","36","37","38","34","39"]],["NIKE FIT (BRANCO/ROSE )","8728","1e8b62_de3d57af757948e78a820b86f14374d0~mv2.png",["37","39"]],["Tênis NB 9060 (OFF/LIMAO)","8721","1e8b62_93f891fedaa649ccb73627525c3dfbc7~mv2.png",["34","35"]],["ADIDAS BOSTON ( PRETO/BRANCO)","8700","1e8b62_7fc5c580e83d4895902673979280e8f7~mv2.png",["34"]],["ADIDAS BOSTON ( BRANCO/VERDE ÁGUA)","8707","1e8b62_9cff7fad1bb34adf8185930cba38a420~mv2.png",["34","35","36","39"]],["NUVEM BRIZZA AREZZO  (BRANCO )","8672","1e8b62_048520a0933c4e12ab7347e52f2bba74~mv2.jpeg",["33-34","39-40"]],["NUVEM BRIZZA AREZZO  (CARAMELO )","8676","1e8b62_77584c43384f432da39225cf2ac19c39~mv2.jpeg",["39-40"]],["NUVEM BRIZZA AREZZO (PRETO )","8668","1e8b62_e232af40a23245af9d3ce6f8346def26~mv2.jpeg",["39-40"]],["BRIZZA AREZZO  (OFF )","8680","1e8b62_e8f53c207f7e4c34a4a8e9516c115247~mv2.jpeg",["39-40"]],["BRIZZA AREZZO  (PRETO )","8684","1e8b62_9d6ec0db1da943ffb3490c5d21e802cc~mv2.jpeg",["37-38","39-40"]],["BRIZZA AREZZO  (BRANCO )","8688","1e8b62_ada520e5ed864cbdb4c16aced50a4e78~mv2.jpeg",["37-8","39-40"]],["PLATAFORMA GUCCI ( OFF )","8612","1e8b62_7989d73e70374441a6c27ea1a8ce168d~mv2.jpeg",["37","38","39"]],["Tênis NB 9060 (OFF/CAFE)","8591","1e8b62_61a3900fac3b445c8df93c99feb78db1~mv2.png",["35"]],["Tênis NB 9060 (OFF/CELESTE)","8605","1e8b62_e14da01b6e06447caed7fcc2b87c3806~mv2.png",["35"]],["NIKE FIT ( BEGE/MARROM)","8556","1e8b62_b0677a6bc1144e6ba1ee1912d637e358~mv2.jpeg",["34","35"]],["NIKE FIT (OFF/ DOURADO )","8570","1e8b62_c203d04d8c3544798c38324ada260248~mv2.jpeg",["34"]],["SALTO FINO BEBECE ( OFF)","8542","1e8b62_e753acbc050245b18d19178f03240b56~mv2.png",["35","36","37","38","34","39"]],["SALTO FINO BEBECE ( PRETO )","8549","1e8b62_d747cea8eb7f4b75b5ec53074c1b3fc6~mv2.png",["37"]],["FLATFORM BRIZZA SQUARE  (PRETA)","8523","1e8b62_0ea02ddbdbfd412db398c84c03d49212~mv2.jpeg",["33-34","37-38","39-40"]],["FLATFORM BRIZZA SQUARE  (MARSALA)","8503","1e8b62_abb65e4ff1a24a539ce076ad3b94e6d0~mv2.png",["33-34","35-36","39-40"]],["FLATFORM BRIZZA SQUARE  (CAFÉ)","8508","1e8b62_0794c127cb814b24a8abc26eeee05cf7~mv2.png",["37-38","39-40"]],["FLATFORM BRIZZA SQUARE (OFF)","8513","1e8b62_abf36c7a7d694287b3d6f602370b7fae~mv2.png",["39-40"]],["FLATFORM BRIZZA AREZZO  (CAPUCHINHO)","8498","1e8b62_0d65bf5d2e6547489ba366d39dc1ef24~mv2.png",["39-40"]],["FLATFORM BRIZZA AREZZO (OFF )","8488","1e8b62_cc938dc1ca464649b68764071107a5cc~mv2.png",["37-38","39-40"]],["FLATFORM BRIZZA AREZZO (PRETO )","8493","1e8b62_13f4bde10a0b41d4977993b2b954a855~mv2.png",["39-40"]],["Tênis ADIDAS SAMBA ( OFF/ PRETO)","8351","1e8b62_0e98427c0e1340409244641a75eadcba~mv2.png",[]],["TÊNIS ADIDAS ADIZERO ( ROSA )","8379","1e8b62_d7ba8618cf5c469985dac70a648a2c40~mv2.png",["34","35","37","38"]],["Tênis ADIDAS  ( ROSA )","8386","1e8b62_c5c0ded817d74b1a9003382a9037f93b~mv2.png",["34","35","36","37","38"]],["Tênis ADIDAS  ( PINK )","8393","1e8b62_abd0d677b2284760834a9bd9cfd923d8~mv2.png",["34","35","36","37","38","39"]],["NEW 9060( OFF/CANELA )","8400","1e8b62_1ac88391c0644addafbee7b46e21705b~mv2.png",["34","35","36","37","39"]],["NEW 9060( OFF/ROSA )","8407","1e8b62_fc54788f6bb648c38d86d5946eb088ea~mv2.png",["34"]],["CHINELO AREZZO ( CARAMELO )","8336","1e8b62_96829561fcf74b228a335f1939877a9c~mv2.png",["33-34"]],["CHINELO AREZZO ( OFF )","8346","1e8b62_1bda4fdc729c47fa9157c3120f69dd13~mv2.png",["33-34"]],["SALTO MARIOTTA 42694 OURO","8315","1e8b62_ebd27e7f73684a73a4a92ffc0a11ea23~mv2.png",["35","36","37","38","34","39"]],["SALTO MARIOTTA  ELETTRA OURO","8308","1e8b62_cd0abcf16f964347a2daedebf49db4e0~mv2.png",["35","36","37","38","34","39"]],["SALTO MARIOTTA ELETTRA PRATA","8301","1e8b62_de8d22bff5604931bd84c4d13d5eb08b~mv2.png",["35","36","37","38","34","39"]],["SALTO  MARIOTTA II (PRETO )","8294","1e8b62_390c752b1e3948d491ef32fe3bb94d52~mv2.png",["37","38","34","39"]],["SALTO  MARIOTTA II (CARAMELO )","8287","1e8b62_6986a57e44004408a50a826c7eb1f0d5~mv2.png",["35","36","37","38","34","39"]],["SALTO  MARIOTTA II (DOURADO)","8280","1e8b62_29767ab622794e38b4429c7aa3125969~mv2.png",["36","37","39"]],["SCARPIN MARIOTTA  (PRETO)","8266","1e8b62_e8ab420fb5f543d192ef38d1f63b46e0~mv2.png",["34","35","36"]],["SCARPIN MARIOTTA  (NUDE)","8273","1e8b62_1d52256b69794c818e845c7da403919d~mv2.png",["35","38","39"]],["ANA BELA MARIOTTA  ( CARAMELO )","8259","1e8b62_dd5b00cfb21f4ec3be5f088da8e4c48b~mv2.png",["35","36","37","38","34","39"]],["SALTO CHAMPAGNE MARIOTTA","8252","1e8b62_874c5d81d9dd429b9b90fd7b9a0a53b7~mv2.png",["35","36","37","38","34","39"]],["SALTO OFF MARIOTTA","8245","1e8b62_71d781aa101a460aa2eadf17bf2051fd~mv2.png",["37","38","39"]],["SALTO DOURADO MARIOTTA","8238","1e8b62_d08e2d44f43041b4ae1384fd03267a38~mv2.png",["35","36","37","38"]],["ANA BELA MARIOTTA  ( PRETA )","8224","1e8b62_d55291d1b4224586bc3c5f248f933746~mv2.png",["36","37","38","34","39"]],["SALTO FESTA MARIOTTA  ( DOURADO )","8231","1e8b62_e146cbecfa1c461d80d78f5e0d143670~mv2.png",["35","36","38","34"]],["SALTINHO MARIOTTA  ( CAFÉ )","8217","1e8b62_00b1eb755b5a454399b98766a816ae25~mv2.png",["38","34"]],["SALTO MARIOTTA PLUS ( PRETO )","8210","1e8b62_da4bdf5981314de4a6f59755f154a75e~mv2.png",["37"]],["SALTO MARIOTTA PLUS ( OFF)","8196","1e8b62_3e1093eb76944174b0f2aa381c912d9f~mv2.png",["38"]],["NIKE ZOOM X ( PRETO )","8175","1e8b62_1cef14a128084ab8bf694e9c92d2feab~mv2.png",["34","35"]],["CHINELO AREZZO ( PRETO)","8160","1e8b62_c1c8a5e7519843b0b6c90530c4444bf3~mv2.jpg",["33-34","39-40"]],["CHINELO AREZZO ( CAPUCHINHO )","8170","1e8b62_cdcdc01eebc64d6487aa56414ae6e0d5~mv2.jpg",["37-38","39-40"]],["SCHÜTZ X ( PRETO)","8139","1e8b62_ab3013d9dc664bf1894941afe991a689~mv2.png",["35"]],["ADIDAS LIGHTSTRIKE PRO LILÁS","8118","1e8b62_d566cacd47fc4ebea6b30b4880802797~mv2.png",["35"]],["NIKE ZOOM X ( ROSA )","8090","1e8b62_0792f127e0c2488a91b7d2408b00fe72~mv2.jpg",["37"]],["TAMANCO TAIS (AMEIXA )","8041","1e8b62_e2a92c2c895c4a4d87ca450e808540c2~mv2.jpeg",["35","36","37","38","39"]],["SANDÁLIA GISELE (OURO )","8006","1e8b62_1a4f9b65aea74115907dc270d4d86ef8~mv2.png",["35","36","37","38","34","39"]],["ANA BELA ACRILICO","7880","1e8b62_146e6d73ec2e4a14ab4973d81d355aba~mv2.jpeg",["35","36","34"]],["ANA BELA PITAYA ( VERMELHO)","7887","1e8b62_2dd4ba83129745d0a5f33c931a8eeaf7~mv2.jpeg",["35","36","37","34"]],["ANA BELA PITAYA ( OURO)","7894","1e8b62_f8195ef6c97c4976a39e7843e5d906b7~mv2.jpeg",["35","36","38","34","39"]],["TAMANCO LAÇO( OURO )","7929","1e8b62_c88eaed41407477b8512033e4db52ac7~mv2.jpeg",["35","36","37","34"]],["TAMANCO LAÇO ( CARAMELO )","7936","1e8b62_9e60c95d3fd74ea8a3ec2c0db9051219~mv2.jpeg",["38","34"]],["TAMANCO LAÍS ( MARSALA )","7971","1e8b62_6a8b4f062c0b42a58b1aba6af1112e6f~mv2.jpeg",["35","36","34","39"]],["TAMANCO LAÍS ( OURO )","7978","1e8b62_fd6e7035102d4c6789a8d1e5f05568b8~mv2.jpeg",["39"]],["TAMANCO TAIS ( OURO )","7985","1e8b62_01debfdf2bde436b94f4e49d75b13aa6~mv2.jpeg",["35","34"]],["TAMANCO TAIS (CARAMELO )","7999","1e8b62_a97d2e5c3c8b474eaedc1a48be257c54~mv2.jpeg",["39"]],["SANDÁLIA MINIMALISTA (OURO )","8013","1e8b62_601b73a9ed4145f786e9cd7adfdde099~mv2.png",["35","36","38","34","39"]],["SANDÁLIA MINIMALISTA (CARAMELO )","8020","1e8b62_b229726e8dcd4472891aff4470e74755~mv2.png",["35","36","37","38","34","39"]],["SANDÁLIA MINIMALISTA (PRETRO )","8027","1e8b62_60b132b14cb1461f9e4cd080aa070f2c~mv2.png",["35","36","37","34","39"]],["SANDÁLIA MINIMALISTA (MARSALA )","8034","1e8b62_e7e1c0afebdb46aeb6cd937cd6e8e535~mv2.png",["35","36","37","34","39"]],["Tênis ADIDAS SAMBA (CARAMELO)","7866","1e8b62_0edf7a4f395a4713be5c1a80386ed0a2~mv2.png",[]],["SALTO MADRI","7862","1e8b62_707b526ffaed4fc0a99bfa68cf7d452d~mv2.png",["37"]],["Tênis Nike ( CINZA PRETO)","7848","1e8b62_6bced12babc848139839b416b5a01758~mv2.png",["35"]],["Tênis Nike ( OFF)","7841","1e8b62_b45e68276c424f13a28afe7d084bbda3~mv2.png",["34"]],["SALTO CRISTAL PRETO  LUMEN","7820","1e8b62_0834640d54b44f2b9a557dd45ec67506~mv2.png",["34"]],["SALTO CRISTAL OFF  LUMEN","7827","1e8b62_aa05bfa3134645b3958eb6840b92c479~mv2.png",["35","37","39"]],["TAMANCO BICO FOLHA LUMEN ( OFF )","7799","1e8b62_409b3bae33d64e5caa94b88eeefa2591~mv2.jpeg",["35"]],["SALTO CRISTAL LUMEN","7806","1e8b62_5dc5df104187490f9e6345e4d87ad673~mv2.png",["35","36","37","34","39"]],["CHINELO SLIDE LV ( OFF)","7785","1e8b62_0b4a0f53a1464302ba6c9393f34b79f3~mv2.jpeg",["37","38"]],["CHINELO SLIDE LV (PRETA)","7792","1e8b62_348adc5dbe23495ba396fd3d2babb3f3~mv2.jpeg",["34","37"]],["Rasteira LOGO ( OFF)","7778","1e8b62_6c4c267c9e4d4272b68979e95f1f5b3c~mv2.png",["35","36","37","39"]],["Rasteira MEDALHA","7743","1e8b62_a51378dc873240cea3cd04b7746d0fbb~mv2.png",["36","37","38","39"]],["Rasteira CARMEL","7757","1e8b62_2f4e92acc374460bbaa2dd0f77cdb58c~mv2.png",["35","39"]],["Rasteira FIO (PRATA)","7722","1e8b62_48afc3f5b2ff4a4d9e47f62fb275e443~mv2.png",["37"]],["Rasteira FIO (OURO )","7729","1e8b62_055456ff4dbe4b1ea458a41f99c125df~mv2.png",["37","38"]],["Rasteira FIO (CARAMELO )","7736","1e8b62_5fd5c15d271e436c99c0b04f9573d115~mv2.png",["38","39"]],["SALTINHO VICTORIA ( OURO )","7715","1e8b62_c2f67bf2e6204a6e995d8044196d9930~mv2.png",["39"]],["TAMANCO BLOCO BAIXO ( PRATA)","7680","1e8b62_9bca0d4d0d22428bb4b031d422da61f9~mv2.png",["36","37"]],["TAMANCO BLOCO ( OFF)","7694","1e8b62_73d329d3820c4cb59cb7d4c3e04ab14c~mv2.png",["39"]],["TAMANCO BLOCO ( CARAMELO )","7701","1e8b62_e6df9aabbe8844ba97d68cb0be734da1~mv2.png",["37","39"]],["TAMANCO BLOCO ( PRETO )","7708","1e8b62_68560011ac3743f9baf538f65f9bacd6~mv2.png",["38"]],["Rasteira Schütz FIO (OFF)","7626","1e8b62_58f42fec7c094b42a1f1120f64e798eb~mv2.png",["38"]],["TÊNIS NIKE ZOOM (OFF )","7605","1e8b62_e1cc25765b34451d882f74ed75fffc5f~mv2.png",["34"]],["SALTO DEDINHO LUMEN (caramelo)","7577","1e8b62_673f402eed784c218138e2dd8f2c4b2b~mv2.png",["35","37","39"]],["SALTO LUXO LUMEN (caramelo)","7584","1e8b62_e284c9af7f44401e94f8d5aa89cb1f0c~mv2.png",["37"]],["SALTINHO TRAÇA  (caramelo)","7591","1e8b62_6e8625e2564b4126b56d501589695caf~mv2.png",["37"]],["Tênis NEW BALANCE  ABZORB (cinza)","7536","1e8b62_c0a5892a847042679f874e4d5f060a1f~mv2.png",["34"]],["Scarpin Salto  (preto)","7482","1e8b62_dfe11356ee004774b7b59c766d558434~mv2.png",["34","35","39"]],["Scarpin Salto  (caramelo)","7489","1e8b62_a83859096965420ea92d4688afd9ef54~mv2.png",["34","35","37","39"]],["Scarpin Cristal (preto)","7503","1e8b62_0daeddbefbdd49e0bcce41c9cff430f6~mv2.png",["35","37"]],["Sandália Gisele (CARAMELO) 1988","7433","1e8b62_66a5430235224613a0f2a6c528b46eca~mv2.png",["35","36","37","39"]],["Sandália Gisele (Caramelo)","7440","1e8b62_4dec94ebca544c3c8962bfb42a6c6111~mv2.png",["38","39"]],["Sandália Gisele (late)","7454","1e8b62_5775f75e10504e5aa8be7b66eae25dba~mv2.png",["34","35","36","38"]],["Sandália Gisele (cafe)","7461","1e8b62_f92dd23d519c40be843a62df28e10f6e~mv2.png",["35","37","39"]],["Sandália Dedinho  (caramelo)2547","7405","1e8b62_12faa9fc380a4fc88aee2238584194ed~mv2.png",["38","39"]],["Sandália Di Valentini (preta)2816","7391","1e8b62_e46c3441cebe445ca4e886b840f925fb~mv2.png",["34","37","39"]],["Sandália Di Valentini (caramelo)2816","7398","1e8b62_7e48f31abd3b4131987eccd5a100481c~mv2.png",["36","37","38","39"]],["Sandália Di Valentini (marrom)2708","7377","1e8b62_ee8aa0b754d44148b853136a55eead1d~mv2.png",["37"]],["Sandália Di Valentini (off)2708","7384","1e8b62_bfae7ef69aa549b0b3f1bfdbc9175380~mv2.png",["39"]],["Sandália Gisele (caramelo) 2172","7349","1e8b62_3432d786366a4b5ba9776bb667b519ea~mv2.png",["34","37","38"]],["Tênis NB 9060 (Branco/rosa)","7272","ae34e2_56677dd966a64847b2810b94b7d5679d~mv2.jpg",["34","35","37","38"]],["BOTA MARIOTTA ( BEGE )","7211","1e8b62_1a274ba55e604ee59f7549d2b8e7eb62~mv2.png",["34","37"]],["BOTA MARIOTTA ARGOLA","7218","1e8b62_c68d43049fc2469fa3984e8996de5443~mv2.png",["34","36","37"]],["BOTA MARIOTTA  ( CAFÉ )","7225","1e8b62_05009c59f53d491ab11671c41458a39e~mv2.png",["34","35","36"]],["BOTA MARIOTTA  ( PRETA )","7232","1e8b62_f2f1e60a3c2742608011518ea11ff56f~mv2.png",["34","36","37"]],["Chinelo GUCCI ( MARON)","7197","1e8b62_5cf297d0141443b4a608e8bee3c726bf~mv2.jpeg",["34"]],["NUVEM ( BRANCA)","7159","1e8b62_3285b4d4d81b48ac9ed025643d1cec06~mv2.jpeg",["36"]],["NUVEM (PRETA )","7166","1e8b62_81a15ef352c74d7f8a41470400f0fab0~mv2.jpeg",[]],["NUVEM (SALMAO )","7173","1e8b62_ab3e23675ecd4f139b92c169e68dabd1~mv2.jpeg",["36","37"]],["SANDÁLIAS FLARE ( PRETO )","7069","1e8b62_a4cebc13940d45909a38d7c425406cf3~mv2.jpeg",["35"]],["SANDÁLIAS FLARE ( PRATA )","7076","1e8b62_537234f8dfd14bc59fcb51f16b22b93b~mv2.jpeg",["34","35","39"]],["SANDÁLIAS FLARE ( OURO )","7083","1e8b62_bfa2f9192e4d46b99effa78fb9773d2f~mv2.jpeg",["34","38","39"]],["Tênis NB 9060 ( vinho )","7002","1e8b62_1de74238d1054838aff066fe85e3b47d~mv2.png",["34","35"]],["Chinelo Virgínia ( AMARELO )","6958","1e8b62_55bbaabcc6844263a9edf7160b8e4f6b~mv2.jpeg",["33-34","39-40"]],["Chinelo Virgínia ( AZUL )","6963","1e8b62_a4e6bec3d60e4312b07c39502f4b1862~mv2.jpeg",["33-34","39-40"]],["AREZZO BRASIL ( CAFE)","6819","1e8b62_bbbec6c2f3184ed5ae2c8b984c17db6c~mv2.jpeg",["33-34"]],["AREZZO BRASIL ( PRETO)","6814","1e8b62_4a3413e3ca4c4a01bee3fe46e566891a~mv2.jpeg",["33-34","39-40"]],["AREZZO BRASIL ( OFF)","6809","1e8b62_87abec4870d94608b82ca874250c48d0~mv2.jpg",["33-34","39-40"]],["Rasteira Schutz Cobra (ouro)","6760","1e8b62_53b546bd01d94f91a248edabf2c1a4fd~mv2.png",["36","37","38"]],["Rasteira Schutz Cobra (prata)","6753","1e8b62_bc0e94e4b4a54386a59094029fdbdc72~mv2.png",["34","35"]],["TÊNIS SCHUTZ 001","6746","1e8b62_87a52adc21d648d990b0a52dd5ac2c76~mv2.png",["34"]],["TÊNIS SCHÜTZ II ( PRETO)","6698","1e8b62_7f2b6163625c483e9002c930a3fe260f~mv2.png",["35"]],["RASTEIRA SCHUTZ X (PRETO)","6581","ae34e2_198f1e74cb6b4fdbac4134608dec44b6~mv2.jpg",["35"]],["RASTEIRA SCHUTZ X (OFF)","6588","ae34e2_3043b28b14ac4c2eb1a4240165430f77~mv2.jpg",["35"]],["RASTEIRA PENA (OURO)","6664","1e8b62_a7ef461484cc47ce952abfd98085eba8~mv2.png",["37-38","39-40"]],["RASTEIRA TROPICAL (PRATA)","6610","1e8b62_b44b327eb8be453889e12340d1da88ef~mv2.jpeg",["35"]],["RASTEIRA H (OURO)","6626","1e8b62_da5205a915a742ce891eb3ec07104caf~mv2.jpeg",["39"]],["RASTEIRA GOLD (PRATA)","6645","1e8b62_9e92c29509e24652940761f8d67beec5~mv2.jpeg",["36"]],["Chinelo Virgínia ( PRETA )","6522","1e8b62_bf499d0f7f5445a48197bbdc341da6d0~mv2.jpeg",["33-34","39-40"]],["Chinelo Virgínia ( MAROM )","6527","1e8b62_5c1ead570d3c4285b5b3c1f4e0d291d4~mv2.jpeg",["33-34"]],["Chinelo Virgínia ( OFF)","6532","1e8b62_9e5388dfae0543f694cda67193fee8b4~mv2.jpeg",["33-34","39-40"]],["Tênis NIKE ( OFF)","6489","1e8b62_69e89e26ded84a1d896d08db3cdbb1a8~mv2.png",["38"]],["Rasteira Fivela (off)","6502","1e8b62_cd73544d7d4d417e940212b6ba6c07e4~mv2.jpeg",["35","37","38","39"]],["Rasteira FIVELA ( CARAMELO)","6511","1e8b62_65d1d33fdfef44c7a5f58b3ad4380ed7~mv2.jpeg",["37","38"]],["Rasteira FIVELA ( PRATA)","6516","1e8b62_354e0b2053e24a68983c37645c1e0703~mv2.jpeg",["35","37","39"]],["Salto DI VALENTINI 11236 ( TELHA)","6430","1e8b62_d426b65c1ee74f99876c7b46b3691af2~mv2.jpeg",["34","35","36","38","39"]],["Salto DI VALENTINI 11236. ( DIJON )","6437","1e8b62_dc340caadc5249708cb92a18300c743c~mv2.jpeg",["34","36","37","38","39"]],["Chinelo Arezzo Brizza ( OFF )","6400","1e8b62_4b2c8405a9ca49c9930e685d33239a2c~mv2.jpeg",["33-34","39-40"]],["Chinelo Arezzo Brizza ( Café)","6405","1e8b62_d1033e2b785a4c5f95bc0e3c4682de41~mv2.jpeg",["33-34","39-40"]],["Chinelo Arezzo Brizza (Preto)","6410","1e8b62_3fd5149d47a142b8957ccab92dc8dd50~mv2.jpeg",["33-34"]],["Rasteira Couro ( OFF)","6259","1e8b62_d0ae32b7d22b4458bdb2a58255d60317~mv2.jpeg",["39"]],["RASTEIRA LUXO (AMARRAÇÃO)","6175","1e8b62_2e216f16955d4bd9b260f3b9e1cee52a~mv2.png",["34"]],["RASTEIRA LUXO (GLADIADORA)","6189","1e8b62_a611c82aa58f476ba72aeb3fa2435c0f~mv2.jpeg",["38"]],["RASTEIRA LUXO (ELO)","6100","1e8b62_8902f10733ac4fc4a0fd9c4396562c0a~mv2.jpeg",["39"]],["PAPETE CARIBE (OFF)","5951","1e8b62_cd7f27d5a9b84fff80cc5f652b6c915f~mv2.jpeg",["34","39"]],["Rasteira Schutz Clássica (nude)","6457","1e8b62_6ac944d43ec54b4f99aed6cb26804ed2~mv2.jpeg",["40"]],["PAPETE BIRKEN GUCCI (GUCCI)","5905","1e8b62_9bc4183a1b7c408fb91e81270fabd95c~mv2.jpeg",["34-35"]],["SLIDE LOUIS  (AZUL)","5818","1e8b62_727ca5ae157f4285ab08182e241ac5ac~mv2.jpeg",["35","36","38"]],["RASTEIRA MIU MIU (OURO)","5784","1e8b62_b219a643367146688b569f12e2e9b799~mv2.png",["38"]],["Chinelo Schutz (OFF)","5701","1e8b62_bd3b219c10124137aa13a3fe339facea~mv2.jpeg",["39-40"]],["DIVALENTINI 5409 (PRETO)","6209","1e8b62_3b7509f5b54d4e60b530a6a4a473d53c~mv2.jpeg",["38"]],["DIVALENTINI 5409 (PRATA )","5570","1e8b62_cd4a85d6efff42efa76b4b17e9226b6c~mv2.jpeg",["38"]],["DIVALENTINI 5406 (PRATA)","5602","1e8b62_ee7ba9b7eefa4c2ca26a4035d57a2790~mv2.png",["36","37","38","39"]],["SCARPIN (PRETO)","5427","1e8b62_0c8991d37705409291a1d889517cd33a~mv2.jpeg",["34"]],["RASTEIRA TÓQUIO (CARAMELO)","5406","1e8b62_abe349c11ca448568c6911a7f0a1936e~mv2.png",["34","35","36","38"]],["RASTEIRA BOUTIQUE (NUDE)","5139","1e8b62_5b29e532f3e84a9d99ac316ab39998dc~mv2.jpeg",["36"]],["RASTEIRA BOUTIQUE (PRATA)","5144","1e8b62_6165eb1d0a8a426b8432050ba0de91db~mv2.jpeg",["36"]],["RASTEIRA BOUTIQUE 02 (PRATA)","5158","1e8b62_f803ec492dfe41a0979e3ad2e7b9fba2~mv2.jpeg",["34","35"]],["RASTEIRA BOUTIQUE 02 (CARAMELO)","5173","1e8b62_87414bfa8bbf45ea9076b9e05830295c~mv2.jpeg",["38","39"]],["RASTEIRA BOUTIQUE 02 (NUDE)","5181","1e8b62_64f140edc8b34d1e9d33d86ed3d5ad41~mv2.jpeg",["36","38"]],["PAPETE DOLORES  (CAFÉ )","5118","1e8b62_bb8e204c26ca44008b3ddfd41b0ba7ce~mv2.png",["34","35","36","37","38","39"]],["PAPETE DOLORES  (OFF )","5125","1e8b62_349abb5d211f483b843c981142c91204~mv2.png",["34","35","36","37","38"]],["SANDÁLIA SALTO THAY (PRETO)","5076","1e8b62_2e5404b43c4442f1bb0cc7015e8d8798~mv2.jpeg",["36","37","38"]],["SANDÁLIA SALTO GREGORIA  (CAFE)","5084","1e8b62_7559aec3757d443cbcab901f369a44eb~mv2.jpeg",["35","36","38","39"]],["SANDÁLIA SALTO GREGORIA  (OFF)","5090","1e8b62_803e0519c148408d996fa9f9f6f19e4c~mv2.jpeg",["34","35","36","38"]],["SANDÁLIA SALTO VOP  (MOUSE)","5106","1e8b62_609dc1df97f24954ac9c5079d53a4678~mv2.png",["38"]],["TAMANCO SALTO LORES  (ÂMBAR )","5111","1e8b62_701323afc03e4d6cb182e6464f588723~mv2.jpeg",["35","36","37","38","39"]],["FALT BLOCO  (PRETA)","5015","1e8b62_8a61968bd5114b71bc8aae1730c3a566~mv2.png",["38","39"]],["RASTEIRA ELOAH  (PRETA)","5049","1e8b62_c81cb62d44ab4e46ac1488dc45a5228c~mv2.png",["35","38"]],["RASTEIRA AREZZO (ONCINHA)","5063","1e8b62_2f08cb55637f4e8ab220b4202c4c548b~mv2.png",["35","38"]],["Chinelo Arezzo ( cafe )","6676","1e8b62_ad3cc7ec5f224ea7b9a08da9a4aa76a1~mv2.jpeg",["33-34"]],["Chinelo Arezzo ( off )","6672","1e8b62_00bc3ecfb8ad46428ce5f43f8643b8e5~mv2.jpeg",["39-40"]],["Tamanco Elani  ( café )","4834","1e8b62_79a0db2b1f81419d94a2af58f88f661a~mv2.png",["39"]],["Tamanco Arací  ( cafe )","4811","1e8b62_6e6927f9a8fb490e812f5c818feb64ef~mv2.jpeg",["35","37","38"]],["Tamanco Arací  ( off )","4818","1e8b62_19aafd4f2a81483f9f47d9b6fc3bd465~mv2.png",["35","37","38","39"]],["Rasteira Vick  ( cafe )","4761","1e8b62_f47bafc892234ff285ab47addeb7d480~mv2.png",["34"]],["Rasteira Vick ( off )","4768","1e8b62_cc06aedf0c1a4c8380155b460438fd68~mv2.png",["34","36","38"]],["Rasteira Bell ( off )","4776","1e8b62_b3700af6dc7f460d8086e43008b26cb4~mv2.png",["35","36","39"]],["Rasteira Bell ( caramelo )","4782","1e8b62_fcc57f9c141e45028bbe932000bdc0e7~mv2.png",["34","35","36","37","38"]],["Rasteira Bell ( musgo )","4790","1e8b62_45a56e5c00d24073b16114d20cc9821c~mv2.png",["35","36","38"]],["PAPETE COURO ( CARAMELO)","4719","1e8b62_0eef06e9d21d43e7883cd5c2f8227572~mv2.jpeg",["35"]],["PAPETE COURO ( ANIMAL PRINTE )","4726","1e8b62_cf069b4f53314a94b113503dd6ab01c5~mv2.png",["34"]],["Salto EUDORA ( AVEIA )","4561","1e8b62_09a59b0ca435484f80c4eb576a36e928~mv2.jpeg",["35","36","37","38","39"]],["SALTO EUDORA ( PRETO)","4567","1e8b62_1da7fbea774c463eb1d7a2e727d2c0fc~mv2.jpeg",["34","35","36","38","39"]],["SALTO EUDORA ( CAFÉ )","4574","1e8b62_1adc62d0b62e4e90bcd83c14d3edb76d~mv2.jpg",["34","35","36","37","39"]],["SALTO JASPIRA ( OURO)","4581","1e8b62_a8e53239b09247899782e860f6a36fa8~mv2.png",["34","36","38"]],["SALTO JASPIRA ( PRATA )","4590","1e8b62_67c91291c1bf442a878e88c9687e7046~mv2.png",["36","37","38"]],["SALTO JASPIRA ( OFF)","4595","1e8b62_0bc38556393c442e9beb747101a25bc6~mv2.png",["34","35","36","37","38","39"]],["SALTO MIDIAN ( OFF)","4603","1e8b62_9b5b9266a099428fb3baa806d99f4758~mv2.jpg",["35","36","37","39"]],["SALTO MIDIAN ( ARMY )","4609","1e8b62_815246d433c043e79c881703d25546f6~mv2.png",["34","35","36","37","38","39"]],["SALTO NAIA ( CARAMELO)","4616","1e8b62_d37a40adee0e4b869ae54871b8ae5051~mv2.jpeg",["35","36","38","39"]],["SALTO LEONOR ( MARSALA )","4490","1e8b62_6f8f0d7a8afe4224a6f8d28663590f47~mv2.png",["34","35"]],["SALTO LIGHT (PRATA )","4527","1e8b62_a051a1534c344da6a71dadfccaff8760~mv2.jpg",["36"]],["Chinelo Schutz Logo ( Preta)","6684","1e8b62_39425fbf0c2241c28bd79ebaa0565395~mv2.jpg",["33-34","39-40"]],["Chinelo Schutz Logo ( OFF )","5690","1e8b62_2aadb26f241043e795434b4c58cd0979~mv2.jpg",["33-34","39-40"]],["Tamanco Bico Folha (caramelo)","4347","1e8b62_f4656a1455f84c5d8cefbc80c50cf8a6~mv2.jpeg",["38"]],["Tamanco Salto Fino ( Café )","4367","1e8b62_283173b70ea440e38271483aa14020c0~mv2.jpeg",["36"]],["Tamanco Salto Fino ( Caramelo)","4373","1e8b62_34fd98381de94130b7bf194d6f21b452~mv2.jpeg",["36"]],["Salto Madri","4401","1e8b62_c8b9211dc4324eebadf89edc97c14d42~mv2.png",["34","35"]],["Salto Madri ( Café )","4408","1e8b62_32c1656341fa401094ddac1db2aae82d~mv2.png",["35","36"]],["Salto V ( Preto )","4417","1e8b62_6eea3eba487b4407915a844d173bcf33~mv2.jpeg",["38"]],["Salto V (OFF )","4424","1e8b62_b8eb0a9b62874d4784aeb959133cb187~mv2.jpeg",["38","39"]],["Salto Gold","4441","1e8b62_3d4300a9fa9f4152b4af46d3eb3b219d~mv2.jpeg",["34"]],["Sandália Salto Baixo MRTT (off)","4271","1e8b62_a33dfe52b4d74c2ba7294da50adb35b7~mv2.png",["39"]],["Sandália de dedo salto fino  MRTT (off)","4280","ae34e2_31817c0c6768418ab8755608333c1377~mv2.jpg",["34","35","39"]],["Bolsa Balada (caramelo)","4197","1e8b62_c3bd5704cfeb4990ac3c03259424c679~mv2.jpeg",[]],["Bolsa Balada (preta)","4198","1e8b62_2731a2e4ee5f4a38bf55b1234d29d468~mv2.jpeg",[]],["Papete Couro (cafe)","4152","1e8b62_588055cead7f4a8689096290d3d90c57~mv2.png",["35","37","38"]],["Papete Couro (preta)","4158","1e8b62_81662cd57c804e92b7fdec9fdc3ba283~mv2.png",["35","36","37","38","39"]],["Salto Fino E Calcanhar Fechado MRTT (preta)","4044","1e8b62_ec449bd0829e4b8bbb21ad3183c8e284~mv2.png",["35","38"]],["Salto Croco (café)","3960","1e8b62_cb0ea316411d43c3911dadcbb0cbfe19~mv2.png",["39"]],["Salto Croco (off)","3963","1e8b62_001c1c5e34964849a9b9f10809f06482~mv2.png",["34"]],["Salto Allm (caramelo)","3808","1e8b62_3b5ef6707d5843b6916103810ba82bba~mv2.jpeg",["34","35","38"]],["Havaiana Bohô (off)","3818","1e8b62_7b3bec62efe44bb388067410e9bccb89~mv2.jpeg",["39-40"]],["Salto Fino E Calcanhar Fechado MRTT","3539","1e8b62_e43591139d304d8e911ac58496995f68~mv2.png",["38"]],["Salto Fino Baixo Fivela De Strass","3557","1e8b62_6f9ff6cc8ff645dc954204ecb00d5a5e~mv2.jpeg",["35"]],["Sandália Essenza MRTT (Café)","3636","1e8b62_ca02baa574c042e8b10d61cb4156e610~mv2.jpeg",["37","38"]],["Chinelo Arezzo (off)","2569","1e8b62_c24b958c17264a89b4eff88e52826a30~mv2.jpeg",["33-34","39-40"]],["Havaianas Olho Grego (lilás)","2488","1e8b62_e9aec5f2ca8747c88546d0fcd3667f70~mv2.jpeg",["39"]],["Colcci Pandora (preta)","2336","1e8b62_205be130650e460d8b278c8ea67dfe0b~mv2.jpeg",["39-40"]],["Chinelo Farm (carnavalha)","2285","1e8b62_9edad100b5884efbbb36c24e8d497366~mv2.jpeg",["39-40"]],["Salto Acrílico (pala caramelo)","1849","1e8b62_6eab8b3d4fce4183b9bc1c67e92eb5fc~mv2.jpg",["38"]],["Papete Birken Gringa  (ouro)","1814","1e8b62_1896a707f7444016ad217b78b1e0636d~mv2.jpg",["38"]],["Papete Birken Gringa  (caramelo)","1819","1e8b62_7b182408d0664a02be9a9dd95e7952b7~mv2.jpg",["36","38"]],["Papete Flor (preta)","909","1e8b62_92c2db5eb6c14016a7f4d469cc8556bd~mv2.png",["35","38"]],["Rasteira Schütz (Nude)","1327","1e8b62_6bf12ebec536427d84be49766b4491e9~mv2.jpg",["40"]],["Saltinho Mari","509","1e8b62_c01fadfc8ce448859f22c5e702e8da59~mv2.png",["34"]],["Arezzo Pedras (Caramelo)","394","1e8b62_f9913cd68a7c4a3486aa2afd187fd230~mv2.png",["38"]],["Bolsa Original Premium","52","1e8b62_29168ed05a5c4952aabf5b6215a878f3~mv2.jpg",[]],["Rasteira Aspiral","240","1e8b62_014b23c45bb741f9a65213781673cd7f~mv2.jpg",["38"]]];
+ const media=new Map(), names=new Map(), linked=new WeakSet(), badges=new Map(), pendingSaves=new Set(), imageCache=new Map();
+ const nameKey=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+  .replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+ for(const item of catalogItems){
+  if(!Array.isArray(item)||item.length<4||!item[1]||!item[2])continue;
+  media.set(String(item[2]),item);
+  const key=nameKey(item[0]);if(!names.has(key))names.set(key,item);
+ }
+ const state={ready:true,matched:0,controls:0,lastError:null};
+ ROOT.__lumenShareV5=state;
+ if(!media.size){state.lastError='catalogo_embutido_vazio';return;}
+ const style=document.createElement('style');
+ style.textContent=".lumen-v5-ref{display:inline-block!important;position:static!important;float:none!important;z-index:auto!important;vertical-align:middle;pointer-events:none;flex:0 0 auto!important;margin-right:8px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:#7d674f!important;font:500 10px/1.2 Arial,sans-serif!important;letter-spacing:.01em!important;white-space:nowrap!important}.lumen-v5-share-sku-row{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;width:100%!important;margin:5px auto 0!important;padding:0!important;background:transparent!important}.lumen-v5-error{position:fixed;left:12px;right:12px;bottom:32px;z-index:2147483644;padding:11px 14px;background:#403125;color:white;border-radius:8px;text-align:center;font:13px Arial,sans-serif;box-shadow:0 3px 12px #0003;pointer-events:none}";
+ document.head.appendChild(style);
+ const one=(tag,cls,text)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el;};
+ const photoUrl=(p,edge=2400)=>'https://static.wixstatic.com/media/'+encodeURIComponent(p[2])+'/v1/fit/w_'+edge+',h_'+edge+',q_100/file.jpg';
+ const sku=p=>'REF '+String(p[1]||'').slice(0,32);
+ const filename=p=>'REF-'+String(p[1]).replace(/[^a-z0-9_-]/gi,'')+'-9x16.jpg';
+ const keysOf=s=>{
+  const v=String(s||'');
+  const out=[];
+  const re=/\/media\/([^/?#"' ]+)/g;
+  let m;while((m=re.exec(v)))out.push(decodeURIComponent(m[1]));
+  return out;
+ };
+ function getProduct(img){
+  for(const s of [img.currentSrc,img.src,img.getAttribute('data-src'),img.getAttribute('srcset'),
+   img.getAttribute('data-image-src'),img.alt]){
+   for(const k of keysOf(s))if(media.has(k))return media.get(k);
+  }
+  const alt=nameKey(img.alt);
+  if(alt&&names.has(alt))return names.get(alt);
+  const rect=img.getBoundingClientRect();
+  if(rect.width<90||rect.height<100)return null;
+  let parent=img.parentElement;
+  for(let n=0;n<7&&parent;n++,parent=parent.parentElement){
+   const t=nameKey(String(parent.innerText||'').slice(0,600));
+   if(t.length>15&&t.length<500&&/(varejo|atacado|adicionar ao carrinho)/.test(t)){
+    const match=[...names.entries()].find(([name])=>t.includes(name)&&name.length>8);
+    if(match)return match[1];
+   }
+  }
+  return null;
+ }
+ function getContainer(img,p){
+  let root=img.parentElement,chosen=null;
+  const key=nameKey(p[0]);
+  for(let i=0;root&&i<8;i++,root=root.parentElement){
+   const txt=nameKey(String(root.innerText||'').slice(0,900));
+   if(txt.includes(key)&&(txt.includes('varejo')||txt.includes('adicionar ao carrinho'))){
+    chosen=root;
+    if(txt.length<380)break;
+   }
+  }
+  return chosen;
+ }
+ function findShare(root,img){
+  const ir=img.getBoundingClientRect();
+  const middle=(ir.left+ir.right)/2;
+  const elements=Array.from((root||img.parentElement||document).querySelectorAll('button,a,svg,[role="button"],[aria-label],[title]')).slice(0,240);
+  const tagged=elements.filter(el=>/compartilh|share/i.test([el.getAttribute('aria-label'),el.getAttribute('title'),el.getAttribute('data-testid'),el.textContent?.slice(0,35)].join(' ')));
+  const btns=tagged.length?tagged:elements.filter(el=>{
+   if(el.tagName.toLowerCase()!=='svg')return false;
+   const r=el.getBoundingClientRect();
+   return r.width>10&&r.width<40&&r.height>10&&r.height<40&&
+    Math.abs((r.left+r.right)/2-middle)<ir.width*.35&&
+    r.top>ir.bottom+45&&r.top<ir.bottom+650;
+  });
+  const filtered=btns.map(el=>el.closest('button,a,[role="button"]')||el)
+   .filter(el=>{const r=el.getBoundingClientRect();return r.width>10&&r.height>8&&r.height<80;});
+  filtered.sort((a,b)=>Math.abs(a.getBoundingClientRect().left-middle)-Math.abs(b.getBoundingClientRect().left-middle));
+  return filtered[0]||null;
+ }
+ async function loadPhoto(url){
+  return new Promise((resolve,reject)=>{
+   const img=new Image();img.crossOrigin='anonymous';
+   img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Nao foi possivel baixar a imagem de origem'));
+   img.src=url;
+  });
+ }
+ async function renderedPhoto(p){
+  let original=null,lastError=null;
+  for(const size of [3000,2400,1800,1200]){
+   try{original=await loadPhoto(photoUrl(p,size));break;}catch(e){lastError=e;}
+  }
+  if(!original){
+   try{original=await loadPhoto('https://static.wixstatic.com/media/'+encodeURIComponent(p[2]));}
+   catch(e){lastError=e;}
+  }
+  if(!original)throw lastError||new Error('Não foi possível carregar a fotografia');
+  const width=1440,height=2560;
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw new Error('O navegador não conseguiu gerar a imagem');
+  // Enquadramento COVER: fotografia preenchendo 100% do formato 9:16.
+  // Não adicionar fundo branco, moldura, margens nem logotipo.
+  const scale=Math.max(width/original.naturalWidth,height/original.naturalHeight);
+  const dw=original.naturalWidth*scale,dh=original.naturalHeight*scale;
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(original,(width-dw)/2,(height-dh)/2,dw,dh);
+  const sizes=Array.isArray(p[3])?[...new Set(p[3].map(String)
+   .filter(x=>/^(3[3-9]|4[0-5])$/.test(x)))].sort((a,b)=>Number(a)-Number(b)).slice(0,13):[];
+  // Tipografia pequena diretamente sobre a foto, protegida por sombra.
+  ctx.fillStyle='#ffffff';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.shadowColor='rgba(0,0,0,.85)';ctx.shadowBlur=10;
+  ctx.shadowOffsetX=1;ctx.shadowOffsetY=2;
+  ctx.font='600 34px Arial,sans-serif';ctx.fillText(sku(p),48,2452);
+  if(sizes.length){
+   ctx.font='26px Arial,sans-serif';
+   ctx.fillText('NUMERAÇÕES  '+sizes.join('  •  '),48,2503);
+  }
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.97));
+  canvas.width=canvas.height=0;
+  if(!blob||blob.size<8000)throw new Error('Não foi possível gerar a foto em alta qualidade');
+  return blob;
+ }
+ function cachedPhoto(p){
+  const key=String(p[2]);
+  if(!imageCache.has(key)){
+   const promise=renderedPhoto(p).catch(e=>{imageCache.delete(key);throw e;});
+   imageCache.set(key,promise);
+  }
+  return imageCache.get(key);
+ }
+ function notifyFailure(msg){
+  state.lastError=String(msg||'Não foi possível salvar a imagem').slice(0,170);
+  const old=document.querySelector('.lumen-v5-error');if(old)old.remove();
+  const toast=one('div','lumen-v5-error','Não foi possível baixar a foto. Tente novamente.');
+  document.body.appendChild(toast);setTimeout(()=>toast.remove(),3500);
+ }
+ async function saveDirect(p){
+  const key=String(p[2]);
+  if(pendingSaves.has(key))return;
+  pendingSaves.add(key);state.lastError=null;
+  try{
+   const blob=await cachedPhoto(p);
+   dl(blob,p);
+   state.lastDownload={sku:String(p[1]),size:blob.size,at:Date.now()};
+  }catch(e){notifyFailure(e?.message||e);}
+  finally{pendingSaves.delete(key);}
+ }
+ function dl(blob,p){
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=filename(p);a.style.display='none';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),45000);
+ }
+ async function nativeShare(blob,p){
+  if(!navigator.share||typeof File==='undefined')return false;
+  const file=new File([blob],filename(p),{type:'image/jpeg'});
+  try{
+   if(navigator.canShare&&!navigator.canShare({files:[file]}))return false;
+   await navigator.share({files:[file],title:String(p[0]),text:String(p[0])+' • '+sku(p)});return true;
+  }
+  catch(e){return e?.name==='AbortError';}
+ }
+ // Gesto de toque longo = download imediato. Nenhuma segunda janela.
+ function bind(img,p){
+  if(linked.has(img))return;
+  linked.add(img);state.matched++;
+  img.style.webkitTouchCallout='none';img.style.webkitUserSelect='none';
+  let timer=0;
+  const clear=()=>{if(timer){clearTimeout(timer);timer=0;}};
+  img.addEventListener('pointerdown',e=>{
+   if(e.pointerType!=='mouse'||e.button!==0)return;
+   clear();cachedPhoto(p).catch(()=>{});
+   timer=setTimeout(()=>{timer=0;saveDirect(p);},640);
+  },{passive:true});
+  ['pointerup','pointercancel','pointerleave','dragstart'].forEach(n=>
+   img.addEventListener(n,clear,{passive:true}));
+  img.addEventListener('contextmenu',e=>{
+   e.preventDefault();clear();saveDirect(p);
+  });
+ }
+ function candidateCard(img,p){
+  return getContainer(img,p)||img.parentElement?.parentElement||null;
+ }
+ function isShareIcon(el){
+  if(!el)return false;
+  const probe=[el.getAttribute?.('aria-label'),el.getAttribute?.('title'),
+   el.getAttribute?.('data-testid'),el.getAttribute?.('data-hook')].join(' ').toLowerCase();
+  if(/compartilh|share/.test(probe))return true;
+  const svg=el.tagName?.toLowerCase()==='svg'?el:el.querySelector?.('svg');
+  if(!svg)return false;
+  const circles=svg.querySelectorAll?.('circle').length||0;
+  return circles>=2&&(svg.querySelector('line,path,polyline')!==null);
+ }
+ function findShareNearCard(card,img){
+  if(!card)return null;
+  const photo=img.getBoundingClientRect();
+  const mid=(photo.left+photo.right)/2;
+  const selectors='svg,[aria-label],[title],[data-testid],[data-hook],button,[role="button"]';
+  const nodes=Array.from(card.querySelectorAll(selectors)).filter(isShareIcon);
+  let selected=null,best=Infinity;
+  for(const el of nodes){
+   if(el.contains(img))continue;
+   const rect=el.getBoundingClientRect();
+   if(rect.width<9||rect.height<9||rect.width>110||rect.height>90)continue;
+   if(rect.top<=photo.bottom+20||rect.top>=photo.bottom+800)continue;
+   const dx=Math.abs((rect.left+rect.right)/2-mid);
+   if(dx>photo.width*.55)continue;
+   const score=dx*.4+Math.abs(rect.top-photo.bottom-300)*.12;
+   if(score<best){best=score;selected=el;}
+  }
+  if(!selected)return null;
+  const clickable=selected.closest('button,a,[role="button"]');
+  if(clickable&&card.contains(clickable)&&clickable!==card)return clickable;
+  return selected.tagName?.toLowerCase()==='svg'?selected.parentElement:selected;
+ }
+ function findWhatsapp(card){
+  if(!card)return null;
+  const nodes=Array.from(card.querySelectorAll('button,a,[role="button"],div,span'))
+   .filter(el=>/comprar no whatsapp/i.test(String(el.textContent||'').trim())&&
+      String(el.textContent||'').trim().length<100);
+  nodes.sort((a,b)=>String(a.textContent).length-String(b.textContent).length);
+  return nodes[0]?.closest?.('button,a,[role="button"]')||nodes[0]||null;
+ }
+ function addBadge(img,p){
+  const previous=badges.get(img);
+  if(previous?.ref?.isConnected)return;
+  if(previous){previous.ref?.remove();badges.delete(img);}
+  const card=candidateCard(img,p);
+  if(!card)return;
+  const ref=one('span','lumen-v5-ref',sku(p));
+  ref.dataset.lumenSku=String(p[1]);
+  const share=findShareNearCard(card,img);
+  const whatsapp=findWhatsapp(card);
+  if(share?.parentNode&&share!==card&&card.contains(share)){
+   // Mesmo container do ícone Compartilhar, à sua esquerda.
+   const parent=share.parentNode;
+   if(parent!==card){
+    const style=getComputedStyle(parent);
+    if(style.display==='block'||style.display==='inline-block'){
+     parent.style.display='flex';parent.style.alignItems='center';
+     parent.style.justifyContent='center';parent.style.gap='7px';
+    }
+   }
+   parent.insertBefore(ref,share);
+  }else if(whatsapp?.parentNode&&card.contains(whatsapp)){
+   // Se o Wix esconder o SVG, inserir uma pequena linha sob WhatsApp.
+   // Nunca sobrepor a fotografia nem o valor.
+   const row=one('div','lumen-v5-share-sku-row');
+   row.appendChild(ref);whatsapp.insertAdjacentElement('afterend',row);
+  }else{
+   // Fallback de texto normal ao final do card (nunca na imagem).
+   const row=one('div','lumen-v5-share-sku-row');
+   row.appendChild(ref);card.appendChild(row);
+  }
+  badges.set(img,{ref,p});state.controls=badges.size;
+ }
+ function draw(){
+  for(const [img,entry] of badges){
+   if(!img.isConnected||!entry.ref.isConnected){
+    entry.ref.remove();badges.delete(img);
+   }
+  }
+  state.controls=badges.size;
+ }
+ // No iPhone a foto do Wix pode estar coberta por uma camada transparente.
+ // Um único listener delegado cuida do toque longo e não duplica downloads.
+ let longTimer=0,touchX=0,touchY=0;
+ const clearLong=()=>{if(longTimer){clearTimeout(longTimer);longTimer=0;}};
+ const eventPhoto=event=>{
+  const target=event.target;
+  if(!target||!target.closest)return null;
+  const direct=target.closest('img');
+  if(direct){const p=getProduct(direct);if(p)return {img:direct,p};}
+  const wrapper=target.closest('wix-image,[data-testid*="image"],[class*="image"]');
+  if(!wrapper)return null;
+  const img=wrapper.querySelector('img');
+  if(!img)return null;
+  const p=getProduct(img);return p?{img,p}:null;
+ };
+ document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1)return;
+  const photo=eventPhoto(e);if(!photo)return;
+  clearLong();
+  touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;
+  cachedPhoto(photo.p).catch(()=>{});
+  longTimer=setTimeout(()=>{longTimer=0;saveDirect(photo.p);},650);
+ },{capture:true,passive:true});
+ document.addEventListener('touchmove',e=>{
+  const t=e.touches?.[0];
+  if(!t||Math.abs(t.clientX-touchX)>13||Math.abs(t.clientY-touchY)>13)
+   clearLong();
+ },{capture:true,passive:true});
+ for(const event of ['touchend','touchcancel','scroll']){
+  document.addEventListener(event,clearLong,{capture:true,passive:true});
+ }
+ let scheduled=false;
+ function scan(){
+  scheduled=false;
+  for(const img of document.querySelectorAll('img')){
+   if(linked.has(img)){if(!badges.get(img)?.ref?.isConnected){const p=getProduct(img);if(p)addBadge(img,p);}continue;}
+   const r=img.getBoundingClientRect();
+   if(r.width<90||r.height<110)continue;
+   const p=getProduct(img);if(!p)continue;
+   bind(img,p);addBadge(img,p);
+  }
+  draw();
+ }
+ function schedule(){if(scheduled)return;scheduled=true;setTimeout(scan,220);}
+ const observer=new MutationObserver(schedule);
+ observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['src','srcset','style']});
+ let drawQueued=false;
+ const scheduleDraw=()=>{
+  if(drawQueued)return;drawQueued=true;
+  requestAnimationFrame(()=>{drawQueued=false;draw();});
+ };
+ document.addEventListener('scroll',scheduleDraw,{passive:true,capture:true});
+ window.addEventListener('resize',scheduleDraw,{passive:true});
+ document.addEventListener('load',schedule,true);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
+ const tryInit=()=>schedule();
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tryInit,{once:true});
+ else tryInit();
+ // Public diagnostic only: no personal data.
+ state.refresh=tryInit;
+})();
