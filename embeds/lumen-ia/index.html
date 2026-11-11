@@ -550,9 +550,12 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const readonly=item.somenteLeitura===true||item.canal==='INSTAGRAM';
     byId('humanReply').disabled=readonly||!mine||!windowOpen;
     byId('sendHuman').disabled=readonly||!mine||!windowOpen||!byId('humanReply').value.trim();
-    byId('toggleIa').disabled=readonly||item.status==='ENCERRADA';
+    // Instagram continua sem envio humano pelo painel, mas os controles
+    // de assumir, ativar e desativar IA funcionam normalmente.
+    const controlesBloqueados=(readonly&&item.canal!=='INSTAGRAM')||item.status==='ENCERRADA';
+    byId('toggleIa').disabled=controlesBloqueados;
     byId('toggleIa').textContent=human?'Ativar IA':'Desativar IA';
-    byId('take').disabled=readonly||item.status==='ENCERRADA'||mine;
+    byId('take').disabled=controlesBloqueados||mine;
     byId('take').textContent=mine?'Conversa assumida':human?'Assumir atendimento pendente':'Assumir atendimento';
   }
   function selectItem(item){
@@ -645,7 +648,11 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     const item=items.find(x=>x.id===selectedId);
     if(!item)return;
     byId('toggleIa').disabled=true;
-    send('CONVERSAS_MODE',{id:selectedId,modo:item.modo==='HUMANO'?'IA':'HUMANO'});
+    const modo=item.modo==='HUMANO'?'IA':'HUMANO';
+    send('CONVERSAS_MODE',{id:selectedId,modo,
+      // O botao DESATIVAR IA e bloqueio manual, sem retomada temporizada.
+      // Assumir atendimento e feito em outro botao e retorna apos 10 min.
+      acao:modo==='HUMANO'?'PAUSA_MANUAL':'REATIVAR'});
   });
   byId('sendHuman').addEventListener('click',()=>{
     const item=items.find(x=>x.id===selectedId);
@@ -726,7 +733,7 @@ h1{font-size:24px;color:#14385f;margin:0 0 5px}p{margin:0;color:#67798a;font-siz
     if(!selectedId)return;
     byId('take').disabled=true;
     byId('feedback').textContent='Transferindo para atendimento humano...';
-    send('CONVERSAS_MODE',{id:selectedId,modo:'HUMANO'});
+    send('CONVERSAS_MODE',{id:selectedId,modo:'HUMANO',acao:'ASSUMIR'});
   });
   function atualizarDiagnostico(canal,data){
     const key=canal==='whatsapp'?'wa':'ig';
