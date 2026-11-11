@@ -1105,6 +1105,50 @@ function resetEditMode(){
   $('create').textContent='GERAR ETIQUETA';
 }
  let dispatchSelection=null,dispatchTimer=null,dispatchProbeTimer=null,dispatchSeq=0;
+let dispatchRingContext=null,dispatchRingTimer=null;
+function dispatchRingPulse(){
+ const audio=dispatchRingContext;
+ if(!audio||audio.state==='closed'||document.hidden)return;
+ try{
+  if(audio.state==='suspended')audio.resume().catch(()=>{});
+  const begin=audio.currentTime+0.03;
+  // Sinal original de chamada telefonica: dois tons curtos e uma pausa.
+  // Nao depende de arquivos ou de audio protegido por direitos autorais.
+  for(const at of [0,0.84]){
+   const gain=audio.createGain();
+   gain.gain.setValueAtTime(0.0001,begin+at);
+   gain.gain.linearRampToValueAtTime(0.037,begin+at+0.035);
+   gain.gain.setValueAtTime(0.037,begin+at+0.48);
+   gain.gain.exponentialRampToValueAtTime(0.0001,begin+at+0.55);
+   gain.connect(audio.destination);
+   for(const hz of [440,480]){
+    const osc=audio.createOscillator();
+    osc.type='sine';osc.frequency.value=hz;
+    osc.connect(gain);osc.start(begin+at);osc.stop(begin+at+0.56);
+    osc.onended=()=>{try{osc.disconnect()}catch(_){}};
+   }
+  }
+ }catch(_){}
+}
+function dispatchRingStart(){
+ if(dispatchRingTimer)return;
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx)return;
+  dispatchRingContext=new Ctx();
+  dispatchRingPulse();
+  dispatchRingTimer=setInterval(dispatchRingPulse,3400);
+ }catch(_){dispatchRingContext=null;}
+}
+function dispatchRingStop(){
+ if(dispatchRingTimer){clearInterval(dispatchRingTimer);dispatchRingTimer=null;}
+ const ctx=dispatchRingContext;dispatchRingContext=null;
+ if(ctx&&ctx.state!=='closed')ctx.close().catch(()=>{});
+}
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden&&dispatchRingTimer)dispatchRingPulse();
+});
+window.addEventListener('pagehide',dispatchRingStop);
 function dispatchMessage(message,level='neutral'){
  const el=$('driverDispatchMessage');
  if(!el)return;
@@ -1122,63 +1166,91 @@ function dispatchPushSummary(state){
  function dispatchProbeClear(){
    if(dispatchProbeTimer){clearTimeout(dispatchProbeTimer);dispatchProbeTimer=null}
  }
- function dispatchProbe(state,delay=5000){
-   dispatchProbeClear();
-   dispatchProbeTimer=setTimeout(()=>{
-     if(dispatchSelection!==state||!state.requestId)return;
-     send('DISPATCH_STATUS',{
-       deliveryId:state.deliveryId,driverIds:state.targetIds||[],
-       requestId:state.requestId
-     });
-   },delay);
+ function dispatchProbe(state,delay=3500){
+  dispatchProbeClear();
+  dispatchProbeTimer=setTimeout(()=>{
+   if(dispatchSelection!==state||!state.requestId)return;
+   send('DISPATCH_STATUS',{
+    deliveryId:state.deliveryId,driverIds:state.targetIds||[],
+    requestId:state.requestId
+   });
+  },delay);
  }
  function dispatchStatusResult(data){
  const state=dispatchSelection;
  if(!state||String(data.deliveryId||'')!==state.deliveryId||
-    String(data.requestId||'')!==state.requestId)return;
- if(data.ok===true&&data.aceita===true){
-  dispatchProbeClear();dispatchTimerClear();
-  const id=state.deliveryId;
-  dispatchClose(true);
-  if(rideById(id))openRideDetail(id);
-  notice('Entregador aceitou a corrida. Consulte o status atualizado.',true);
+  String(data.requestId||'')!==state.requestId)return;
+ if(data.ok===true&&(data.aceita===true||data.finalizada===true&&data.driverId)){
+  dispatchRingStop();dispatchProbeClear();dispatchTimerClear();
+  state.sending=false;state.phase='accepted';
+  $('driverDispatchConfirm').textContent='Corrida aceita ✓';
+  $('driverDispatchConfirm').disabled=true;
+  const driver=availableDrivers.find(d=>String(d.id)===String(data.driverId))||
+   availableDrivers.find(d=>state.targetIds?.includes(String(d.id)));
+  const name=String(driver?.name||'O entregador');
+  dispatchMessage(name+' aceitou a corrida.'+
+   (data.finalizada?' A entrega também já foi finalizada.':''),'success');
+  notice('Corrida aceita por '+name+'.',true);
+  send('REFRESH');
+  setTimeout(()=>{
+   if(dispatchSelection===state&&state.phase==='accepted')dispatchClose(true);
+  },3500);
+  return;
+ }
+ if(data.ok===true&&data.recusada===true){
+  dispatchRingStop();dispatchProbeClear();dispatchTimerClear();
+  state.sending=false;state.phase='declined';state.uncertain=false;
+  state.refusedDriverIds=[...(state.targetIds||[])];
+  $('driverDispatchConfirm').textContent='Escolher outro entregador';
+  dispatchMessage('Corrida recusada. Selecione outro entregador ou envie para todos os disponíveis.','error');
+  dispatchUpdateMode();
+  send('REFRESH');return;
+ }
+ if(data.ok===true&&data.cancelada===true){
+  dispatchRingStop();dispatchProbeClear();dispatchTimerClear();
+  state.sending=false;state.phase='canceled';
+  $('driverDispatchConfirm').textContent='Corrida cancelada';
+  $('driverDispatchConfirm').disabled=true;
+  dispatchMessage('Esta corrida foi cancelada; não há chamado em andamento.','error');
   send('REFRESH');return;
  }
  if(data.ok===true&&data.confirmada===true){
-  // Consulta autenticada confirmou oferta PENDING para a selecao atual.
-  // A resposta pode ser processada mesmo sem ACK do postMessage.
-  // Nao afirmar recebimento no celular.
-  state.offerConfirmed=true;
-  state.backendAck=true;
-  if(state.backendAck===true){
-   dispatchProbeClear();dispatchTimerClear();
-   const id=state.deliveryId;
-   dispatchClose(true);
-   if(rideById(id))openRideDetail(id);
-   notice(dispatchPushSummary(state),(Number(state.pushProviderAccepted)||0)>0);
-   send('REFRESH');return;
+  state.offerConfirmed=true;state.backendAck=true;
+  dispatchTimerClear();
+  // Oferta PENDING não é aceite. Permanecer chamando e consultando.
+  state.phase='ringing';
+  if(state.sending){
+   $('driverDispatchConfirm').textContent='Chamando entregador...';
+   dispatchMessage('Chamando entregador. Aguardando aceitar ou recusar a corrida.'+
+    (Number(state.pushProviderAccepted)>0?' Notificação enviada ao serviço de push.':''),'neutral');
+  }else{
+   $('driverDispatchConfirm').textContent='Acompanhar chamada';
+   dispatchMessage('O chamado já está registrado. Clique para acompanhar a resposta.','neutral');
   }
-  $('driverDispatchConfirm').textContent='Conferindo notificação...';
-  dispatchMessage('Oferta registrada no painel. Conferindo o envio da notificação; o recebimento no celular ainda não está confirmado.');
+  dispatchUpdateMode();
+  dispatchProbe(state,3500);
+  return;
  }
  if(data.ok===true&&data.status==='WAITING_DRIVER'&&data.mesmaSelecao===false){
-  dispatchProbeClear();dispatchTimerClear();
+  dispatchRingStop();dispatchProbeClear();dispatchTimerClear();
   state.sending=false;state.uncertain=true;
   $('driverDispatchConfirm').textContent='Atualizar corridas';
-  dispatchMessage(data.mensagem||'Existe um chamado com outra seleção. Confira antes de reenviar.','error');
+  dispatchMessage(data.mensagem||'Existe chamado para outra seleção. Confira antes de reenviar.','error');
   dispatchUpdateMode();return;
  }
- if(state.sending&&(state.probeCount||0)<6){
-  state.probeCount=(state.probeCount||0)+1;
-  dispatchProbe(state,6500);
- }
+ // A consulta é somente leitura. Repeti-la nunca dispara novo push.
+ // Se o servidor ou a rede estiverem lentos, continuar verificando.
+ if(state.phase!=='accepted'&&state.phase!=='declined'&&state.phase!=='canceled')
+  dispatchProbe(state,data.ok===true?3500:6000);
 }
 function dispatchTimerClear(){if(dispatchTimer){clearTimeout(dispatchTimer);dispatchTimer=null}}
  function dispatchWatchdog(state,phase,waitMs){
  dispatchTimerClear();
  dispatchTimer=setTimeout(()=>{
   if(dispatchSelection!==state||state.phase!==phase||!state.sending)return;
+  if(state.offerConfirmed)return;
   state.sending=false;state.uncertain=true;
+  dispatchRingStop();
   $('driverDispatchConfirm').textContent='Conferir corrida atualizada';
   dispatchMessage('A verificação está demorando. A oferta pode ter sido registrada: confira a corrida atualizada antes de tentar outro chamado.');
   dispatchProbe(state,100);
@@ -1224,7 +1296,7 @@ function dispatchUpdateMode(){
 }
 function dispatchClose(force=false){
   const pending=dispatchSelection?.sending;
-  dispatchTimerClear();dispatchProbeClear();
+  dispatchTimerClear();dispatchProbeClear();dispatchRingStop();
   $('driverDispatchOverlay').hidden=true;
   dispatchSelection=null;
   if(pending&&!force){
@@ -1235,6 +1307,14 @@ function dispatchClose(force=false){
  function dispatchConfirm(){
   const state=dispatchSelection;if(!state||state.sending)return;
   if(state.uncertain){dispatchClose(true);send('REFRESH');return;}
+ if(state.phase==='declined'&&state.refusedDriverIds?.length){
+  const next=$('driverDispatchOverlay').querySelector('input[value="one"]').checked?
+   String($('driverDispatchSelect').value||''):'';
+  if(next&&state.refusedDriverIds.includes(next)){
+   dispatchMessage('Esse entregador já recusou a corrida. Selecione outro.','error');
+   return;
+  }
+ }
  const specific=$('driverDispatchOverlay').querySelector('input[value="one"]').checked;
  const target=specific?String($('driverDispatchSelect').value||''):'';
  if(specific&&!availableDrivers.some(d=>String(d.id)===target)){
@@ -1242,6 +1322,7 @@ function dispatchClose(force=false){
  }
   state.sending=true;state.uncertain=false;
   state.backendAck=false;state.pushProviderAccepted=null;state.offerConfirmed=false;
+  dispatchRingStart();
   state.requestId='driver-'+(++dispatchSeq)+'-'+Date.now();
   state.targetIds=specific?[target]:[];
   const ride=rideById(state.deliveryId);
@@ -1251,18 +1332,20 @@ function dispatchClose(force=false){
   // Etapa ja preparada: nao reenviar a selecao para o backend.
   // Uma chamada autenticada e idempotente registra a oferta de fato.
   const canDispatchDirectly=state.status==='READY_TO_DISPATCH'&&sameSelection;
-  state.phase=canDispatchDirectly?'dispatching':'selecting';
-  $('driverDispatchConfirm').textContent=canDispatchDirectly?'Chamando entregador...':'Preparando chamado...';
-  $('driverDispatchMessage').textContent=canDispatchDirectly?
-    'Registrando o chamado para a seleção já salva. Aguardando a confirmação da oferta.':
-    'Confirmando a seleção. Em seguida será registrado o chamado.';
+  const alreadyWaiting=state.status==='WAITING_DRIVER'&&sameSelection;
+  state.phase=alreadyWaiting?'ringing':canDispatchDirectly?'dispatching':'selecting';
+  $('driverDispatchConfirm').textContent='Chamando entregador...';
+  $('driverDispatchMessage').textContent=alreadyWaiting?
+   'Conferindo chamado existente. Aguardando resposta do entregador.':
+   'Chamando entregador. Aguardando a confirmação da oferta.';
   dispatchUpdateMode();
-  dispatchWatchdog(state,state.phase,15000);
-  dispatchProbe(state,3500);
+  if(!alreadyWaiting)dispatchWatchdog(state,state.phase,18000);
+  dispatchProbe(state,alreadyWaiting?100:1400);
+  if(alreadyWaiting)return; // Sem novo disparo para oferta ja registrada
   if(canDispatchDirectly)
-    send('DISPATCH_PREPARED',{deliveryId:state.deliveryId,requestId:state.requestId});
+   send('DISPATCH_PREPARED',{deliveryId:state.deliveryId,requestId:state.requestId});
   else
-    send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
+   send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
 }
 function dispatchSelectionResult(data){
  const state=dispatchSelection;
@@ -1271,6 +1354,7 @@ function dispatchSelectionResult(data){
  dispatchTimerClear();
  if(!data.ok){
   state.sending=false;
+  dispatchRingStop();
   dispatchMessage(data.mensagem||'Não foi possível selecionar o entregador.','error');
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
@@ -1283,11 +1367,11 @@ function dispatchSelectionResult(data){
  state.backendAck=jaRegistrado;
  if(jaRegistrado)state.pushProviderAccepted=Number(data.pushProviderAccepted)||0;
  if(jaRegistrado){
-  state.phase='confirming';
-  $('driverDispatchConfirm').textContent='Conferindo oferta...';
-  dispatchMessage('Solicitação registrada. Conferindo o status real e a notificação...');
-  dispatchWatchdog(state,'confirming',14000);
-  dispatchProbe(state,50);return;
+  state.phase='ringing';
+  $('driverDispatchConfirm').textContent='Chamando entregador...';
+  dispatchMessage('Oferta registrada. Aguardando o entregador aceitar ou recusar.');
+  dispatchTimerClear();
+  dispatchProbe(state,100);return;
  }
  state.phase='dispatching';
  $('driverDispatchConfirm').textContent='Chamando entregador...';
@@ -1305,6 +1389,7 @@ function dispatchFinalResult(data,kind){
  dispatchTimerClear();
  if(!data.ok){
   state.sending=false;
+  dispatchRingStop();
   dispatchMessage(data.mensagem||'Não foi possível chamar o entregador.','error');
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
@@ -1312,10 +1397,11 @@ function dispatchFinalResult(data,kind){
  state.backendAck=true;
  state.pushProviderAccepted=Number(data.pushProviderAccepted)||0;
  state.phase='confirming';
- $('driverDispatchConfirm').textContent='Conferindo oferta...';
- dispatchMessage('Conferindo a oferta no VELUM. O recebimento no celular só é confirmado pelo próprio entregador.');
- dispatchWatchdog(state,'confirming',14000);
- dispatchProbe(state,50);
+ $('driverDispatchConfirm').textContent='Chamando entregador...';
+ dispatchMessage('Oferta registrada. Aguardando o entregador aceitar ou recusar.');
+ state.phase='ringing';
+ dispatchTimerClear();
+ dispatchProbe(state,100);
 }
 $('driverDispatchOverlay').querySelectorAll('input[name="driverDispatchMode"]').forEach(i=>i.onchange=dispatchUpdateMode);
 $('driverDispatchSelect').onchange=dispatchUpdateMode;
