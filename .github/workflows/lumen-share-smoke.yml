@@ -48,10 +48,24 @@ jobs:
             console.log('LUMEN_MODAL_DIAGNOSTIC',JSON.stringify({modal}));
             if(!modal)throw Error('LUMEN_PHOTO_DIALOG_NOT_OPEN');
             await page.waitForTimeout(5000);
-            console.log('LUMEN_PREVIEW',JSON.stringify(await page.evaluate(()=>({
-             image:document.querySelector('.lumen-v3-dialog img')?.naturalWidth||0,
-             text:document.querySelector('.lumen-v3-dialog')?.innerText.slice(0,220)
-            }))));
+            const preview=await page.evaluate(()=>({
+             width:document.querySelector('.lumen-v3-dialog img')?.naturalWidth||0,
+             height:document.querySelector('.lumen-v3-dialog img')?.naturalHeight||0,
+             text:document.querySelector('.lumen-v3-dialog')?.innerText.slice(0,240)
+            }));
+            console.log('LUMEN_PREVIEW',JSON.stringify(preview));
+            if(preview.width!==1440||preview.height!==2560||!preview.text.includes('REF '))throw Error('LUMEN_IMAGE_NOT_9X16_WITH_SKU');
+            await page.locator('.lumen-v3-actions button').filter({hasText:'Fechar'}).first().click();
+            const productImage=page.locator('img[src*="1e8b62_055456"]').first();
+            if(await productImage.count()===0)throw Error('LUMEN_PRODUCT_IMAGE_NOT_FOUND');
+            await productImage.evaluate(img=>{
+             const touch=new Touch({identifier:1,target:img,clientX:180,clientY:350,screenX:180,screenY:350});
+             img.dispatchEvent(new TouchEvent('touchstart',{touches:[touch],changedTouches:[touch],targetTouches:[touch],bubbles:true,cancelable:true}));
+            });
+            await page.waitForTimeout(850);
+            const pressModal=await page.locator('.lumen-v3-mask').count();
+            console.log('LUMEN_LONGPRESS',JSON.stringify({opened:pressModal>0,product:'Rasteira FIO (OURO)'}));
+            if(!pressModal)throw Error('LUMEN_LONGPRESS_NOT_OPEN');
            }finally{await browser.close();}
           })().catch(err=>{console.error('SMOKE_FAILURE',err.message);process.exit(1)});
           NODE
