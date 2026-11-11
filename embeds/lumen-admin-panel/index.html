@@ -1145,7 +1145,11 @@ function dispatchPushSummary(state){
   send('REFRESH');return;
  }
  if(data.ok===true&&data.confirmada===true){
+  // Consulta autenticada confirmou oferta PENDING para a selecao atual.
+  // A resposta pode ser processada mesmo sem ACK do postMessage.
+  // Nao afirmar recebimento no celular.
   state.offerConfirmed=true;
+  state.backendAck=true;
   if(state.backendAck===true){
    dispatchProbeClear();dispatchTimerClear();
    const id=state.deliveryId;
@@ -1176,7 +1180,7 @@ function dispatchTimerClear(){if(dispatchTimer){clearTimeout(dispatchTimer);disp
   if(dispatchSelection!==state||state.phase!==phase||!state.sending)return;
   state.sending=false;state.uncertain=true;
   $('driverDispatchConfirm').textContent='Conferir corrida atualizada';
-  dispatchMessage('A verificação está demorando. Confira a corrida atualizada antes de tentar outra chamada. Nenhum novo disparo foi feito.');
+  dispatchMessage('A verificação está demorando. A oferta pode ter sido registrada: confira a corrida atualizada antes de tentar outro chamado.');
   dispatchProbe(state,100);
   dispatchUpdateMode();
  },waitMs);
@@ -1243,7 +1247,7 @@ function dispatchClose(force=false){
   $('driverDispatchConfirm').textContent='Preparando chamado...';
   $('driverDispatchMessage').textContent='Registrando sua solicitação. Se a confirmação demorar, consultaremos a corrida sem duplicar o chamado.';
   dispatchUpdateMode();
-  dispatchWatchdog(state,'selecting',45000);
+  dispatchWatchdog(state,'selecting',14000);
   dispatchProbe(state,5000);
   send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
 }
@@ -1258,19 +1262,24 @@ function dispatchSelectionResult(data){
   $('driverDispatchConfirm').textContent='Tentar novamente';
   dispatchUpdateMode();return;
  }
- state.backendAck=state.status==='WAITING_DRIVER';
- if(state.backendAck)state.pushProviderAccepted=Number(data.pushProviderAccepted)||0;
- if(state.status==='WAITING_DRIVER'){
+ // O controlador mais recente registra a oferta durante a selecao.
+ // Nao chamar DISPATCH_PREPARED de novo quando ja existe WAITING_DRIVER.
+ const jaRegistrado=state.status==='WAITING_DRIVER'||
+  data.status==='WAITING_DRIVER'||data.confirmada===true||
+  data.codigo==='CHAMADO_JA_REGISTRADO';
+ state.backendAck=jaRegistrado;
+ if(jaRegistrado)state.pushProviderAccepted=Number(data.pushProviderAccepted)||0;
+ if(jaRegistrado){
   state.phase='confirming';
   $('driverDispatchConfirm').textContent='Conferindo oferta...';
   dispatchMessage('Solicitação registrada. Conferindo o status real e a notificação...');
-  dispatchWatchdog(state,'confirming',22000);
+  dispatchWatchdog(state,'confirming',14000);
   dispatchProbe(state,50);return;
  }
  state.phase='dispatching';
  $('driverDispatchConfirm').textContent='Chamando entregador...';
  dispatchMessage('Seleção confirmada. Registrando a oferta e verificando o envio da notificação...');
- dispatchWatchdog(state,'dispatching',45000);
+ dispatchWatchdog(state,'dispatching',16000);
  if(state.status==='LOGISTICS_READY_FOR_DRIVER')
   send('LOGISTICS_ACTION',{deliveryId:state.deliveryId,action:'CALL_DRIVER',requestId:state.requestId});
  else send('DISPATCH_PREPARED',{deliveryId:state.deliveryId,requestId:state.requestId});
@@ -1292,7 +1301,7 @@ function dispatchFinalResult(data,kind){
  state.phase='confirming';
  $('driverDispatchConfirm').textContent='Conferindo oferta...';
  dispatchMessage('Conferindo a oferta no VELUM. O recebimento no celular só é confirmado pelo próprio entregador.');
- dispatchWatchdog(state,'confirming',22000);
+ dispatchWatchdog(state,'confirming',14000);
  dispatchProbe(state,50);
 }
 $('driverDispatchOverlay').querySelectorAll('input[name="driverDispatchMode"]').forEach(i=>i.onchange=dispatchUpdateMode);
