@@ -1,11 +1,11 @@
-name: Lumen 9x16 mobile smoke
+name: Lumen SKU share mobile smoke
 on:
   push:
     paths:
       - .github/workflows/lumen-share-smoke.yml
   workflow_dispatch:
 jobs:
-  smoke:
+  safari-mobile:
     runs-on: ubuntu-latest
     timeout-minutes: 9
     steps:
@@ -13,76 +13,62 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install browser
+      - name: Install WebKit
         run: |
           npm install --no-save --package-lock=false playwright
           npx playwright install --with-deps webkit
-      - name: Check live Lumen mobile card interactions
+      - name: Validate live mobile SKU and direct long-press download
         run: |
           node <<'NODE'
           const {webkit,devices}=require('playwright');
           (async()=>{
-           const browser=await webkit.launch({headless:true});
-           const page=await browser.newPage({...devices['iPhone 13']});
-           const errors=[];
-           page.on('pageerror',e=>errors.push(e.message.slice(0,400)));
-           page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,400))});
-           try{
-            const response=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
-            await page.waitForTimeout(15000);
-            const state=await page.evaluate(()=>({
-             status:document.readyState,
-             v3:Boolean(window.__lumenShareV3?.ready),
-             count:window.__lumenShareV3?.matched||0,
-             controls:document.querySelectorAll('.lumen-v3-btn').length,
-             images:document.images.length,
-             src:Array.from(document.scripts).filter(x=>x.src.includes('lumen-sku-9x16')).map(x=>x.src)
-            }));
-            console.log('LUMEN_MOBILE_DIAGNOSTIC',JSON.stringify({http:response.status(),...state,errors:errors.slice(0,8)}));
-            if(response.status()>=400||!state.v3||state.controls<1)throw Error('LUMEN_SHARE_NOT_ACTIVE');
-            const control=page.locator('.lumen-v3-btn').first();
-            await control.scrollIntoViewIfNeeded();
-            await control.click({force:true});
-            await page.waitForTimeout(1500);
-            const modal=await page.locator('.lumen-v3-mask').count();
-            console.log('LUMEN_MODAL_DIAGNOSTIC',JSON.stringify({modal}));
-            if(!modal)throw Error('LUMEN_PHOTO_DIALOG_NOT_OPEN');
-            await page.waitForTimeout(5000);
-            const preview=await page.evaluate(()=>({
-             width:document.querySelector('.lumen-v3-dialog img')?.naturalWidth||0,
-             height:document.querySelector('.lumen-v3-dialog img')?.naturalHeight||0,
-             text:document.querySelector('.lumen-v3-dialog')?.innerText.slice(0,240)
-            }));
-            console.log('LUMEN_PREVIEW',JSON.stringify(preview));
-            if(preview.width!==1440||preview.height!==2560||!preview.text.includes('REF '))throw Error('LUMEN_IMAGE_NOT_9X16_WITH_SKU');
-            const hit=await page.evaluate(()=>{
-             const mask=document.querySelector('.lumen-v3-mask');
-             const dialog=document.querySelector('.lumen-v3-dialog');
-             const button=dialog?.querySelector('.lumen-v3-actions button:last-child');
-             const r=button?.getBoundingClientRect();
-             const at=r?document.elementFromPoint(r.x+r.width/2,r.y+r.height/2):null;
-             const shape=el=>{if(!el)return null;const r=el.getBoundingClientRect();return {x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height),pointer:getComputedStyle(el).pointerEvents,z:getComputedStyle(el).zIndex};};
-             return{button:shape(button),dialog:shape(dialog),mask:shape(mask),
-              target:at?.tagName+' '+at?.className,contains:dialog?.contains(at),
-              innerHeight,scrollY:window.scrollY};
-            });
-            console.log('LUMEN_HITTEST',JSON.stringify(hit));
+            const browser=await webkit.launch({headless:true});
+            const page=await browser.newPage({...devices['iPhone 13']});
             try{
-             await page.locator('.lumen-v3-actions button').filter({hasText:'Fechar'}).first().click({timeout:6500});
-             console.log('LUMEN_CLOSE_CLICK','ok');
-            }catch(e){
-             console.log('LUMEN_CLOSE_CLICK','layout-interference');
-             await page.evaluate(()=>document.querySelector('.lumen-v3-actions button:last-child').click());
-            }
-            const productImage=page.locator('img[src*="1e8b62_055456"]').first();
-            if(await productImage.count()===0)throw Error('LUMEN_PRODUCT_IMAGE_NOT_FOUND');
-            await productImage.evaluate(img=>{
-             img.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'mouse',button:0,bubbles:true,cancelable:true,clientX:180,clientY:350}));
-            });
-            await page.waitForTimeout(850);
-            const pressModal=await page.locator('.lumen-v3-mask').count();
-            console.log('LUMEN_LONGPRESS',JSON.stringify({opened:pressModal>0,product:'Rasteira FIO (OURO)'}));
-            if(!pressModal)throw Error('LUMEN_LONGPRESS_NOT_OPEN');
-           }finally{await browser.close();}
-          })().catch(err=>{console.error('SMOKE_FAILURE',err.message);process.exit(1)});
+              await page.addInitScript(()=>{
+                window.__skuDownloadTest=null;
+                const normal=HTMLAnchorElement.prototype.click;
+                HTMLAnchorElement.prototype.click=function(){
+                  if(this.download&&this.download.startsWith('REF-')){
+                    window.__skuDownloadTest={filename:this.download,blob:this.href.startsWith('blob:')};
+                    return;
+                  }
+                  return normal.call(this);
+                };
+              });
+              const reply=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
+              await page.waitForFunction(()=>window.__lumenShareV5?.ready,{timeout:30000});
+              await page.waitForTimeout(9000);
+              const check=await page.evaluate(()=>{
+                const refs=[...document.querySelectorAll('.lumen-v5-ref')];
+                const first=refs[0];
+                const imgs=[...document.images].filter(x=>x.getBoundingClientRect().height>100);
+                return{
+                  count:refs.length,
+                  ref:first?.textContent,
+                  noDownloadButtons:document.querySelectorAll('.lumen-v3-btn,.lumen-v4-ref').length===0,
+                  noModal:document.querySelector('.lumen-v3-mask')===null,
+                  firstBadgeY:Math.round(first?.getBoundingClientRect().top||0),
+                  imageBottom:Math.round(imgs[0]?.getBoundingClientRect().bottom||0)
+                };
+              });
+              console.log('LUMEN_V5_CARD',JSON.stringify({http:reply.status(),...check}));
+              if(reply.status()>=400||check.count<2||!check.noDownloadButtons||!check.noModal)
+                throw Error('SKU_V5_CARD_INVALID');
+              const img=page.locator('img[src*="1e8b62_055456"]').first();
+              if(!await img.count())throw Error('PRODUCT_IMAGE_NOT_FOUND');
+              await img.evaluate(el=>{
+                el.dispatchEvent(new PointerEvent('pointerdown',{
+                  bubbles:true,cancelable:true,pointerType:'mouse',button:0,clientX:160,clientY:210
+                }));
+              });
+              await page.waitForFunction(()=>window.__skuDownloadTest?.blob,{timeout:20000});
+              const saved=await page.evaluate(()=>({download:window.__skuDownloadTest,
+                result:window.__lumenShareV5?.lastDownload,
+                hasModal:!!document.querySelector('.lumen-v3-mask')}));
+              console.log('LUMEN_V5_DOWNLOAD',JSON.stringify(saved));
+              if(!saved.download?.filename.startsWith('REF-')||saved.hasModal||
+                 !(saved.result?.size>8000))throw Error('DIRECT_9X16_DOWNLOAD_FAILED');
+            }finally{await browser.close()}
+          })().catch(e=>{console.error('LUMEN_SMOKE_FAILURE',e.message);process.exit(1)});
           NODE
