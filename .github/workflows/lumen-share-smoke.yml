@@ -59,7 +59,10 @@ jobs:
                   return r.y>ir.bottom&&r.y<ir.bottom+600&&r.width>8&&r.height>8&&r.height<100;
                 }).slice(0,30).map(el=>({element:info(el),parent:info(el.parentElement)})):[];
                 const sku=document.querySelector('[data-lumen-sku="7729"]');
-                return{found:true,chain,whatsapp:info([...document.querySelectorAll('*')].find(x=>x.textContent?.trim()==='Comprar no WhatsApp'&&x.children.length===0)),sku:info(sku),skuParent:info(sku?.parentElement),icons:listed};
+                const afterW = [...product.querySelectorAll('*')].filter(el=>{const r=el.getBoundingClientRect();
+                  return r.y>679&&r.y<750&&r.width>4&&r.height>4&&r.height<110;}).slice(0,60)
+                  .map(el=>({el:info(el),parent:info(el.parentElement)}));
+                return{found:true,chain,whatsapp:info([...document.querySelectorAll('*')].find(x=>x.textContent?.trim()==='Comprar no WhatsApp'&&x.children.length===0)),sku:info(sku),skuParent:info(sku?.parentElement),icons:listed,afterW};
               });
               console.log('LUMEN_SHARE_DOM',JSON.stringify(dom));
               const check=await page.evaluate(()=>{
