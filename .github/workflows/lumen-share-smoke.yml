@@ -40,7 +40,7 @@ jobs:
                   sizes:(arg?.files||[]).map(f=>f.size)});
               }});
               Object.defineProperty(navigator,'canShare',{configurable:true,value:arg=>
-                Array.isArray(arg.files)&&arg.files.length<=6&&
+                Array.isArray(arg.files)&&arg.files.length<=10&&
                 arg.files.every(f=>f.type==='image/jpeg')});
             });
             try{
@@ -134,6 +134,23 @@ jobs:
               });
               console.log('LUMEN_BULK_CHAINS',JSON.stringify(chainDiag));
 
+              const positionCheck=await page.evaluate(()=>{
+                const b=document.querySelector('.lumen-v6-bulk');
+                const select=document.querySelector('select.wixui-dropdown__input');
+                const heading=[...document.querySelectorAll('h2')].find(x=>/CONFIRA AS NOVIDADES!/i.test(x.textContent||''));
+                if(!b||!select||!heading)return{found:false};
+                const r=b.getBoundingClientRect(),s=select.getBoundingClientRect(),h=heading.getBoundingClientRect();
+                return{found:true,buttonRect:[r.left,r.top,r.right,r.bottom].map(Math.round),
+                  selectBottom:Math.round(s.bottom),headingTop:Math.round(h.top),
+                  position:getComputedStyle(b).position,
+                  belowFilter:r.top>=s.bottom+1,aboveTitle:r.bottom<=h.top-1,
+                  centered:Math.abs((r.left+r.right)/2-(h.left+h.right)/2)<7,
+                  discreet:r.height<30};
+              });
+              console.log('LUMEN_V6_POSITION_10',JSON.stringify(positionCheck));
+              if(!positionCheck.found||positionCheck.position!=='absolute'||
+                !positionCheck.belowFilter||!positionCheck.aboveTitle||
+                !positionCheck.centered||!positionCheck.discreet)fail('BULK_BUTTON_NOT_DISCREET_IN_FILTER_STRIP');
               const bulkBefore=await page.locator('.lumen-v6-bulk').textContent();
               await page.locator('.lumen-v6-bulk').click();
               await page.waitForTimeout(850);
@@ -144,7 +161,7 @@ jobs:
                 downloads:window.__downloadCalls.length
               }));
               console.log('LUMEN_V6_BULK',JSON.stringify({before:bulkBefore,...bulk}));
-              if(bulk.totalCalls<2||bulk.last.fileCount<2||bulk.last.fileCount>6||
+              if(bulk.totalCalls<2||bulk.last.fileCount!==10||
                 bulk.downloads!==0||bulk.last.names.some(n=>!n.startsWith('REF-')))fail('BULK_SHARE_FAILED');
             }finally{await browser.close()}
           })().catch(e=>{console.error('LUMEN_V6_SMOKE_FAILED',e.stack||e);process.exit(1)});
