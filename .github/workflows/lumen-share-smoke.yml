@@ -1,0 +1,57 @@
+name: Lumen 9x16 mobile smoke
+on:
+  push:
+    paths:
+      - .github/workflows/lumen-share-smoke.yml
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Check live Lumen mobile card interactions
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+           const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+           const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3});
+           const errors=[];
+           page.on('pageerror',e=>errors.push(e.message.slice(0,400)));
+           page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,400))});
+           try{
+            const response=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForTimeout(15000);
+            const state=await page.evaluate(()=>({
+             status:document.readyState,
+             v3:Boolean(window.__lumenShareV3?.ready),
+             count:window.__lumenShareV3?.matched||0,
+             controls:document.querySelectorAll('.lumen-v3-btn').length,
+             images:document.images.length,
+             src:Array.from(document.scripts).filter(x=>x.src.includes('lumen-sku-9x16')).map(x=>x.src)
+            }));
+            console.log('LUMEN_MOBILE_DIAGNOSTIC',JSON.stringify({http:response.status(),...state,errors:errors.slice(0,8)}));
+            if(response.status()>=400||!state.v3||state.controls<1)throw Error('LUMEN_SHARE_NOT_ACTIVE');
+            const control=page.locator('.lumen-v3-btn').first();
+            await control.scrollIntoViewIfNeeded();
+            await control.click({force:true});
+            await page.waitForTimeout(1500);
+            const modal=await page.locator('.lumen-v3-mask').count();
+            console.log('LUMEN_MODAL_DIAGNOSTIC',JSON.stringify({modal}));
+            if(!modal)throw Error('LUMEN_PHOTO_DIALOG_NOT_OPEN');
+            await page.waitForTimeout(5000);
+            console.log('LUMEN_PREVIEW',JSON.stringify(await page.evaluate(()=>({
+             image:document.querySelector('.lumen-v3-dialog img')?.naturalWidth||0,
+             text:document.querySelector('.lumen-v3-dialog')?.innerText.slice(0,220)
+            }))));
+           }finally{await browser.close();}
+          })().catch(err=>{console.error('SMOKE_FAILURE',err.message);process.exit(1)});
+          NODE
