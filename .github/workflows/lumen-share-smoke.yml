@@ -101,6 +101,24 @@ jobs:
                 const b=document.querySelector('.lumen-v6-bulk');
                 return b&&!b.hidden&&!b.disabled&&b.textContent.includes('Compartilhar');
               },{timeout:65000});
+              const placeDiag=await page.evaluate(()=>{
+                const short=el=>{const r=el.getBoundingClientRect();return {
+                  tag:el.tagName,cls:String(el.className?.baseVal||el.className||'').slice(0,75),
+                  txt:el.textContent?.trim().slice(0,90),rect:[r.x,r.y,r.width,r.height].map(n=>Math.round(n)),
+                  parent:el.parentElement?.tagName,css:getComputedStyle(el).position}};
+                const headings=[...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role=heading]')]
+                  .filter(el=>el.getBoundingClientRect().width>0)
+                  .slice(0,25).map(short);
+                const filterControls=[...document.querySelectorAll('button,select,[role=combobox],input')]
+                 .filter(el=>{const r=el.getBoundingClientRect();return r.top>150&&r.top<700&&r.width>90;})
+                 .slice(0,18).map(short);
+                const bulk=document.querySelector('.lumen-v6-bulk');
+                return{headings,filterControls,bulk:bulk?short(bulk):null,
+                 afterTitle:[...document.querySelectorAll('[data-testid="richTextElement"]')]
+                  .filter(x=>/^(?:SALTO|RASTEIRA|CONFIRA AS NOVIDADES!)$/i.test(x.innerText?.trim()||''))
+                  .slice(0,10).map(short)};
+              });
+              console.log('LUMEN_BULK_POSITION_DOM',JSON.stringify(placeDiag));
               const bulkBefore=await page.locator('.lumen-v6-bulk').textContent();
               await page.locator('.lumen-v6-bulk').click();
               await page.waitForTimeout(850);
