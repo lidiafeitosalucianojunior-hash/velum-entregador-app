@@ -16,14 +16,14 @@ jobs:
       - name: Install browser
         run: |
           npm install --no-save --package-lock=false playwright
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps webkit
       - name: Check live Lumen mobile card interactions
         run: |
           node <<'NODE'
-          const {chromium}=require('playwright');
+          const {webkit,devices}=require('playwright');
           (async()=>{
-           const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
-           const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3});
+           const browser=await webkit.launch({headless:true});
+           const page=await browser.newPage({...devices['iPhone 13']});
            const errors=[];
            page.on('pageerror',e=>errors.push(e.message.slice(0,400)));
            page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,400))});
@@ -67,7 +67,13 @@ jobs:
               innerHeight,scrollY:window.scrollY};
             });
             console.log('LUMEN_HITTEST',JSON.stringify(hit));
-            await page.evaluate(()=>document.querySelector('.lumen-v3-actions button:last-child').click());
+            try{
+             await page.locator('.lumen-v3-actions button').filter({hasText:'Fechar'}).first().click({timeout:6500});
+             console.log('LUMEN_CLOSE_CLICK','ok');
+            }catch(e){
+             console.log('LUMEN_CLOSE_CLICK','layout-interference');
+             await page.evaluate(()=>document.querySelector('.lumen-v3-actions button:last-child').click());
+            }
             const productImage=page.locator('img[src*="1e8b62_055456"]').first();
             if(await productImage.count()===0)throw Error('LUMEN_PRODUCT_IMAGE_NOT_FOUND');
             await productImage.evaluate(img=>{
