@@ -482,7 +482,7 @@ let selectedBlingOrderId='',selectedBlingOrderNumber='',blingRequestId=0,blingSe
 
 function send(type,payload={}){parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function dt(v){if(!v)return'—';try{return new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(_){return'—'}}
-function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',AVAILABLE_FOR_CUSTOMER_PICKUP:'Disponível para retirada no centro',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Mercadoria a caminho',GOING_TO_STORE:'Mercadoria a caminho',AT_STORE:'Mercadoria a caminho',COLLECTED:'Pedido em rota de entrega',OUT_FOR_DELIVERY:'Mercadoria a caminho',DELIVERED:'Concluída'})[s]||s||'Corrida'}
+function statusLabel(s){return({STORE_PICKUP_READY:'Aguardando retirada na loja',AVAILABLE_FOR_CUSTOMER_PICKUP:'Disponível para retirada no centro',READY_TO_DISPATCH:'Etiqueta pronta',PREPARING:'Preparando',LOGISTICS_PACKED:'Conferido e embalado',LOGISTICS_IN_TRANSIT:'A caminho do centro',AT_LOGISTICS_CENTER:'No centro de distribuição',LOGISTICS_READY_FOR_DRIVER:'Último centro confirmado',WAITING_DRIVER:'Aguardando entregador',DRIVER_ACCEPTED:'Corrida aceita • entregador a caminho',GOING_TO_STORE:'Mercadoria a caminho',AT_STORE:'Mercadoria a caminho',COLLECTED:'Pedido em rota de entrega',OUT_FOR_DELIVERY:'Mercadoria a caminho',DELIVERED:'Concluída'})[s]||s||'Corrida'}
 let lumenOrders=[],lumenOrdersLoading=false,lumenOrdersLoaded=false,lumenOrdersTimer=null;
 const lumenOrderPayLabel=v=>v==='VELUM_CREDIT'?'Crédito VELUM':'Mercado Pago';
 function lumenOrderStatusKey(o){
@@ -1911,6 +1911,15 @@ $('logout').onclick=()=>send('LOGOUT');
 window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_ADMIN_PANEL_PAGE')return;const d=m.payload||{};
  if(m.type==='DATA'){
   render(d);
+  lastDispatchDashboardAt=Date.now();
+  // Refletir o aceite mesmo quando a resposta do clique/consulta se perdeu.
+  const active=dispatchSelection,visible=active&&rideById(active.deliveryId);
+  if(active?.requestId&&visible?.driverId&&
+   ['DRIVER_ACCEPTED','GOING_TO_STORE','AT_STORE','COLLECTED','OUT_FOR_DELIVERY','DELIVERED'].includes(visible.status)){
+   dispatchStatusResult({ok:true,deliveryId:active.deliveryId,
+     requestId:active.requestId,aceita:true,driverId:visible.driverId,
+     finalizada:visible.status==='DELIVERED'});
+  }
   if(pendingCreatedDeliveryId){
    const ride=rideById(pendingCreatedDeliveryId);
    if(ride){
@@ -2017,6 +2026,21 @@ window.addEventListener('message',event=>{
     firstDashboardData=true;
   }
 });
+// Atualiza o painel ao voltar para a aba e enquanto existir chamado pendente.
+// Nunca reenvia a corrida; REFRESH consulta dados com a sessao administrativa.
+let lastDispatchDashboardAt=0;
+window.addEventListener('focus',()=>{
+ if(document.visibilityState==='visible')send('REFRESH');
+});
+setInterval(()=>{
+ if(document.hidden)return;
+ const needsUpdate=Boolean(dispatchSelection)||
+  activeRides.some(x=>x.status==='WAITING_DRIVER'||x.status==='DRIVER_ACCEPTED');
+ if(needsUpdate&&Date.now()-lastDispatchDashboardAt>=12000){
+  lastDispatchDashboardAt=Date.now();
+  send('REFRESH');
+ }
+},12000);
 renderStops();send('READY');
 let readyAttempts=0;
 const readyRetry=setInterval(()=>{
