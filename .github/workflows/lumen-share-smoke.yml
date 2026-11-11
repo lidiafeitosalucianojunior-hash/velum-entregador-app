@@ -119,6 +119,21 @@ jobs:
                   .slice(0,10).map(short)};
               });
               console.log('LUMEN_BULK_POSITION_DOM',JSON.stringify(placeDiag));
+              const chainDiag=await page.evaluate(()=>{
+                const short=el=>{if(!el)return null;const r=el.getBoundingClientRect(),css=getComputedStyle(el);return{
+                  tag:el.tagName,cls:String(el.className?.baseVal||el.className||'').slice(0,80),
+                  id:el.id,txt:el.innerText?.trim().slice(0,65),
+                  rect:[r.x,r.y,r.width,r.height].map(n=>Math.round(n)),display:css.display,
+                  position:css.position,gridColumn:css.gridColumn,gridRow:css.gridRow,
+                  paddingBottom:css.paddingBottom,marginBottom:css.marginBottom
+                }};
+                const h=[...document.querySelectorAll('h2')].find(x=>/CONFIRA AS NOVIDADES|SALTO|RASTEIRA/i.test(x.textContent));
+                const sel=document.querySelector('select.wixui-dropdown__input');
+                const climb=el=>{const arr=[];for(let i=0;el&&i<7;i++,el=el.parentElement)arr.push(short(el));return arr};
+                return{heading:climb(h),select:climb(sel),images:short(document.querySelector('img[src*="1e8b62_055456"]'))};
+              });
+              console.log('LUMEN_BULK_CHAINS',JSON.stringify(chainDiag));
+
               const bulkBefore=await page.locator('.lumen-v6-bulk').textContent();
               await page.locator('.lumen-v6-bulk').click();
               await page.waitForTimeout(850);
