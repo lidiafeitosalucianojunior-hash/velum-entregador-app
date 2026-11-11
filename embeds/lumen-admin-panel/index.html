@@ -1240,16 +1240,29 @@ function dispatchClose(force=false){
  if(specific&&!availableDrivers.some(d=>String(d.id)===target)){
   $('driverDispatchMessage').textContent='Selecione um entregador aprovado.';return;
  }
-  state.sending=true;state.uncertain=false;state.phase='selecting';
- state.backendAck=false;state.pushProviderAccepted=null;state.offerConfirmed=false;
+  state.sending=true;state.uncertain=false;
+  state.backendAck=false;state.pushProviderAccepted=null;state.offerConfirmed=false;
   state.requestId='driver-'+(++dispatchSeq)+'-'+Date.now();
   state.targetIds=specific?[target]:[];
-  $('driverDispatchConfirm').textContent='Preparando chamado...';
-  $('driverDispatchMessage').textContent='Registrando sua solicitação. Se a confirmação demorar, consultaremos a corrida sem duplicar o chamado.';
+  const ride=rideById(state.deliveryId);
+  const previouslySelected=Array.isArray(ride?.selectedDriverIds)?ride.selectedDriverIds.map(String):[];
+  const normalize=ids=>[...new Set(ids.map(String))].sort().join('|');
+  const sameSelection=normalize(previouslySelected)===normalize(state.targetIds);
+  // Etapa ja preparada: nao reenviar a selecao para o backend.
+  // Uma chamada autenticada e idempotente registra a oferta de fato.
+  const canDispatchDirectly=state.status==='READY_TO_DISPATCH'&&sameSelection;
+  state.phase=canDispatchDirectly?'dispatching':'selecting';
+  $('driverDispatchConfirm').textContent=canDispatchDirectly?'Chamando entregador...':'Preparando chamado...';
+  $('driverDispatchMessage').textContent=canDispatchDirectly?
+    'Registrando o chamado para a seleção já salva. Aguardando a confirmação da oferta.':
+    'Confirmando a seleção. Em seguida será registrado o chamado.';
   dispatchUpdateMode();
-  dispatchWatchdog(state,'selecting',14000);
-  dispatchProbe(state,5000);
-  send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
+  dispatchWatchdog(state,state.phase,15000);
+  dispatchProbe(state,3500);
+  if(canDispatchDirectly)
+    send('DISPATCH_PREPARED',{deliveryId:state.deliveryId,requestId:state.requestId});
+  else
+    send('SELECT_DRIVERS',{deliveryId:state.deliveryId,driverIds:state.targetIds,requestId:state.requestId});
 }
 function dispatchSelectionResult(data){
  const state=dispatchSelection;
