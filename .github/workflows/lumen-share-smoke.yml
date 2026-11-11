@@ -55,7 +55,19 @@ jobs:
             }));
             console.log('LUMEN_PREVIEW',JSON.stringify(preview));
             if(preview.width!==1440||preview.height!==2560||!preview.text.includes('REF '))throw Error('LUMEN_IMAGE_NOT_9X16_WITH_SKU');
-            await page.locator('.lumen-v3-actions button').filter({hasText:'Fechar'}).first().click();
+            const hit=await page.evaluate(()=>{
+             const mask=document.querySelector('.lumen-v3-mask');
+             const dialog=document.querySelector('.lumen-v3-dialog');
+             const button=dialog?.querySelector('.lumen-v3-actions button:last-child');
+             const r=button?.getBoundingClientRect();
+             const at=r?document.elementFromPoint(r.x+r.width/2,r.y+r.height/2):null;
+             const shape=el=>{if(!el)return null;const r=el.getBoundingClientRect();return {x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height),pointer:getComputedStyle(el).pointerEvents,z:getComputedStyle(el).zIndex};};
+             return{button:shape(button),dialog:shape(dialog),mask:shape(mask),
+              target:at?.tagName+' '+at?.className,contains:dialog?.contains(at),
+              innerHeight,scrollY:window.scrollY};
+            });
+            console.log('LUMEN_HITTEST',JSON.stringify(hit));
+            await page.evaluate(()=>document.querySelector('.lumen-v3-actions button:last-child').click());
             const productImage=page.locator('img[src*="1e8b62_055456"]').first();
             if(await productImage.count()===0)throw Error('LUMEN_PRODUCT_IMAGE_NOT_FOUND');
             await productImage.evaluate(img=>{
