@@ -1,13 +1,13 @@
-name: Lumen SKU share mobile smoke
+name: Lumen SKU iPhone native sharing smoke
 on:
   push:
     paths:
       - .github/workflows/lumen-share-smoke.yml
   workflow_dispatch:
 jobs:
-  safari-mobile:
+  mobile-webkit:
     runs-on: ubuntu-latest
-    timeout-minutes: 9
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,84 +17,102 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright
           npx playwright install --with-deps webkit
-      - name: Validate live mobile SKU and direct long-press download
+      - name: Check live SKU layout and mock iPhone share chooser
         run: |
           node <<'NODE'
           const {webkit,devices}=require('playwright');
+          const fail=s=>{throw Error(s)};
           (async()=>{
             const browser=await webkit.launch({headless:true});
             const page=await browser.newPage({...devices['iPhone 13']});
+            page.on('pageerror',e=>console.log('PAGE_JS_WARNING',e.message.slice(0,240)));
+            await page.addInitScript(()=>{
+              window.__shareCalls=[];
+              window.__downloadCalls=[];
+              const normal=HTMLAnchorElement.prototype.click;
+              HTMLAnchorElement.prototype.click=function(){
+                if(this.download){window.__downloadCalls.push(this.download);return}
+                return normal.call(this);
+              };
+              Object.defineProperty(navigator,'share',{configurable:true,value:async arg=>{
+                window.__shareCalls.push({fileCount:arg?.files?.length||0,
+                  names:(arg?.files||[]).map(f=>f.name),
+                  sizes:(arg?.files||[]).map(f=>f.size)});
+              }});
+              Object.defineProperty(navigator,'canShare',{configurable:true,value:arg=>
+                Array.isArray(arg.files)&&arg.files.length<=6&&
+                arg.files.every(f=>f.type==='image/jpeg')});
+            });
             try{
-              await page.addInitScript(()=>{
-                window.__skuDownloadTest=null;
-                const normal=HTMLAnchorElement.prototype.click;
-                HTMLAnchorElement.prototype.click=function(){
-                  if(this.download&&this.download.startsWith('REF-')){
-                    window.__skuDownloadTest={filename:this.download,blob:this.href.startsWith('blob:')};
-                    return;
-                  }
-                  return normal.call(this);
-                };
+              const response=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
+              await page.waitForFunction(()=>window.__lumenShareV6?.ready,{timeout:45000});
+              await page.waitForTimeout(7500);
+              const layout=await page.evaluate(()=>{
+                const img=[...document.images].find(i=>i.src.includes('1e8b62_055456'));
+                const card=img?.closest('[class*="wixui-repeater__i"]');
+                const ref=card?.querySelector('[data-lumen-sku="7729"]');
+                const share=card?.querySelector('compartilhar-produto');
+                if(!img||!card||!ref||!share)return {found:false};
+                const a=ref.getBoundingClientRect(),b=share.getBoundingClientRect();
+                return{found:true,refs:document.querySelectorAll('.lumen-v6-ref').length,
+                  ref:{x:a.left,y:a.top,right:a.right,midY:(a.top+a.bottom)/2},
+                  share:{x:b.left,y:b.top,midY:(b.top+b.bottom)/2},
+                  overlap:a.right>b.left-5,
+                  aligned:Math.abs((a.top+a.bottom)/2-(b.top+b.bottom)/2)<5,
+                  noOldRefs:document.querySelectorAll('.lumen-v5-ref,.lumen-v5-share-sku-row').length===0,
+                  noOldModals:document.querySelectorAll('.lumen-v3-mask').length===0};
               });
-              const reply=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
-              await page.waitForFunction(()=>window.__lumenShareV5?.ready,{timeout:30000});
-              await page.waitForTimeout(9000);
-              const dom=await page.evaluate(()=>{
-                const img=[...document.images].find(x=>x.currentSrc?.includes('1e8b62_055456')||x.src?.includes('1e8b62_055456'));
-                if(!img)return {found:false};
-                const info=el=>{if(!el)return null;const r=el.getBoundingClientRect();const s=getComputedStyle(el);
-                  return {tag:el.tagName,cls:String(el.className?.baseVal||el.className||'').slice(0,90),
-                   rect:[r.x,r.y,r.width,r.height].map(n=>Math.round(n)),
-                   css:{display:s.display,position:s.position,transform:s.transform,flex:s.flexDirection},
-                   title:el.getAttribute('title'),label:el.getAttribute('aria-label'),
-                   text:(el.innerText||'').trim().slice(0,110)};};
-                let cur=img;const chain=[];
-                while(cur&&chain.length<12){chain.push(info(cur));cur=cur.parentElement;}
-                let card=img;for(let i=0;card&&i<9;i++,card=card.parentElement){
-                  if((card.innerText||'').includes('Comprar no WhatsApp'))break;
-                }
-                const product=card;
-                const listed=product?[...product.querySelectorAll('svg,button,a,[role=button]')].filter(el=>{
-                  const r=el.getBoundingClientRect(),ir=img.getBoundingClientRect();
-                  return r.y>ir.bottom&&r.y<ir.bottom+600&&r.width>8&&r.height>8&&r.height<100;
-                }).slice(0,30).map(el=>({element:info(el),parent:info(el.parentElement)})):[];
-                const sku=document.querySelector('[data-lumen-sku="7729"]');
-                const afterW = [...product.querySelectorAll('*')].filter(el=>{const r=el.getBoundingClientRect();
-                  return r.y>679&&r.y<750&&r.width>4&&r.height>4&&r.height<110;}).slice(0,60)
-                  .map(el=>({el:info(el),parent:info(el.parentElement)}));
-                return{found:true,chain,whatsapp:info([...document.querySelectorAll('*')].find(x=>x.textContent?.trim()==='Comprar no WhatsApp'&&x.children.length===0)),sku:info(sku),skuParent:info(sku?.parentElement),icons:listed,afterW};
-              });
-              console.log('LUMEN_SHARE_DOM',JSON.stringify(dom));
-              const check=await page.evaluate(()=>{
-                const refs=[...document.querySelectorAll('.lumen-v5-ref')];
-                const first=refs[0];
-                const imgs=[...document.images].filter(x=>x.getBoundingClientRect().height>100);
-                return{
-                  count:refs.length,
-                  ref:first?.textContent,
-                  noDownloadButtons:document.querySelectorAll('.lumen-v3-btn,.lumen-v4-ref').length===0,
-                  noModal:document.querySelector('.lumen-v3-mask')===null,
-                  firstBadgeY:Math.round(first?.getBoundingClientRect().top||0),
-                  imageBottom:Math.round(imgs[0]?.getBoundingClientRect().bottom||0)
-                };
-              });
-              console.log('LUMEN_V5_CARD',JSON.stringify({http:reply.status(),...check}));
-              if(reply.status()>=400||check.count<2||!check.noDownloadButtons||!check.noModal)
-                throw Error('SKU_V5_CARD_INVALID');
+              console.log('LUMEN_V6_LAYOUT',JSON.stringify({http:response.status(),...layout}));
+              if(response.status()>=400||!layout.found||layout.refs<2||
+                layout.overlap||!layout.aligned||!layout.noOldRefs||!layout.noOldModals)
+                fail('SKU_NOT_ALIGNED_OR_OLD_UI');
               const img=page.locator('img[src*="1e8b62_055456"]').first();
-              if(!await img.count())throw Error('PRODUCT_IMAGE_NOT_FOUND');
-              await img.evaluate(el=>{
-                el.dispatchEvent(new PointerEvent('pointerdown',{
-                  bubbles:true,cancelable:true,pointerType:'mouse',button:0,clientX:160,clientY:210
-                }));
-              });
-              await page.waitForFunction(()=>window.__skuDownloadTest?.blob,{timeout:20000});
-              const saved=await page.evaluate(()=>({download:window.__skuDownloadTest,
-                result:window.__lumenShareV5?.lastDownload,
-                hasModal:!!document.querySelector('.lumen-v3-mask')}));
-              console.log('LUMEN_V5_DOWNLOAD',JSON.stringify(saved));
-              if(!saved.download?.filename.startsWith('REF-')||saved.hasModal||
-                 !(saved.result?.size>8000))throw Error('DIRECT_9X16_DOWNLOAD_FAILED');
+              for(let attempt=0;attempt<5;attempt++){
+                await img.evaluate(el=>{
+                  const e=new Event('touchstart',{bubbles:true,cancelable:true});
+                  Object.defineProperty(e,'touches',{value:[{clientX:75,clientY:420}]});
+                  el.dispatchEvent(e);
+                });
+                await page.waitForTimeout(725);
+                await img.evaluate(el=>{
+                  const e=new Event('touchend',{bubbles:true,cancelable:true});
+                  Object.defineProperty(e,'touches',{value:[]});
+                  el.dispatchEvent(e);
+                });
+                await page.waitForTimeout(1100);
+                if(await page.evaluate(()=>window.__shareCalls.length>0))break;
+              }
+              const one=await page.evaluate(()=>({
+                calls:window.__shareCalls,downloads:window.__downloadCalls,
+                final:window.__lumenShareV6?.lastShared,
+                modal:!!document.querySelector('.lumen-v3-mask')
+              }));
+              console.log('LUMEN_V6_SINGLE',JSON.stringify(one));
+              if(!one.calls.length||one.calls[0].fileCount!==1||
+                one.calls[0].names[0]!=='REF-7729-9x16.jpg'||
+                one.downloads.length||one.modal)fail('LONGPRESS_DID_NOT_USE_NATIVE_SHARE');
+              const filter=page.getByText('34',{exact:true}).first();
+              await filter.click({timeout:8000});
+              await page.waitForFunction(()=>{
+                const b=document.querySelector('.lumen-v6-bulk');
+                return b&&!b.hidden;
+              },{timeout:20000});
+              await page.waitForFunction(()=>{
+                const b=document.querySelector('.lumen-v6-bulk');
+                return b&&!b.hidden&&!b.disabled&&b.textContent.includes('Compartilhar');
+              },{timeout:65000});
+              const bulkBefore=await page.locator('.lumen-v6-bulk').textContent();
+              await page.locator('.lumen-v6-bulk').click();
+              await page.waitForTimeout(850);
+              const bulk=await page.evaluate(()=>({
+                button:document.querySelector('.lumen-v6-bulk')?.textContent,
+                last:window.__shareCalls.at(-1),
+                totalCalls:window.__shareCalls.length,
+                downloads:window.__downloadCalls.length
+              }));
+              console.log('LUMEN_V6_BULK',JSON.stringify({before:bulkBefore,...bulk}));
+              if(bulk.totalCalls<2||bulk.last.fileCount<2||bulk.last.fileCount>6||
+                bulk.downloads!==0||bulk.last.names.some(n=>!n.startsWith('REF-')))fail('BULK_SHARE_FAILED');
             }finally{await browser.close()}
-          })().catch(e=>{console.error('LUMEN_SMOKE_FAILURE',e.message);process.exit(1)});
+          })().catch(e=>{console.error('LUMEN_V6_SMOKE_FAILED',e.stack||e);process.exit(1)});
           NODE
