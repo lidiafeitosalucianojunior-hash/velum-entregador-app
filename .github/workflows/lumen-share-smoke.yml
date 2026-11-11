@@ -77,8 +77,7 @@ jobs:
             const productImage=page.locator('img[src*="1e8b62_055456"]').first();
             if(await productImage.count()===0)throw Error('LUMEN_PRODUCT_IMAGE_NOT_FOUND');
             await productImage.evaluate(img=>{
-             const touch=new Touch({identifier:1,target:img,clientX:180,clientY:350,screenX:180,screenY:350});
-             img.dispatchEvent(new TouchEvent('touchstart',{touches:[touch],changedTouches:[touch],targetTouches:[touch],bubbles:true,cancelable:true}));
+             img.dispatchEvent(new PointerEvent('pointerdown',{pointerType:'mouse',button:0,bubbles:true,cancelable:true,clientX:180,clientY:350}));
             });
             await page.waitForTimeout(850);
             const pressModal=await page.locator('.lumen-v3-mask').count();
