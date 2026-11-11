@@ -39,6 +39,29 @@ jobs:
               const reply=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
               await page.waitForFunction(()=>window.__lumenShareV5?.ready,{timeout:30000});
               await page.waitForTimeout(9000);
+              const dom=await page.evaluate(()=>{
+                const img=[...document.images].find(x=>x.currentSrc?.includes('1e8b62_055456')||x.src?.includes('1e8b62_055456'));
+                if(!img)return {found:false};
+                const info=el=>{if(!el)return null;const r=el.getBoundingClientRect();const s=getComputedStyle(el);
+                  return {tag:el.tagName,cls:String(el.className?.baseVal||el.className||'').slice(0,90),
+                   rect:[r.x,r.y,r.width,r.height].map(n=>Math.round(n)),
+                   css:{display:s.display,position:s.position,transform:s.transform,flex:s.flexDirection},
+                   title:el.getAttribute('title'),label:el.getAttribute('aria-label'),
+                   text:(el.innerText||'').trim().slice(0,110)};};
+                let cur=img;const chain=[];
+                while(cur&&chain.length<12){chain.push(info(cur));cur=cur.parentElement;}
+                let card=img;for(let i=0;card&&i<9;i++,card=card.parentElement){
+                  if((card.innerText||'').includes('Comprar no WhatsApp'))break;
+                }
+                const product=card;
+                const listed=product?[...product.querySelectorAll('svg,button,a,[role=button]')].filter(el=>{
+                  const r=el.getBoundingClientRect(),ir=img.getBoundingClientRect();
+                  return r.y>ir.bottom&&r.y<ir.bottom+600&&r.width>8&&r.height>8&&r.height<100;
+                }).slice(0,30).map(el=>({element:info(el),parent:info(el.parentElement)})):[];
+                const sku=document.querySelector('[data-lumen-sku="7729"]');
+                return{found:true,chain,whatsapp:info([...document.querySelectorAll('*')].find(x=>x.textContent?.trim()==='Comprar no WhatsApp'&&x.children.length===0)),sku:info(sku),skuParent:info(sku?.parentElement),icons:listed};
+              });
+              console.log('LUMEN_SHARE_DOM',JSON.stringify(dom));
               const check=await page.evaluate(()=>{
                 const refs=[...document.querySelectorAll('.lumen-v5-ref')];
                 const first=refs[0];
