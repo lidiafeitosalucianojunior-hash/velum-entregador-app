@@ -1,0 +1,54 @@
+name: Lumen product card DOM diagnostic
+on:
+  push:
+    paths:
+      - .github/workflows/lumen-card-dom.yml
+  workflow_dispatch:
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Prepare WebKit
+      run: |
+        npm install --no-save --package-lock=false playwright
+        npx playwright install --with-deps webkit
+    - name: Inspect cards
+      run: |
+        node <<'NODE'
+        const {webkit,devices}=require('playwright');
+        (async()=>{
+          const browser=await webkit.launch({headless:true});
+          const page=await browser.newPage({...devices['iPhone 13']});
+          await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForTimeout(12000);
+          const result=await page.evaluate(()=>{
+            const img=Array.from(document.images).find(i=>(i.src||'').includes('1e8b62_055456'));
+            if(!img)return {found:false,imgs:document.images.length};
+            const brief=e=>{
+              const r=e.getBoundingClientRect();
+              return {tag:e.tagName,id:e.id,cls:String(e.className||'').slice(0,120),
+                hook:e.getAttribute('data-hook'),aria:e.getAttribute('aria-label'),
+                rect:[r.x,r.y,r.width,r.height].map(v=>Math.round(v)),
+                txt:(e.innerText||'').trim().slice(0,190),
+                count:e.children.length,style:e.getAttribute('style')?.slice(0,140),
+                css:{display:getComputedStyle(e).display,position:getComputedStyle(e).position,
+                  overflow:getComputedStyle(e).overflow}};
+            };
+            const parents=[];let el=img;
+            while(el&&parents.length<13){parents.push(brief(el));el=el.parentElement;}
+            const buttons=Array.from(document.querySelectorAll('button,a,svg,[role=button],[aria-label]'))
+              .filter(e=>{const r=e.getBoundingClientRect();const x=img.getBoundingClientRect();
+                return r.y>x.bottom+20&&r.y<x.bottom+620&&r.x>x.left-30&&r.x<x.right+30&&r.width>5&&r.height>5;})
+              .slice(0,35).map(brief);
+            const badge=document.querySelector('.lumen-v3-ref');
+            return{found:true,img:brief(img),parents,buttons,badge:badge?brief(badge):null};
+          });
+          console.log('LUMEN_DOM',JSON.stringify(result));
+          await browser.close();
+        })().catch(e=>{console.error(e.stack||e);process.exit(1)});
+        NODE
