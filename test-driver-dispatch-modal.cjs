@@ -12,7 +12,8 @@ assert(html.includes('id="driverDispatchSelect"')&&!html.includes('<select id="d
 assert(html.includes('dispatchTimerClear()')&&html.includes('dispatchWatchdog(state'), 'Pending action must recover');
 assert(html.includes('state.requestId')&&html.includes('data.requestId'), 'Responses correlated with request');
 assert(html.includes("state.uncertain")&&html.includes("send('REFRESH')"), 'Timeout must not retry automatically');
-assert(html.includes("state.phase='selecting'")&&html.includes("state.phase='dispatching'"), 'Two-phase dispatch has explicit states');
+assert(html.includes("state.phase=alreadyWaiting?'ringing':canDispatchDirectly?'dispatching':'selecting'")&&html.includes("state.phase='dispatching'"), 'Dispatch phases distinguish selection, ringing and calls');
 assert(/if\(editingDeliveryId\)\s*\{\s*\$\('create'\)\.disabled=true;/.test(html), 'Edits must not be blocked by missing freight');
 assert(html.includes("if(!ride||!['READY_TO_DISPATCH','WAITING_DRIVER','LOGISTICS_READY_FOR_DRIVER'].includes(ride.status))return;"), 'No inappropriate call for center customer pickup');
-console.log('DISPATCH_MODAL_UI_TEST_OK: 11 protected behaviors + '+scripts.length+' scripts parsed');
+assert(html.includes('dispatchRingStart()')&&html.includes('dispatchRingStop()'), 'Call ringing starts on click and stops at terminal state');
+console.log('DISPATCH_MODAL_UI_TEST_OK: 12 protected behaviors + '+scripts.length+' scripts parsed');
