@@ -1,0 +1,62 @@
+name: Lumen visual identity diagnostic
+on:
+  push:
+    paths: [.github/workflows/lumen-visual-diagnostic.yml]
+  workflow_dispatch:
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps webkit
+      - name: Inspect product controls
+        run: |
+          node <<'NODE'
+          const {webkit,devices}=require('playwright');
+          (async()=>{
+           const b=await webkit.launch({headless:true});
+           const p=await b.newPage({...devices['iPhone 13']});
+           const failures=[];
+           p.on('requestfailed',r=>{if(failures.length<30)failures.push({url:r.url().slice(0,200),fail:r.failure()?.errorText})});
+           try{
+             await p.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
+             await p.waitForTimeout(10500);
+             const d=await p.evaluate(()=>{
+               const style=el=>{if(!el)return null;const s=getComputedStyle(el),r=el.getBoundingClientRect();return{
+                 tag:el.tagName,classes:String(el.className?.baseVal||el.className||'').slice(0,200),
+                 id:el.id,role:el.getAttribute('role'),text:(el.innerText||'').trim().slice(0,90),
+                 outer:el.outerHTML.slice(0,950),
+                 style:{color:s.color,bg:s.backgroundColor,font:s.fontFamily,size:s.fontSize,display:s.display,
+                 border:s.border,borderRadius:s.borderRadius,position:s.position,textDecoration:s.textDecoration,
+                 width:s.width,height:s.height,padding:s.padding,boxSizing:s.boxSizing,overflow:s.overflow},
+                 rect:[r.x,r.y,r.width,r.height].map(x=>Math.round(x))
+               }};
+               const findButton=text=>{
+                 const els=[...document.querySelectorAll('a,button,span,div,[role="button"]')];
+                 const hits=els.filter(x=>new RegExp(text,'i').test(x.textContent||'')&&(x.textContent||'').trim().length<65);
+                 hits.sort((x,y)=>(x.innerText||'').length-(y.innerText||'').length);
+                 return hits.slice(0,5).map(el=>{
+                   const chain=[];let x=el;for(let i=0;x&&i<6;i++,x=x.parentElement)chain.push(style(x));
+                   return chain;
+                 });
+               };
+               const svg=[...document.querySelectorAll('svg')].filter(x=>{const r=x.getBoundingClientRect();return r.width>35&&r.height>35&&r.y>250}).slice(0,15).map(style);
+               const known=document.querySelector('img[src*="1e8b62_055456"]');
+               return{
+                 ready:document.readyState,v6:window.__lumenShareV6?.ready,imgs:document.images.length,cssLinks:[...document.querySelectorAll('link[rel="stylesheet"]')].map(x=>x.href.slice(0,180)).slice(0,25),
+                 add:findButton('Adicionar ao'),whats:findButton('Comprar no'),svgs:svg,
+                 matchedImage:known?style(known):null
+               };
+             });
+             console.log('LUMEN_VISUAL_DOM',JSON.stringify(d));
+             console.log('LUMEN_NETWORK_FAILED',JSON.stringify(failures));
+           }finally{await b.close()}
+          })().catch(e=>{console.error('LUMEN_VISUAL_ERROR',e.stack||e);process.exit(1)});
+          NODE
