@@ -29,7 +29,7 @@ jobs:
               await page.waitForFunction(()=>window.__lumenShareV6?.ready===true,{timeout:35000});
               await page.waitForTimeout(7000);
               const data=await page.evaluate(()=>{
-               const card=document.querySelector('.wixui-repeater__item');
+               const card=[...document.querySelectorAll('.wixui-repeater__item')].find(x=>x.querySelector('button[aria-label="Adicionar ao carrinho"]'));
                const add=card?.querySelector('button[aria-label="Adicionar ao carrinho"]');
                const whats=card?.querySelector('button[aria-label="Comprar no WhatsApp"]');
                const info=btn=>{
