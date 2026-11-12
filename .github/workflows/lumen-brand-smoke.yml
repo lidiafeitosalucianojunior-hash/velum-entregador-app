@@ -1,0 +1,62 @@
+name: Lumen brand buttons smoke
+on:
+  push:
+    paths:
+      - .github/workflows/lumen-brand-smoke.yml
+  workflow_dispatch:
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install WebKit
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps webkit
+      - name: Verify brand styling and controls
+        run: |
+          node <<'NODE'
+          const {webkit,devices}=require('playwright');
+          (async()=>{
+            const browser=await webkit.launch({headless:true});
+            const page=await browser.newPage({...devices['iPhone 13']});
+            try{
+              const res=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
+              await page.waitForFunction(()=>window.__lumenShareV6?.ready===true,{timeout:35000});
+              await page.waitForTimeout(7000);
+              const data=await page.evaluate(()=>{
+               const card=document.querySelector('.wixui-repeater__item');
+               const add=card?.querySelector('button[aria-label="Adicionar ao carrinho"]');
+               const whats=card?.querySelector('button[aria-label="Comprar no WhatsApp"]');
+               const info=btn=>{
+                if(!btn)return null;
+                const s=getComputedStyle(btn),lab=btn.querySelector('.wixui-button__label'),icon=btn.querySelector('.wixui-button__icon');
+                const r=icon?.getBoundingClientRect(),svg=icon?.querySelector('svg');
+                return{bg:s.backgroundColor,border:s.borderRadius,borderColor:s.borderColor,
+                 width:Math.round(btn.getBoundingClientRect().width),
+                 labelColor:getComputedStyle(lab).color,
+                 labelFont:getComputedStyle(lab).fontSize,
+                 iconDisplay:icon?getComputedStyle(icon).display:null,
+                 iconWidth:r?.width||0,
+                 svgWidth:svg?.getBoundingClientRect().width||0};
+               };
+               return{guard:!!document.querySelector('#lumen-brand-guard-v1'),
+                 v6:window.__lumenShareV6?.ready,add:info(add),whats:info(whats),
+                 count:document.querySelectorAll('.wixui-repeater__item').length};
+              });
+              console.log('LUMEN_BRAND_SMOKE',JSON.stringify({http:res.status(),...data}));
+              if(res.status()>=400||!data.guard||!data.v6||!data.add||!data.whats)
+                throw Error('BRAND_GUARD_OR_BUTTONS_MISSING');
+              if(data.add.bg!=='rgb(70, 51, 20)'||data.add.labelColor!=='rgb(255, 255, 255)'||
+                data.whats.bg!=='rgb(255, 255, 255)'||
+                data.whats.labelColor!=='rgb(139, 103, 85)'||
+                data.add.iconDisplay!=='none'||data.whats.svgWidth>18.5)
+                throw Error('BRAND_STYLING_NOT_RESTORED');
+              console.log('LUMEN_BRAND_PASS');
+            }finally{await browser.close()}
+          })().catch(e=>{console.error('LUMEN_BRAND_ERROR',e.stack||e);process.exit(1)});
+          NODE
