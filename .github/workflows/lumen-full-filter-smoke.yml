@@ -35,11 +35,18 @@ jobs:
              await page.waitForTimeout(5000);
              const select=page.locator('select.wixui-dropdown__input').first();
              await select.waitFor({timeout:20000});
-             const options=await select.evaluate(el=>Array.from(el.options||[]).map(x=>({label:x.label,value:x.value})));
-             console.log('LUMEN_FULL_OPTIONS',JSON.stringify(options.slice(0,20)));
-             const rasteira=options.find(x=>/rasteira/i.test(x.label||''));
-             if(!rasteira)throw Error('RASTEIRA_OPTION_NOT_FOUND');
-             await select.selectOption(rasteira.value);
+             await select.click();
+             await page.waitForTimeout(450);
+             const menu=await page.evaluate(()=>[...document.querySelectorAll('[role="option"],[role="listbox"],[class*="dropdown__option"],[class*="option"]')].filter(x=>
+               /rasteira/i.test(x.textContent||'')&&x.getBoundingClientRect().width>3).slice(0,15)
+               .map(x=>({tag:x.tagName,role:x.getAttribute('role'),class:String(x.className).slice(0,95),
+                text:x.textContent.trim().slice(0,90)})));
+             console.log('LUMEN_FULL_MENU',JSON.stringify(menu));
+             const choices=page.getByText('Rasteira',{exact:true});
+             const n=await choices.count();
+             console.log('LUMEN_RASTEIRA_ELEMENTS',n);
+             if(n<1)throw Error('RASTEIRA_DROPDOWN_CHOICE_NOT_FOUND');
+             await choices.last().click({timeout:10000});
              await page.waitForTimeout(2200);
              const loaded=await page.evaluate(()=>({
                count:window.__lumenShareV6?.bulkResults?.(),
