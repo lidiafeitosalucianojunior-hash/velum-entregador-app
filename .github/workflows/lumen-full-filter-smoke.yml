@@ -1,0 +1,57 @@
+name: Lumen full search batch count 66
+on:
+  push:
+    paths:
+      - .github/workflows/lumen-full-filter-smoke.yml
+  workflow_dispatch:
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install WebKit
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps webkit
+      - name: Verify total Wix category without scrolling
+        run: |
+          node <<'NODE'
+          const {webkit,devices}=require('playwright');
+          const fs=require('fs');
+          (async()=>{
+           const script=fs.readFileSync('embeds/lumen-share/lumen-sku-9x16-v6.js','utf8');
+           if(!script.includes('ctx.strokeText(sizeText,48,2247)')||
+              !script.includes('const BULK_SIZE=10;')||
+              !script.includes('p[5]===true'))throw Error('BUILD_REGRESSION');
+           const browser=await webkit.launch({headless:true});
+           const page=await browser.newPage({...devices['iPhone 13']});
+           try {
+             const r=await page.goto('https://www.lumenluxos.com/',{waitUntil:'domcontentloaded',timeout:60000});
+             await page.waitForFunction(()=>window.__lumenShareV6?.ready===true,{timeout:45000});
+             await page.waitForTimeout(5000);
+             const select=page.locator('select.wixui-dropdown__input').first();
+             await select.waitFor({timeout:20000});
+             const options=await select.evaluate(el=>Array.from(el.options||[]).map(x=>({label:x.label,value:x.value})));
+             console.log('LUMEN_FULL_OPTIONS',JSON.stringify(options.slice(0,20)));
+             const rasteira=options.find(x=>/rasteira/i.test(x.label||''));
+             if(!rasteira)throw Error('RASTEIRA_OPTION_NOT_FOUND');
+             await select.selectOption(rasteira.value);
+             await page.waitForTimeout(2200);
+             const loaded=await page.evaluate(()=>({
+               count:window.__lumenShareV6?.bulkResults?.(),
+               label:document.querySelector('.lumen-v6-bulk')?.textContent,
+               cards:document.querySelectorAll('.lumen-v6-ref').length,
+               filter:document.querySelector('select.wixui-dropdown__input')?.value
+             }));
+             console.log('LUMEN_FULL_FILTER',JSON.stringify(loaded));
+             if(loaded.count!==66)throw Error('COUNT_NOT_66:'+JSON.stringify(loaded));
+             const starts=loaded.label?.includes('10')&&loaded.label?.includes('66');
+             if(!starts)throw Error('BATCH_LABEL_NOT_10_OF_66');
+             console.log('LUMEN_TOTAL_FROM_WIX_OK',JSON.stringify({count:loaded.count,totalBatch:10,noScroll:true}));
+           } finally {await browser.close()}
+          })().catch(e=>{console.error('LUMEN_FULL_FILTER_FAILED',e.stack||e);process.exit(1)});
+          NODE
