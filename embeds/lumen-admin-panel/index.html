@@ -687,6 +687,20 @@ function lumenOrderLabelPayload(o,ride=null){
   orderLabel:true,orderId:o.orderId,orderNumber:o.orderId,
   isMalaDireta:o.fulfillmentMode==='RESALE',fulfillmentMode:o.fulfillmentMode,
   shippingType:o.shippingType,
+  // Pedido de retirada pode ser impresso ANTES de existir corrida. Usar
+  // somente a origem oficial efetivamente carregada no painel Lúmen.
+  pickupAddress:o.shippingType==='PICKUP_LUMEN'?
+   (activeRide?.pickupAddress||$('pickupAddress')?.value||''):activeRide?.pickupAddress||'',
+  pickupNumber:o.shippingType==='PICKUP_LUMEN'?
+   (activeRide?.pickupNumber||$('pickupNumber')?.value||''):activeRide?.pickupNumber||'',
+  pickupNeighborhood:o.shippingType==='PICKUP_LUMEN'?
+   (activeRide?.pickupNeighborhood||$('pickupNeighborhood')?.value||''):activeRide?.pickupNeighborhood||'',
+  pickupCity:o.shippingType==='PICKUP_LUMEN'?
+   (activeRide?.pickupCity||$('pickupCity')?.value||''):activeRide?.pickupCity||'',
+  pickupState:o.shippingType==='PICKUP_LUMEN'?
+   (activeRide?.pickupState||$('pickupState')?.value||''):activeRide?.pickupState||'',
+  pickupZipCode:o.shippingType==='PICKUP_LUMEN'?
+   (activeRide?.pickupZipCode||$('pickupZipCode')?.value||''):activeRide?.pickupZipCode||'',
   senderName:o.resellerName||'Lúmen Luxos',
   senderContact:o.resellerContact||'',
   senderPhone:o.resellerPhone||'',
@@ -911,19 +925,21 @@ function labelWhatsappLink(phone){
 function labelHtml(x){
  const orderLabel=x.orderLabel===true;
  const isPickup=!orderLabel&&(x.storePickup===true||x.deliveryType==='Retirada em loja'||x.status==='STORE_PICKUP_READY');
- const isCenterPickup=!orderLabel&&(x.customerPickupAtCenter===true||String(x.customerPickupMode||'').toUpperCase()==='CENTER');
+ const isCenterPickup=x.customerPickupAtCenter===true||
+   String(x.customerPickupMode||'').toUpperCase()==='CENTER';
  const malaDireta=orderLabel&&x.isMalaDireta===true;
  const isBasePickup=orderLabel&&x.shippingType==='PICKUP_LUMEN';
- const labelMode=malaDireta?'MALA DIRETA':isBasePickup?'RETIRADA NA BASE':isPickup?'RETIRADA':isCenterPickup?'RETIRADA NO CENTRO':'ENTREGA';
+ const labelMode=isCenterPickup?'RETIRADA NO CENTRO':malaDireta?'MALA DIRETA':
+   isBasePickup?'RETIRADA NA BASE':isPickup?'RETIRADA':'ENTREGA';
  const orderQrOnly=orderLabel&&!(x.deliveryId&&x.labelCode);
  const name=String(x.customerName||x.recipientName||'Recebedor');
  const phone=String(x.customerPhone||'');
  const whatsapp=labelWhatsappLink(phone);
  const lastCenter=Array.isArray(x.logisticsStages)?x.logisticsStages[x.logisticsStages.length-1]:null;
- const address=isCenterPickup?String(lastCenter?.address||x.finalLogisticsCenterAddress||''):isPickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):String(x.deliveryAddress||'').trim();
- const city=isCenterPickup?(lastCenter?.city||x.finalLogisticsCenterCity):isPickup?x.pickupCity:x.deliveryCity;
- const state=isCenterPickup?(lastCenter?.state||x.finalLogisticsCenterState):isPickup?x.pickupState:x.deliveryState;
- const postcode=isCenterPickup?(lastCenter?.zipCode||x.finalLogisticsCenterZipCode):isPickup?x.pickupZipCode:x.deliveryZipCode;
+ const address=isCenterPickup?String(lastCenter?.address||x.finalLogisticsCenterAddress||x.deliveryAddress||''):isPickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):isBasePickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):String(x.deliveryAddress||'').trim();
+ const city=isCenterPickup?(lastCenter?.city||x.finalLogisticsCenterCity||x.deliveryCity):(isPickup||isBasePickup)?x.pickupCity:x.deliveryCity;
+ const state=isCenterPickup?(lastCenter?.state||x.finalLogisticsCenterState||x.deliveryState):(isPickup||isBasePickup)?x.pickupState:x.deliveryState;
+ const postcode=isCenterPickup?(lastCenter?.zipCode||x.finalLogisticsCenterZipCode||x.deliveryZipCode):(isPickup||isBasePickup)?x.pickupZipCode:x.deliveryZipCode;
  const addressHtml=[address,[city,state].filter(Boolean).join(' - '),postcode&&('CEP '+postcode)].filter(Boolean).map(esc).join('<br>');
  const complement=String(x.deliveryComplement||x.blingComplement||x.addressComplement||'').trim();
  const amount=Number(x.deliveryFee||0);
@@ -941,14 +957,15 @@ function labelHtml(x){
   (x.senderContact&&x.senderContact!==x.senderName?'<span>Responsável: '+esc(x.senderContact)+'</span>':'')+
   (x.senderPhone?'<span>WhatsApp: '+esc(x.senderPhone)+'</span>':'')+
   '</section>':'';
- const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):isCenterPickup?'Sem taxa de entrega':money(amount);
+ const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):isCenterPickup?'Sem taxa de entrega':x.freightNegotiated===true?'A combinar':money(amount);
  const shippingPayer=orderLabel?(isBasePickup?'Retirada na base':malaDireta?'A confirmar na corrida':'Consultar a corrida'):esc(payer);
  return '<article class="shipping-label'+(orderLabel?' order-logistic':'')+(complement?' has-complement':'')+'">'+
   '<header class="label-header"><div class="label-brand"><strong>'+(orderLabel?'VELUM LOGÍSTICA':'LÚMEN LUXOS')+'</strong><span>'+(orderLabel?'Pedido '+esc(x.orderId||x.orderNumber||''):'Exclusividade, Poder e Presença')+'</span></div><div class="label-mode">'+labelIcon((isPickup||isBasePickup||isCenterPickup)?'store':'truck')+'<b>'+labelMode+'</b></div></header>'+
   senderHtml+
   '<section class="label-recipient"><div class="label-recipient-info"><small class="label-eyebrow">DESTINATÁRIO</small><div class="label-name-row"><span class="label-icon-square">'+labelIcon('person')+'</span><strong class="label-name">'+esc(name)+'</strong></div><div class="label-phone-row"><span class="label-icon-square">'+labelIcon('phone')+'</span><div><small>TELEFONE / WHATSAPP</small><b>'+esc(phone||'Não informado')+'</b></div></div></div>'+
   '<div class="label-qr-whats">'+(smallQr?'<img src="'+smallQr+'" alt="QR Code para WhatsApp da destinatária"><b>FALAR NO<br>WHATSAPP</b>':'<span>WhatsApp<br>indisponível</span>')+'</div></section>'+
-  '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isBasePickup?'ENDEREÇO DA CLIENTE · RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):(isPickup?'ENDEREÇO DE RETIRADA':isCenterPickup?'ENDEREÇO DO CENTRO DE RETIRADA':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
+  '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isCenterPickup?'ENDEREÇO DO CENTRO DE RETIRADA':
+   isBasePickup?'ENDEREÇO DE RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):((isPickup||isBasePickup)?'ENDEREÇO DE RETIRADA':isCenterPickup?'ENDEREÇO DO CENTRO DE RETIRADA':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
   (complement?'<section class="label-complement-block"><small>COMPLEMENTO DO ENDEREÇO · BLING</small><b>'+esc(complement)+'</b></section>':'')+
   (orderLabel?'':'<section class="label-facts">'+
   section('fact-mode',(isPickup||isBasePickup||isCenterPickup)?'store':'truck','TIPO DE ENTREGA',labelMode)+
