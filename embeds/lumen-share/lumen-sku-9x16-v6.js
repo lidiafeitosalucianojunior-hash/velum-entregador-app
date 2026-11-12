@@ -325,6 +325,42 @@
  }
  const BULK_SIZE=10;
  let activeFilter=false,selectedSize='',selectedCategory='',bulkOffset=0,lastSet='',bulkBar=null,bulkButton=null,preparingKey='';
+ // O Wix emite click NO LABEL, click NO INPUT e change para um unico toque.
+ // O estado do filtro precisa vir da UI atual, nunca de contagem de cliques.
+ function normalizeSize(value){
+  return String(value||'').trim().replace(/[–/]/g,'-')
+   .replace(/^(3[3-9])-(\d)$/,'$1-3$2');
+ }
+ function mainSizeGroup(){
+  const known=document.getElementById('comp-mtlus61b');
+  if(known?.querySelector('input[type="checkbox"]'))return known;
+  const dropdown=document.querySelector('select.wixui-dropdown__input');
+  const top=dropdown?.getBoundingClientRect().top??Infinity;
+  return [...document.querySelectorAll('.wixui-selection-tags')]
+   .filter(el=>el.querySelector('input[type="checkbox"]')&&
+    el.getBoundingClientRect().bottom<=top+10)
+   .sort((a,b)=>b.getBoundingClientRect().bottom-a.getBoundingClientRect().bottom)[0]||null;
+ }
+ function selectedChip(label){
+  const input=label.querySelector('input[type="checkbox"]');
+  if(input?.checked||label.getAttribute('aria-selected')==='true')return true;
+  const m=(getComputedStyle(label).backgroundColor||'').match(/\d+(?:\.\d+)?/g);
+  return m?.length>=3&&Number(m[0])+Number(m[1])+Number(m[2])<360;
+ }
+ function syncFiltersFromUi(){
+  const root=mainSizeGroup();
+  const select=document.querySelector('select.wixui-dropdown__input');
+  const sizes=root?[...root.querySelectorAll('label')]
+   .filter(selectedChip).map(l=>normalizeSize(l.querySelector('input')?.value||l.textContent))
+   .filter(Boolean):[];
+  const size=root?(sizes[0]||''):selectedSize;
+  const category=select?String(select.value||''):selectedCategory;
+  if(size!==selectedSize||category!==selectedCategory){
+   selectedSize=size;selectedCategory=category;
+   bulkOffset=0;lastSet='';preparingKey='';filteredCache=null;filteredCacheKey='';
+  }
+  activeFilter=Boolean(selectedSize||selectedCategory);
+ }
  let filteredCacheKey='',filteredCache=null;
  function categoryKey(value){
   const key=nameKey(value);
@@ -346,7 +382,7 @@
   // A última coluna indica estoque; a penúltima, as coleções reais do Wix.
   const all=catalogItems.filter(p=>p[5]===true&&Boolean(p[1]&&p[2])&&
    (!category||(Array.isArray(p[4])&&p[4].includes(category)))&&
-   (!selectedSize||(Array.isArray(p[3])&&p[3].map(String).includes(selectedSize))));
+   (!selectedSize||(Array.isArray(p[3])&&p[3].some(s=>normalizeSize(s)===selectedSize))));
   const allowed=new Map(all.map(p=>[String(p[2]),p]));
   const seen=new Set(),result=[];
   // Preservar no início a ordem dos produtos que a vitrine já mostrou.
@@ -484,33 +520,21 @@
   });
  }
  function scheduleBulk(){
-  if(!activeFilter)return;
+  syncFiltersFromUi();
+  if(!activeFilter){if(bulkButton)bulkButton.hidden=true;return;}
   if(!bulkBar)showBulk();
   else refreshBulk();
  }
  function markFilter(event){
   const target=event.target;
-  if(!target||!target.closest)return;
-  const el=target.closest('button,[role="button"],a,option,div,span,label')||target;
-  const value=String(event.type==='change'?(target.value||el.textContent):(el.textContent||'')).trim();
-  const heading=[...document.querySelectorAll('h1,h2,h3,h4')].find(x=>
-    /confira as novidades/i.test(x.textContent||''));
-  const top=heading?.getBoundingClientRect().top??innerHeight;
-  const r=el.getBoundingClientRect();
-  if(r.top>top+30||value.length>75)return;
-  if(/^(?:3[4-9]|4[0-5])$/.test(value)){
-   selectedSize=selectedSize===value?'':value;
-  }else if(/^(?:rasteira|tênis|tenis|papete|salto|chinelo(?: f\.)?|bota|botas|nuvem|crocs|bolsas|acessórios)$/i.test(value)){
-   selectedCategory=value;
-  }else if(/^(?:escolha uma categoria|todas as categorias)$/i.test(value)){
-   selectedCategory='';
-  }else return;
-  activeFilter=Boolean(selectedSize||selectedCategory);
-  filteredCache=null;filteredCacheKey='';
-  bulkOffset=0;lastSet='';preparingKey='';
-  setTimeout(()=>{scan();scheduleBulk();},700);
+  if(!target?.matches)return;
+  const sizeGroup=mainSizeGroup();
+  // Um unico gesto no Wix emite click no label, click no input e change.
+  // Somente CHANGE do controle oficial tem autoridade para alterar o filtro.
+  if(!target.matches('select.wixui-dropdown__input')&&
+   !(target.matches('input[type="checkbox"]')&&sizeGroup?.contains(target)))return;
+  setTimeout(()=>{syncFiltersFromUi();scan();scheduleBulk();},180);
  }
- document.addEventListener('click',markFilter,{capture:true,passive:true});
  document.addEventListener('change',markFilter,{capture:true,passive:true});
  let scheduled=false;
  function scan(){
