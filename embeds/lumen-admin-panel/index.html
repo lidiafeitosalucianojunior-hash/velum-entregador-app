@@ -43,7 +43,7 @@
 .store-pickup-option input{width:20px;height:20px;flex:none;accent-color:var(--orange)}
 .store-pickup-option b{display:block;font-size:13px}.store-pickup-option small{display:block;margin-top:3px;line-height:1.5;color:#715c47;font-size:10px}
 .center-pickup-mode #deliveryAddressBlock,.center-pickup-mode #payerField{display:none!important}
-.store-pickup-mode #deliveryAddressBlock,.store-pickup-mode #stopList,.store-pickup-mode #addStop,.store-pickup-mode #payerField,.store-pickup-mode #review,.store-pickup-mode #centerPickupOption{display:none!important}
+.store-pickup-mode #deliveryAddressBlock,.store-pickup-mode #stopList,.store-pickup-mode #addStop,.store-pickup-mode #payerField,.store-pickup-mode #centerPickupOption{display:none!important}
 .logistics-pickup-option{background:#eef5fc;border-color:#cadcf0}.logistics-pickup-option small{color:#59708d}.logistics-pickup-option input{accent-color:var(--orange)}
 .sheet-select-label{display:flex;align-items:center;gap:5px}
 .sheet-select-label input,.sheet-order-line input{width:16px;height:16px;flex:none;accent-color:var(--orange);cursor:pointer}
@@ -352,6 +352,11 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 @media(min-width:680px){.lumen-order-compact-table th{width:26%}.lumen-order-compact-table td{font-size:12px}}
 @media(max-width:400px){.lumen-order-overview-card{padding:11px!important}.lumen-order-compact-table th{width:34%;font-size:10px}.lumen-order-compact-table td{font-size:11px}.lumen-order-compact-table th,.lumen-order-compact-table td{padding-top:7px;padding-bottom:7px}}
 .lumen-inbox-card{grid-column:1/-1;background:#f6faf8;border:1px solid #cbe1d8;color:#184c3c}.lumen-inbox-card b{color:#194b3d}.lumen-inbox-card span{color:#567467;opacity:1}.lumen-inbox-card:focus-visible{outline:2px solid #16875f}
+/* Frete e combinacao sempre na mesma linha, inclusive no mobile. */
+.freight-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.freight-buttons .btn{width:100%;min-width:0;white-space:normal;font-size:clamp(10px,2.8vw,13px);line-height:1.25;min-height:46px}
+#pickupManualFeeBox{display:none}
+body.center-pickup-mode #pickupManualFeeBox,body.store-pickup-mode #pickupManualFeeBox{display:block}
 </style>
 </head>
 <body><div class="app">
@@ -384,8 +389,8 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 
 <div class="address-block"><h4>4. Paradas / centros de distribuição</h4><p>Opcional. Adicione uma ou mais paradas antes de chamar o entregador. Cada parada pode ter taxa extra ou não.</p>
 <div id="stopList" class="stop-list"></div><button id="addStop" class="add-stop" type="button">+ ADICIONAR PARADA</button>
-<label class="store-pickup-option logistics-pickup-option" id="centerPickupOption"><input id="centerPickupMode" type="checkbox"><span><b>Retirada no centro logístico</b><small>A cliente poderá retirar no último centro. Não precisa informar endereço de entrega agora; poderá preenchê-lo pelo rastreio se solicitar entregador.</small></span></label>
-<label class="store-pickup-option"><input id="storePickupMode" type="checkbox"><span><b>Retirada em loja</b><small>O próprio cliente busca o pedido na Lúmen. Sem entregador e sem taxa de entrega.</small></span></label>
+<label class="store-pickup-option logistics-pickup-option" id="centerPickupOption"><input id="centerPickupMode" type="checkbox"><span><b>Retirada no centro logístico</b><small>A cliente retira no último centro. O endereço dela é obrigatório para a etiqueta; o frete da retirada é R$ 0,00, salvo taxa manual.</small></span></label>
+<label class="store-pickup-option"><input id="storePickupMode" type="checkbox"><span><b>Retirada em loja</b><small>A cliente retira na Lúmen. Sem cálculo de frete; a etiqueta traz o endereço da cliente.</small></span></label>
 <label class="ready-check" id="storePickupReadyBox" style="display:none"><input id="storePickupReady" type="checkbox"><span>Confirmo que o pedido está pronto para retirada na loja.</span></label>
 </div>
 
@@ -396,21 +401,23 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 <div class="grid three"><div class="field"><label>CEP</label><input id="customerZipCode"></div><div class="field"><label>Cidade</label><input id="customerCity"></div><div class="field"><label>UF</label><input id="customerState" maxlength="2"></div></div>
 <div class="field"><label>Complemento do endereço da cliente</label><input id="customerComplement"></div>
 </div>
+<div class="address-block" id="pickupManualFeeBox">
+<div class="field"><label>Taxa manual da retirada (opcional) — R$</label><input id="pickupManualFee" type="number" min="0" max="9999" step="0.01" inputmode="decimal" value="0" aria-label="Taxa manual da retirada em reais"></div>
+<p>Sem taxa manual: R$ 0,00. Essa taxa não é frete calculado e não gera pagamento ao entregador.</p>
+</div>
 <div id="notice" class="notice"></div>
-<div class="form-actions"><button id="calc" class="btn primary">CALCULAR ENTREGA</button></div>
-<div class="negotiated-actions" style="display:grid;gap:8px;margin:9px 0 16px">
-<button id="negotiate" class="btn secondary" type="button" aria-pressed="false">COMBINAR COM O ENTREGADOR</button>
+<div class="form-actions freight-buttons"><button id="calc" class="btn primary" type="button">CALCULAR FRETE</button><button id="negotiate" class="btn secondary" type="button" aria-pressed="false">COMBINAR COM O ENTREGADOR</button></div>
+<div class="negotiated-actions" style="margin:9px 0 16px">
 <div id="negotiatedHint" hidden style="background:#fff7ed;color:#70451c;border:1px solid #efc391;border-radius:10px;padding:12px;font-size:12px;line-height:1.5">
-<b>Frete a combinar.</b> A cliente negocia e paga diretamente ao motorista. Nenhum valor será cobrado pela VELUM. Depois de gerar a etiqueta, use <b>Chamar entregador</b> na corrida, ou escolha a retirada na loja abaixo.
-<button id="negotiatedStorePickup" class="btn secondary" type="button" style="display:block;margin-top:10px;width:100%">MARCAR RETIRADA EM LOJA</button>
+<b>Frete a combinar.</b> A cliente escolhe alguém de sua preferência, negocia e paga diretamente a essa pessoa. A VELUM não faz cotação, não cobra esse frete nem chama automaticamente entregador. A etiqueta mostrará o endereço da cliente.
 </div></div>
 
 <div id="review" class="review">
 <div class="route-box" id="routeBox"></div>
-<div class="review-price"><span>Valor da corrida VELUM</span><strong id="quoteValue">R$ 0,00</strong></div>
+<div class="review-price"><span id="quoteLabel">Valor da corrida VELUM</span><strong id="quoteValue">R$ 0,00</strong></div>
 <div id="extraFeeText" class="meta" style="margin-top:7px"></div>
 <div class="review-actions"><button id="editRoute" class="btn secondary" type="button">EDITAR</button><button id="cancelRoute" class="btn secondary" type="button">CANCELAR</button></div>
-<label class="ready-check"><input id="readyConfirm" type="checkbox"><span>Confirmo que a corrida está pronta para iniciar o processo.</span></label>
+<label class="ready-check"><input id="readyConfirm" type="checkbox"><span id="readyConfirmText">Confirmo que os dados estão corretos para gerar a etiqueta.</span></label>
 <button id="create" class="btn primary" style="width:100%" disabled>GERAR ETIQUETA</button>
 </div></section>
 
@@ -889,11 +896,20 @@ function driverPicker(x){
  }).join(''):'<div class="empty" style="padding:14px">Nenhum entregador aprovado.</div>';
  return '<div class="driver-picker" data-picker="'+esc(x.deliveryId)+'"><button class="driver-picker-toggle" type="button" data-toggle-picker="'+esc(x.deliveryId)+'"><span>SELECIONAR ENTREGADORES PARA ESTA CORRIDA</span><span>'+(selected.size?selected.size+' selecionado(s)':'Todos')+'</span></button><div class="driver-picker-body">'+choices+'<div class="driver-picker-note">Sem seleção, a corrida fica disponível para todos. Um entregador que recusou esta entrega específica não será notificado novamente, mesmo se for selecionado.</div><div class="driver-picker-actions"><button class="btn secondary drivers-all" data-id="'+esc(x.deliveryId)+'" type="button">TODOS</button><button class="btn primary drivers-apply" data-id="'+esc(x.deliveryId)+'" type="button">APLICAR SELEÇÃO</button></div></div></div>';
 }
+function pickupFeeOf(x){
+ const stages=Array.isArray(x.logisticsStages)?x.logisticsStages:[];
+ const extras=stages.length?stages.reduce((sum,s)=>sum+(s.hasFee?Math.max(0,Number(s.fee)||0):0),0):Math.max(0,Number(x.logisticsTotalFee)||0);
+ return Math.max(0,Number(x.pickupManualFee)||0)+extras;
+}
+function rideCost(x){
+ const pickup=x.storePickup===true||x.customerPickupAtCenter===true||x.deliveryType==='Retirada em loja'||x.deliveryType==='Retirada no centro logístico';
+ return pickup?money(pickupFeeOf(x)):x.freightNegotiated?'A combinar':money(x.deliveryFee||0);
+}
 function printerSvg(){return'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg>'}
 function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';const pdfAction=x.comandaLumen&&!done?(x.etiquetaPdfConfirmada&&x.etiquetaPrintUrl?
 '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn secondary label-pdf-link" data-url="'+esc(x.etiquetaPrintUrl)+'" type="button" style="flex:1">IMPRIMIR PDF 10x15</button><button class="btn secondary label-preview-link" data-url="'+esc(x.etiquetaPreviaPrintUrl)+'" type="button" style="flex:1">VER PREVIA</button></div><div style="margin-top:5px;font-size:11px;color:#17613d;font-weight:700">PDF automatico pronto'+(x.etiquetaPreviaMetaStatus==='ACEITO_META'?' - Previa/link aceitos pela Meta':' - Envio Meta pendente')+'</div>':
 '<div style="margin-top:8px;font-size:12px;color:#b3590d;font-weight:700">Etiqueta PDF em geracao automatica apos pagamento.</div>'):'';
-return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Entrega:</b> '+esc(x.deliveryAddress||'—')+'<br><b>Valor:</b> '+(x.freightNegotiated?'A combinar':money(x.deliveryFee||0))+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+pdfAction+driverPicker(x)+waitingActions+(x.status==='STORE_PICKUP_READY'?'<button type="button" class="btn primary store-complete" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:10px">CONCLUIR RETIRADA NA LOJA</button>':'')+'</article>'}
+return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Endereço da cliente:</b> '+esc(detailAddress(x.customerAddress||x.deliveryAddress,x.customerCity||x.deliveryCity,x.customerState||x.deliveryState))+'<br><b>Valor:</b> '+rideCost(x)+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+pdfAction+driverPicker(x)+waitingActions+(x.status==='STORE_PICKUP_READY'?'<button type="button" class="btn primary store-complete" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:10px">CONCLUIR RETIRADA NA LOJA</button>':'')+'</article>'}
 
 function fillOrigin(loja){if(!loja)return;[['pickupAddress','pickupAddress'],['pickupNumber','pickupNumber'],['pickupNeighborhood','pickupNeighborhood'],['pickupCity','pickupCity'],['pickupState','pickupState'],['pickupZipCode','pickupZipCode'],['pickupPhone','pickupPhone']].forEach(([id,key])=>{if($(id)&&!$(id).value)$(id).value=loja[key]||''})}
 function allRideData(){return [...activeRides,...doneRides]}
@@ -968,7 +984,7 @@ const postcode=String(x.customerZipCode||((isPickup||isCenterPickup)?'':x.delive
   (x.senderContact&&x.senderContact!==x.senderName?'<span>Responsável: '+esc(x.senderContact)+'</span>':'')+
   (x.senderPhone?'<span>WhatsApp: '+esc(x.senderPhone)+'</span>':'')+
   '</section>':'';
-const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):(isPickup||isCenterPickup)?'Sem frete':x.freightNegotiated?'A combinar diretamente com entregador':money(amount);
+const shippingCost=(isPickup||isCenterPickup)?money(pickupFeeOf(x)):orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):x.freightNegotiated?'A combinar diretamente com entregador':money(amount);
  const shippingPayer=orderLabel?(isBasePickup?'Retirada na base':malaDireta?'A confirmar na corrida':'Consultar a corrida'):esc(payer);
  return '<article class="shipping-label'+(orderLabel?' order-logistic':'')+(complement?' has-complement':'')+'">'+
   '<header class="label-header"><div class="label-brand"><strong>'+(orderLabel?'VELUM LOGÍSTICA':'LÚMEN LUXOS')+'</strong><span>'+(orderLabel?'Pedido '+esc(x.orderId||x.orderNumber||''):'Exclusividade, Poder e Presença')+'</span></div><div class="label-mode">'+labelIcon((isPickup||isBasePickup||isCenterPickup)?'store':'truck')+'<b>'+labelMode+'</b></div></header>'+
@@ -979,7 +995,7 @@ const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):(
   (complement?'<section class="label-complement-block"><small>COMPLEMENTO DO ENDEREÇO · BLING</small><b>'+esc(complement)+'</b></section>':'')+
   (orderLabel?'':'<section class="label-facts">'+
   section('fact-mode',(isPickup||isBasePickup||isCenterPickup)?'store':'truck','TIPO DE ENTREGA',labelMode)+
-  section('fact-cost','coins',(isPickup||isCenterPickup)?'VALOR DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
+  section('fact-cost','coins',(isPickup||isCenterPickup)?'TAXA MANUAL DA RETIRADA':'VALOR DA ENTREGA',shippingCost)+
   section('fact-payer','card','QUEM PAGA',shippingPayer)+'</section>')+
   '<section class="label-collection"><div class="label-collection-code"><img src="'+largeQr+'" alt="QR Code para consultar a corrida"></div>'+
   '<div class="label-collection-info"><div class="label-collection-heading">'+labelIcon('box')+'<div><small>'+(orderQrOnly?'QR DO PEDIDO':'QR DA CORRIDA')+'</small><strong>'+(orderQrOnly?'IDENTIFICAÇÃO<br>DO PEDIDO':'CONSULTAR<br>DADOS DA CORRIDA')+'</strong></div></div>'+
@@ -1108,6 +1124,7 @@ function startEditRide(x){
   }
   $('customerName').value=x.customerName||'';
   $('customerPhone').value=x.customerPhone||'';
+  $('pickupManualFee').value=String(Math.max(0,Number(x.pickupManualFee)||0));
   for(const k of ['customerAddress','customerCity','customerState','customerZipCode','customerComplement'])$(k).value=x[k]||'';
   $('instructions').value=x.deliveryInstructions||'';
   $('payer').value=x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'PAY_AT_DELIVERY':'PAY_AT_PICKUP';
@@ -1141,7 +1158,7 @@ function resetEditMode(){
   $('storePickupReady').checked=false;
   document.body.classList.remove('store-pickup-mode');
   $('storePickupReadyBox').style.display='none';
-  $('calc').textContent='CALCULAR ENTREGA';
+  $('calc').textContent='CALCULAR FRETE';
   $('calc').disabled=false;
   $('create').textContent='GERAR ETIQUETA';
 }
@@ -1788,7 +1805,7 @@ function detailInfo(x){
   let html='<section class="detail-main"><div class="detail-section-title">Dados da corrida</div>'+
     '<div class="detail-heading"><div><h4>'+esc(x.customerName||x.recipientName||'Cliente')+'</h4><div class="detail-subtitle">Pedido '+esc(x.orderNumber||x.blingOrderNumber||x.deliveryId||'—')+'</div></div><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></div>'+
     '<div class="detail-info-grid">'+field('Cliente / recebedor',x.customerName||x.recipientName||'—')+field('Telefone',x.customerPhone||'—')+
-    field('Modalidade',isStore?'Retirada em loja':isCenter?'Retirada no centro logístico':x.deliveryType||x.type||'Entrega')+field('Valor da corrida',(x.freightNegotiated?'A combinar':money(x.deliveryFee||0)))+
+    field('Modalidade',isStore?'Retirada em loja':isCenter?'Retirada no centro logístico':x.deliveryType||x.type||'Entrega')+field('Valor da corrida',rideCost(x))+
     field('Quem paga',payer)+field('Criada em',dt(x.createdAt))+
     field('Endereço de retirada',detailAddress(pickup,x.originalPickupAddress?'':x.pickupCity,x.originalPickupAddress?'':x.pickupState),true)+
     field('Endereço de entrega / destino',destination,true)+field('Observações / referência',x.deliveryInstructions||'Nenhuma',true)+
@@ -1860,21 +1877,43 @@ function render(d){
   if(openedRideId)renderRideDetail();
 }
 function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);if(!stops.length)$('centerPickupMode').checked=false;renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
-function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryAddress').value.trim(),deliveryCity:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryCity').value.trim(),deliveryState:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryZipCode').value.trim(),deliveryComplement:$('deliveryComplement').value.trim(),customerAddress:$('customerAddress').value.trim(),customerCity:$('customerCity').value.trim(),customerState:$('customerState').value.trim().toUpperCase(),customerZipCode:$('customerZipCode').value.trim(),customerComplement:$('customerComplement').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,freightNegotiated:freightNegotiated&&!$('centerPickupMode').checked&&!$('storePickupMode').checked,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
+function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryAddress').value.trim(),deliveryCity:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryCity').value.trim(),deliveryState:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryZipCode').value.trim(),deliveryComplement:$('deliveryComplement').value.trim(),customerAddress:$('customerAddress').value.trim(),customerCity:$('customerCity').value.trim(),customerState:$('customerState').value.trim().toUpperCase(),customerZipCode:$('customerZipCode').value.trim(),customerComplement:$('customerComplement').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,pickupManualFee:($('storePickupMode').checked||$('centerPickupMode').checked)?Math.max(0,Number($('pickupManualFee').value)||0):0,freightNegotiated:freightNegotiated&&!$('centerPickupMode').checked&&!$('storePickupMode').checked,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
 function routeReview(){
- const centerPickup=$('centerPickupMode').checked;
- const pts=[['Retirada',[$('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],
+ const centerPickup=$('centerPickupMode').checked,storePickup=$('storePickupMode').checked;
+  const pts=[['Retirada',[$('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],
    ...stops.map((x,i)=>[centerPickup&&i===stops.length-1?'Retirada pela cliente no centro':'Parada '+(i+1),[x.name,x.address,x.city,x.state].filter(Boolean).join(' • ')]),
-   ...(centerPickup?[]:[['Entrega',[$('deliveryAddress').value,$('deliveryCity').value,$('deliveryState').value].filter(Boolean).join(' • ')]])];
+   ...((centerPickup||storePickup)?[]:[['Entrega',[$('deliveryAddress').value,$('deliveryCity').value,$('deliveryState').value].filter(Boolean).join(' • ')]])];
  $('routeBox').innerHTML=pts.map(p=>'<div class="route-point"><small>'+esc(p[0])+'</small><b>'+esc(p[1])+'</b></div>').join('');
- $('quoteValue').textContent=centerPickup?'Sem frete':freightNegotiated?'A combinar com o entregador':money(currentFee);
+ const pickupMode=centerPickup||storePickup;
+  $('quoteLabel').textContent=pickupMode?'Taxa manual da retirada':freightNegotiated?'Frete negociado diretamente':'Valor da corrida VELUM';
+  $('quoteValue').textContent=pickupMode?money(Math.max(0,Number($('pickupManualFee').value)||0)+stops.reduce((sum,s)=>sum+(s.hasFee?Math.max(0,Number(s.fee)||0):0),0)):freightNegotiated?'A combinar com o entregador':money(currentFee);
+  $('readyConfirmText').textContent=storePickup?'Confirmo que o pedido está pronto para retirada na loja.':
+      centerPickup?'Confirmo que o pedido está pronto para retirada no centro logístico.':
+      freightNegotiated?'Confirmo o endereço da cliente e que ela negociará diretamente o frete.':
+      'Confirmo que os dados estão corretos para gerar a etiqueta.';
  const extra=stops.reduce((s,x)=>s+(x.hasFee?Number(x.fee)||0:0),0);
- $('extraFeeText').textContent=(centerPickup?'A cliente retira no último centro logístico. ':'')+(extra>0?'Taxas internas informadas: '+money(extra)+' (não alteram o ganho do entregador VELUM).':'Sem taxa extra de centros de distribuição.');
+ $('extraFeeText').textContent=(centerPickup?'A cliente retira no último centro logístico. ':storePickup?'Retirada pela cliente na loja. ':'')+(extra>0?'Taxas manuais das paradas: '+money(extra)+(pickupMode?' (incluídas no valor da retirada).':' (não alteram o ganho do entregador VELUM).'):'Sem taxa extra de centros de distribuição.');
  $('review').classList.add('on');$('calc').closest('.form-actions').style.display='none';$('review').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 $('call').onclick=()=>{$('callBox').classList.toggle('on');if($('callBox').classList.contains('on'))$('callBox').scrollIntoView({behavior:'smooth',block:'start'})};
 $('addStop').onclick=()=>{stops.push(stops.length===0?defaultXimbaStop():{name:'',address:'',city:'',state:'PB',zipCode:'',hasFee:false,fee:0});renderStops();if(editingDeliveryId&&rideById(editingDeliveryId)?.internalLogistics===true)toggleEditRouteFields(true)};
+function validateCustomerLabelAddress(){
+ const address=$('customerAddress').value.trim(),city=$('customerCity').value.trim(),state=$('customerState').value.trim().toUpperCase();
+ if(address&&city&&/^[A-Z]{2}$/.test(state))return true;
+ notice('Preencha rua, número e bairro, cidade e UF do endereço da cliente. Ele deve constar em toda etiqueta.',false);
+ $('customerAddressBlock').scrollIntoView({behavior:'smooth',block:'center'});
+ return false;
+}
+function syncDestinationFromCustomer(force=false){
+ const fields={deliveryAddress:'customerAddress',deliveryCity:'customerCity',deliveryState:'customerState',deliveryZipCode:'customerZipCode',deliveryComplement:'customerComplement'};
+ for(const [dest,origin] of Object.entries(fields)){if(force||!$(dest).value.trim())$(dest).value=$(origin).value.trim()}
+}
+function validManualPickupFee(){
+ const n=Number($('pickupManualFee').value||0);
+ if(!Number.isFinite(n)||n<0||n>9999){notice('Informe uma taxa manual válida de R$ 0 a R$ 9.999,00.',false);return false}
+ return true;
+}
 function syncNegotiatedUI(){
  const hint=$('negotiatedHint'),button=$('negotiate');
  if(hint)hint.hidden=!freightNegotiated;
@@ -1884,7 +1923,9 @@ $('negotiate').onclick=()=>{
  clearNotice();
  if($('storePickupMode').checked){$('storePickupMode').checked=false;applyStorePickupMode()}
  if($('centerPickupMode').checked){$('centerPickupMode').checked=false;applyCenterPickupUI()}
- const data=payload();
+  if(!validateCustomerLabelAddress())return;
+  syncDestinationFromCustomer(true);
+  const data=payload();
  if(!data.deliveryAddress||!data.deliveryCity||!data.deliveryState)
    return notice('Informe o destino da entrega para combinar o frete com o motorista.',false);
  if(!data.customerName||data.customerPhone.replace(/\D/g,'').length<10)
@@ -1895,18 +1936,13 @@ $('negotiate').onclick=()=>{
  syncNegotiatedUI();routeReview();
  notice('Frete a combinar com o motorista. A cliente paga diretamente a ele, sem tarifa fixa na VELUM.',true);
 };
-$('negotiatedStorePickup').onclick=()=>{
- freightNegotiated=false;syncNegotiatedUI();
- $('storePickupMode').checked=true;applyStorePickupMode();
- $('storePickupReadyBox').scrollIntoView({behavior:'smooth',block:'center'});
-};
 function applyStorePickupMode(){
   const selected=$('storePickupMode').checked;
   if(selected){$('centerPickupMode').checked=false;freightNegotiated=false;syncNegotiatedUI();}
   document.body.classList.toggle('store-pickup-mode',selected);
   applyCenterPickupUI();
-  $('storePickupReadyBox').style.display=selected?'flex':'none';
-  $('calc').textContent=selected?'REGISTRAR RETIRADA EM LOJA':'CALCULAR ENTREGA';
+  $('storePickupReadyBox').style.display='none';
+  $('calc').textContent='CALCULAR FRETE';
   $('calc').disabled=false;
   $('review').classList.remove('on');
   $('calc').closest('.form-actions').style.display='grid';
@@ -1917,7 +1953,7 @@ function applyCenterPickupUI(){
  const selected=$('centerPickupMode').checked&&!$('storePickupMode').checked;
  if(selected){freightNegotiated=false;syncNegotiatedUI()}
  document.body.classList.toggle('center-pickup-mode',selected);
- if(!editingDeliveryId)$('calc').textContent=selected?'CONTINUAR SEM ENDEREÇO DE ENTREGA':'CALCULAR ENTREGA';
+ if(!editingDeliveryId)$('calc').textContent='CALCULAR FRETE';
 }
 $('storePickupMode').onchange=applyStorePickupMode;
 $('centerPickupMode').onchange=()=>{
@@ -1936,12 +1972,12 @@ $('centerPickupMode').onchange=()=>{
 $('deliveryAddress').oninput=()=>{clearTimeout(suggestTimer);const term=$('deliveryAddress').value.trim();if(term.length<3){$('deliverySuggestions').classList.remove('on');return}suggestTimer=setTimeout(()=>send('SUGGEST_ADDRESS',{term,target:'delivery'}),350)};
 $('calc').onclick=()=>{
   clearNotice();
+  if(!validateCustomerLabelAddress())return;
+  if(!validManualPickupFee())return;
   if($('storePickupMode').checked){
     const data=payload();
     if(!data.customerName||data.customerPhone.replace(/\D/g,'').length<10)return notice('Informe nome e telefone do cliente que fará a retirada.');
-    if(!data.readyConfirmed)return notice('Confirme que o pedido está pronto para retirada na loja.');
-    $('calc').disabled=true;$('calc').textContent=editingDeliveryId?'SALVANDO ALTERAÇÕES...':'SALVANDO RETIRADA...';
-    if(editingDeliveryId)send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data});else send('CREATE_STORE_PICKUP',data);return;
+    currentFee=0;routeReview();notice('Retirada em loja: frete R$ 0,00. Revise o endereço da cliente e gere a etiqueta.',true);return;
   }
   if($('centerPickupMode').checked){
     if(!stops.length)return notice('Adicione o centro logístico de retirada antes de continuar.',false);
@@ -1949,20 +1985,21 @@ $('calc').onclick=()=>{
       return notice('Preencha nome, rua, cidade e UF de cada centro.',false);
     if(!$('customerName').value.trim()||$('customerPhone').value.replace(/\D/g,'').length<10)
       return notice('Informe nome e telefone válidos da cliente.',false);
-    currentFee=0;routeReview();notice('Retirada sem frete preparada. Gere a etiqueta; a cliente poderá informar o endereço no rastreio.',true);return;
+    currentFee=0;routeReview();notice('Retirada no centro: frete R$ 0,00. A etiqueta incluirá o endereço da cliente.',true);return;
   }
-  freightNegotiated=false;syncNegotiatedUI();currentFee=0;$('calc').disabled=true;$('calc').textContent='CALCULANDO...';send('CALCULATE',payload())
+  syncDestinationFromCustomer();freightNegotiated=false;syncNegotiatedUI();currentFee=0;$('calc').disabled=true;$('calc').textContent='CALCULANDO...';send('CALCULATE',payload())
 };
 $('editRoute').onclick=()=>{$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true};
 $('cancelRoute').onclick=()=>{currentFee=0;resetEditMode();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';clearNotice()};
 $('readyConfirm').onchange=()=>{$('create').disabled=!$('readyConfirm').checked};
 $('create').onclick=()=>{
+  if(!validateCustomerLabelAddress()||!validManualPickupFee())return;
   if(editingDeliveryId){
     $('create').disabled=true;
     $('create').textContent='SALVANDO...';
     send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data:payload()});return;
   }
-  if(!(currentFee>0)&&!payload().freightNegotiated&&!payload().customerPickupAtCenter)return notice('Calcule a entrega ou escolha combinar com o entregador.');
+  if(!(currentFee>0)&&!payload().freightNegotiated&&!payload().customerPickupAtCenter&&!payload().storePickup)return notice('Calcule o frete ou escolha combinar com o entregador.');
   $('create').disabled=true;
  // iOS Safari blocks popups opened after the asynchronous Wix response.
  // Reserve the print tab synchronously with the tap, then populate it on DATA.
@@ -1972,7 +2009,7 @@ $('create').onclick=()=>{
  }
  pendingCreatedDeliveryId='';
  $('create').textContent=stops.length?'CRIANDO PROCESSO...':'GERANDO ETIQUETA...';
- send('CREATE_DELIVERY',payload());
+ send($('storePickupMode').checked?'CREATE_STORE_PICKUP':'CREATE_DELIVERY',payload());
 };
 
 document.querySelectorAll('[data-active-tab]').forEach(button=>button.onclick=()=>{
@@ -2051,8 +2088,17 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
   }
  if(m.type==='STORE_PICKUP_RESULT'){
     $('calc').disabled=false;
-    $('calc').textContent='REGISTRAR RETIRADA EM LOJA';
-    if(!d.ok){notice(d.mensagem||'Não foi possível registrar a retirada em loja.',false);return}
+    $('calc').textContent='CALCULAR FRETE';
+    if(!d.ok){
+      $('create').disabled=false;
+      if(reservedPrintWindow&&!reservedPrintWindow.closed){try{reservedPrintWindow.close()}catch(e){}}
+      reservedPrintWindow=null;pendingCreatedDeliveryId='';
+      notice(d.mensagem||'Não foi possível registrar a retirada em loja.',false);return;
+    }
+    pendingCreatedDeliveryId=String(d.deliveryId||'');
+    if(!pendingCreatedDeliveryId){if(reservedPrintWindow&&!reservedPrintWindow.closed)reservedPrintWindow.close();reservedPrintWindow=null;}
+    $('create').textContent='GERAR ETIQUETA';
+    $('readyConfirm').checked=false;$('create').disabled=true;$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';
     notice(d.mensagem||'Retirada em loja registrada. Nenhum entregador foi chamado.',true);
     $('storePickupReady').checked=false;
     selectedBlingOrderId='';selectedBlingOrderNumber='';
@@ -2062,7 +2108,7 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
     $('blingSearchResults').innerHTML='';
   }
  if(m.type==='SUGGEST_RESULT'){const box=$('deliverySuggestions');const items=Array.isArray(d.items)?d.items:[];box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');box.classList.toggle('on',items.length>0);box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const x=items[Number(el.dataset.i)];$('deliveryAddress').value=x.address||x.label||'';$('deliveryCity').value=x.city||'';$('deliveryState').value=x.state||'';$('deliveryZipCode').value=x.zipCode||'';box.classList.remove('on')})}
- if(m.type==='CALCULATE_RESULT'){freightNegotiated=false;syncNegotiatedUI();$('calc').disabled=false;$('calc').textContent='CALCULAR ENTREGA';if(!d.ok){currentFee=0;return notice(d.mensagem||'Não foi possível calcular.',false)}currentFee=Number(d.shipping?.amount)||0;routeReview();notice('Trajeto calculado. Revise antes de confirmar.',true)}
+ if(m.type==='CALCULATE_RESULT'){freightNegotiated=false;syncNegotiatedUI();$('calc').disabled=false;$('calc').textContent='CALCULAR FRETE';if(!d.ok){currentFee=0;return notice(d.mensagem||'Não foi possível calcular.',false)}currentFee=Number(d.shipping?.amount)||0;routeReview();notice('Trajeto calculado. Revise antes de confirmar.',true)}
  if(m.type==='CREATE_RESULT'){$('create').textContent='GERAR ETIQUETA';if(!d.ok){
   $('create').disabled=false;
   if(reservedPrintWindow&&!reservedPrintWindow.closed){try{reservedPrintWindow.close()}catch(e){}}
@@ -2075,7 +2121,7 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
   reservedPrintWindow=null;
   notice('Corrida criada. Reabra a corrida para imprimir a etiqueta.',false);
  }
- notice(d.mensagem||'Processo criado.',true);currentFee=0;freightNegotiated=false;syncNegotiatedUI();stops=[];$('centerPickupMode').checked=false;renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';for(const k of ['customerAddress','customerCity','customerState','customerZipCode','customerComplement'])$(k).value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
+ notice(d.mensagem||'Processo criado.',true);$('pickupManualFee').value='0';currentFee=0;freightNegotiated=false;syncNegotiatedUI();stops=[];$('centerPickupMode').checked=false;renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';for(const k of ['customerAddress','customerCity','customerState','customerZipCode','customerComplement'])$(k).value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
  if(m.type==='DISPATCH_STATUS_RESULT')dispatchStatusResult(d);
  if(m.type==='LOGISTICS_RESULT'){document.querySelectorAll('.log-act').forEach(b=>b.disabled=false);dispatchFinalResult(d,'LOGISTICS');notice(d.mensagem||'Processo atualizado.',d.ok===true)}
  if(m.type==='ACTION_RESULT'){
