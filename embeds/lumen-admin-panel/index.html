@@ -389,6 +389,13 @@ body:has(.ride-record details[open]) #velumAppDownload{display:none!important}
 <label class="ready-check" id="storePickupReadyBox" style="display:none"><input id="storePickupReady" type="checkbox"><span>Confirmo que o pedido está pronto para retirada na loja.</span></label>
 </div>
 
+<div class="address-block" id="customerAddressBlock">
+<h4>Endereço da cliente para a etiqueta</h4>
+<p>Será impresso em todas as etiquetas, inclusive retirada em loja ou no centro logístico. Carregado do Bling quando disponível; se necessário, complete manualmente. Não altera o local de retirada nem cobra frete.</p>
+<div class="field"><label>Rua, número e bairro da cliente</label><input id="customerAddress" autocomplete="street-address" placeholder="Endereço cadastrado da cliente"></div>
+<div class="grid three"><div class="field"><label>CEP</label><input id="customerZipCode"></div><div class="field"><label>Cidade</label><input id="customerCity"></div><div class="field"><label>UF</label><input id="customerState" maxlength="2"></div></div>
+<div class="field"><label>Complemento do endereço da cliente</label><input id="customerComplement"></div>
+</div>
 <div id="notice" class="notice"></div>
 <div class="form-actions"><button id="calc" class="btn primary">CALCULAR ENTREGA</button></div>
 <div class="negotiated-actions" style="display:grid;gap:8px;margin:9px 0 16px">
@@ -706,7 +713,8 @@ function lumenOrderLabelPayload(o,ride=null){
   senderPhone:o.resellerPhone||'',
   customerName:o.customerName||'',
   customerPhone:o.customerPhone||'',
-  deliveryAddress:o.deliveryAddress||'',
+  customerAddress:o.customerAddress||o.deliveryAddress||'',customerCity:o.customerCity||o.deliveryCity||'',customerState:o.customerState||o.deliveryState||'',customerZipCode:o.customerZipCode||o.deliveryZipCode||'',customerComplement:o.customerComplement||o.deliveryComplement||'',
+   deliveryAddress:o.deliveryAddress||'',
   deliveryCity:o.deliveryCity||'',
   deliveryState:o.deliveryState||'',
   deliveryZipCode:o.deliveryZipCode||'',
@@ -750,6 +758,7 @@ function lumenOrderCallDriver(asCourier=false){
  $('deliveryState').value=o.deliveryState||'';
  $('deliveryZipCode').value=o.deliveryZipCode||'';
  $('deliveryComplement').value=o.deliveryComplement||o.addressComplement||'';
+  for(const [k,from] of Object.entries({customerAddress:'deliveryAddress',customerCity:'deliveryCity',customerState:'deliveryState',customerZipCode:'deliveryZipCode',customerComplement:'deliveryComplement'}))$(k).value=o[k]||o[from]||'';
  $('instructions').value='Pedido VELUM '+o.orderId+' • Produtos Lúmen';
  $('blingSearch').value=o.orderId;
  $('blingSearchStatus').textContent='Pedido VELUM '+o.orderId+' vinculado. Revise endereço, frete e paradas antes de gerar a etiqueta.';
@@ -936,12 +945,14 @@ function labelHtml(x){
  const phone=String(x.customerPhone||'');
  const whatsapp=labelWhatsappLink(phone);
  const lastCenter=Array.isArray(x.logisticsStages)?x.logisticsStages[x.logisticsStages.length-1]:null;
- const address=isCenterPickup?String(lastCenter?.address||x.finalLogisticsCenterAddress||x.deliveryAddress||''):isPickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):isBasePickup?[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '):String(x.deliveryAddress||'').trim();
- const city=isCenterPickup?(lastCenter?.city||x.finalLogisticsCenterCity||x.deliveryCity):(isPickup||isBasePickup)?x.pickupCity:x.deliveryCity;
- const state=isCenterPickup?(lastCenter?.state||x.finalLogisticsCenterState||x.deliveryState):(isPickup||isBasePickup)?x.pickupState:x.deliveryState;
- const postcode=isCenterPickup?(lastCenter?.zipCode||x.finalLogisticsCenterZipCode||x.deliveryZipCode):(isPickup||isBasePickup)?x.pickupZipCode:x.deliveryZipCode;
+const address=String(x.customerAddress||((isPickup||isCenterPickup)?'':x.deliveryAddress)||'').trim();
+const city=String(x.customerCity||((isPickup||isCenterPickup)?'':x.deliveryCity)||'');
+const state=String(x.customerState||((isPickup||isCenterPickup)?'':x.deliveryState)||'');
+const postcode=String(x.customerZipCode||((isPickup||isCenterPickup)?'':x.deliveryZipCode)||'');
  const addressHtml=[address,[city,state].filter(Boolean).join(' - '),postcode&&('CEP '+postcode)].filter(Boolean).map(esc).join('<br>');
- const complement=String(x.deliveryComplement||x.blingComplement||x.addressComplement||'').trim();
+ const complement=String(x.customerComplement||x.deliveryComplement||x.blingComplement||x.addressComplement||'').trim();
+  const pickupSite=isCenterPickup?[lastCenter?.address||x.finalLogisticsCenterAddress,lastCenter?.city||x.finalLogisticsCenterCity,lastCenter?.state||x.finalLogisticsCenterState].filter(Boolean).join(', '):(isPickup||isBasePickup)?[[x.pickupAddress,x.pickupNumber,x.pickupNeighborhood].filter(Boolean).join(', '),[x.pickupCity,x.pickupState].filter(Boolean).join(' - ')].filter(Boolean).join(', '):'';
+  const pickupSiteHtml=pickupSite?'<small style="margin-top:1.3mm">LOCAL DE RETIRADA</small><span class="label-pickup-location">'+esc(pickupSite)+'</span>':'';
  const amount=Number(x.deliveryFee||0);
  const payer=isCenterPickup?'Sem taxa de entrega':String(x.payerLabel|| (isPickup?'Sem taxa de entrega':x.deliveryPaymentMode==='PAY_AT_PICKUP'?'LÚMEN paga na retirada':x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'Destinatário paga na entrega':'A confirmar'));
  const code=x.labelCode||('VELUM:'+String(x.deliveryId||'')+':V'+String(x.labelRevision||1));
@@ -957,15 +968,14 @@ function labelHtml(x){
   (x.senderContact&&x.senderContact!==x.senderName?'<span>Responsável: '+esc(x.senderContact)+'</span>':'')+
   (x.senderPhone?'<span>WhatsApp: '+esc(x.senderPhone)+'</span>':'')+
   '</section>':'';
- const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):isCenterPickup?'Sem taxa de entrega':x.freightNegotiated===true?'A combinar':money(amount);
+const shippingCost=orderLabel?(isBasePickup?'Sem frete':'Definido na corrida'):(isPickup||isCenterPickup)?'Sem frete':x.freightNegotiated?'A combinar diretamente com entregador':money(amount);
  const shippingPayer=orderLabel?(isBasePickup?'Retirada na base':malaDireta?'A confirmar na corrida':'Consultar a corrida'):esc(payer);
  return '<article class="shipping-label'+(orderLabel?' order-logistic':'')+(complement?' has-complement':'')+'">'+
   '<header class="label-header"><div class="label-brand"><strong>'+(orderLabel?'VELUM LOGÍSTICA':'LÚMEN LUXOS')+'</strong><span>'+(orderLabel?'Pedido '+esc(x.orderId||x.orderNumber||''):'Exclusividade, Poder e Presença')+'</span></div><div class="label-mode">'+labelIcon((isPickup||isBasePickup||isCenterPickup)?'store':'truck')+'<b>'+labelMode+'</b></div></header>'+
   senderHtml+
   '<section class="label-recipient"><div class="label-recipient-info"><small class="label-eyebrow">DESTINATÁRIO</small><div class="label-name-row"><span class="label-icon-square">'+labelIcon('person')+'</span><strong class="label-name">'+esc(name)+'</strong></div><div class="label-phone-row"><span class="label-icon-square">'+labelIcon('phone')+'</span><div><small>TELEFONE / WHATSAPP</small><b>'+esc(phone||'Não informado')+'</b></div></div></div>'+
   '<div class="label-qr-whats">'+(smallQr?'<img src="'+smallQr+'" alt="QR Code para WhatsApp da destinatária"><b>FALAR NO<br>WHATSAPP</b>':'<span>WhatsApp<br>indisponível</span>')+'</div></section>'+
-  '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>'+(orderLabel?(isCenterPickup?'ENDEREÇO DO CENTRO DE RETIRADA':
-   isBasePickup?'ENDEREÇO DE RETIRADA NA BASE':'ENDEREÇO DA DESTINATÁRIA'):((isPickup||isBasePickup)?'ENDEREÇO DE RETIRADA':isCenterPickup?'ENDEREÇO DO CENTRO DE RETIRADA':'ENDEREÇO DE ENTREGA'))+'</small><b>'+ (addressHtml||'Endereço não informado')+'</b></div></section>'+
+   '<section class="label-address-block"><span class="label-icon-square">'+labelIcon('pin')+'</span><div><small>ENDEREÇO DA CLIENTE</small><b>'+(addressHtml||'Endereço da cliente não informado')+'</b>'+pickupSiteHtml+'</div></section>'+
   (complement?'<section class="label-complement-block"><small>COMPLEMENTO DO ENDEREÇO · BLING</small><b>'+esc(complement)+'</b></section>':'')+
   (orderLabel?'':'<section class="label-facts">'+
   section('fact-mode',(isPickup||isBasePickup||isCenterPickup)?'store':'truck','TIPO DE ENTREGA',labelMode)+
@@ -1029,7 +1039,8 @@ function printLabels(items,existingWindow=null){
   '.label-address-block{display:flex;gap:2mm;align-items:flex-start;background:#f8fafc;border:1px solid #d9e2ed;border-radius:3mm;margin-top:2mm;padding:2mm;flex-shrink:0;min-height:23mm}',
   '.label-address-block .label-icon-square{background:#fff1e6;color:#e86616}',
   '.label-address-block>div{min-width:0;flex:1}',
-  '.label-address-block b{display:block;font-size:10pt;line-height:1.14;letter-spacing:-.1pt;margin-top:2mm;overflow-wrap:anywhere}',
+  '.label-address-block b{display:block;font-size:10pt;line-height:1.14;letter-spacing:-.1pt;margin-top:1mm;overflow-wrap:anywhere}',
+   '.label-pickup-location{font-size:7.5pt;line-height:1.1;display:block;overflow-wrap:anywhere}',
   '.label-complement-block{margin-top:1.2mm;border:1px solid #d9e2ed;border-radius:2mm;background:#f8fafc;padding:1.2mm 2mm;min-height:9mm;max-height:15mm;overflow:hidden;flex-shrink:0}',
   '.label-complement-block small{display:block;color:#65758a;font-size:6.5pt;font-weight:900}',
   '.label-complement-block b{display:block;font-size:8.4pt;line-height:1.08;margin-top:.8mm;overflow-wrap:anywhere}',
@@ -1097,6 +1108,7 @@ function startEditRide(x){
   }
   $('customerName').value=x.customerName||'';
   $('customerPhone').value=x.customerPhone||'';
+  for(const k of ['customerAddress','customerCity','customerState','customerZipCode','customerComplement'])$(k).value=x[k]||'';
   $('instructions').value=x.deliveryInstructions||'';
   $('payer').value=x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'PAY_AT_DELIVERY':'PAY_AT_PICKUP';
   selectedBlingOrderId=String(x.blingOrderId||'');
@@ -1555,6 +1567,7 @@ function applyBlingRecord(r){
   if(r.deliveryCity)$('deliveryCity').value=r.deliveryCity;
   if(r.deliveryState)$('deliveryState').value=r.deliveryState;
   if(r.deliveryZipCode)$('deliveryZipCode').value=r.deliveryZipCode;
+ for(const [k,from] of Object.entries({customerAddress:'deliveryAddress',customerCity:'deliveryCity',customerState:'deliveryState',customerZipCode:'deliveryZipCode',customerComplement:'deliveryComplement'}))$(k).value=r[k]||r[from]||'';
   $('deliveryComplement').value=String(r.deliveryComplement||r.complement||r.addressComplement||'');
   selectedBlingOrderId=String(r.blingOrderId||'');
   selectedBlingOrderNumber=String(r.orderNumber||'');
@@ -1847,7 +1860,7 @@ function render(d){
   if(openedRideId)renderRideDetail();
 }
 function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);if(!stops.length)$('centerPickupMode').checked=false;renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
-function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryAddress').value.trim(),deliveryCity:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryCity').value.trim(),deliveryState:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryZipCode').value.trim(),deliveryComplement:$('deliveryComplement').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,freightNegotiated:freightNegotiated&&!$('centerPickupMode').checked&&!$('storePickupMode').checked,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
+function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryAddress').value.trim(),deliveryCity:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryCity').value.trim(),deliveryState:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryZipCode').value.trim(),deliveryComplement:$('deliveryComplement').value.trim(),customerAddress:$('customerAddress').value.trim(),customerCity:$('customerCity').value.trim(),customerState:$('customerState').value.trim().toUpperCase(),customerZipCode:$('customerZipCode').value.trim(),customerComplement:$('customerComplement').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,freightNegotiated:freightNegotiated&&!$('centerPickupMode').checked&&!$('storePickupMode').checked,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('storePickupMode').checked?$('storePickupReady').checked:$('readyConfirm').checked}}
 function routeReview(){
  const centerPickup=$('centerPickupMode').checked;
  const pts=[['Retirada',[$('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],
@@ -1949,7 +1962,7 @@ $('create').onclick=()=>{
     $('create').textContent='SALVANDO...';
     send('UPDATE_DELIVERY',{deliveryId:editingDeliveryId,data:payload()});return;
   }
-  if(!(currentFee>0)&&!freightNegotiated&&!$('centerPickupMode').checked)return notice('Calcule a entrega ou escolha combinar com o entregador.');
+  if(!(currentFee>0)&&!payload().freightNegotiated&&!payload().customerPickupAtCenter)return notice('Calcule a entrega ou escolha combinar com o entregador.');
   $('create').disabled=true;
  // iOS Safari blocks popups opened after the asynchronous Wix response.
  // Reserve the print tab synchronously with the tap, then populate it on DATA.
@@ -2044,7 +2057,8 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
     $('storePickupReady').checked=false;
     selectedBlingOrderId='';selectedBlingOrderNumber='';
     $('customerName').value='';$('customerPhone').value='';$('blingSearch').value='';
-    $('blingSearchStatus').textContent='Retirada registrada. Você pode cadastrar outra.';
+    for(const k of ['customerAddress','customerCity','customerState','customerZipCode','customerComplement'])$(k).value='';
+   $('blingSearchStatus').textContent='Retirada registrada. Você pode cadastrar outra.';
     $('blingSearchResults').innerHTML='';
   }
  if(m.type==='SUGGEST_RESULT'){const box=$('deliverySuggestions');const items=Array.isArray(d.items)?d.items:[];box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');box.classList.toggle('on',items.length>0);box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const x=items[Number(el.dataset.i)];$('deliveryAddress').value=x.address||x.label||'';$('deliveryCity').value=x.city||'';$('deliveryState').value=x.state||'';$('deliveryZipCode').value=x.zipCode||'';box.classList.remove('on')})}
@@ -2061,7 +2075,7 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
   reservedPrintWindow=null;
   notice('Corrida criada. Reabra a corrida para imprimir a etiqueta.',false);
  }
- notice(d.mensagem||'Processo criado.',true);currentFee=0;freightNegotiated=false;syncNegotiatedUI();stops=[];$('centerPickupMode').checked=false;renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
+ notice(d.mensagem||'Processo criado.',true);currentFee=0;freightNegotiated=false;syncNegotiatedUI();stops=[];$('centerPickupMode').checked=false;renderStops();$('review').classList.remove('on');$('calc').closest('.form-actions').style.display='grid';$('readyConfirm').checked=false;$('create').disabled=true;$('deliveryAddress').value='';$('deliveryCity').value='';$('deliveryState').value='';$('deliveryZipCode').value='';$('customerName').value='';$('customerPhone').value='';$('instructions').value='';for(const k of ['customerAddress','customerCity','customerState','customerZipCode','customerComplement'])$(k).value='';selectedBlingOrderId='';selectedBlingOrderNumber='';$('blingSearch').value='';$('blingSearchResults').innerHTML='';$('callBox').classList.remove('on')}
  if(m.type==='DISPATCH_STATUS_RESULT')dispatchStatusResult(d);
  if(m.type==='LOGISTICS_RESULT'){document.querySelectorAll('.log-act').forEach(b=>b.disabled=false);dispatchFinalResult(d,'LOGISTICS');notice(d.mensagem||'Processo atualizado.',d.ok===true)}
  if(m.type==='ACTION_RESULT'){
