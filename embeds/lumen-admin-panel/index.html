@@ -906,9 +906,9 @@ function rideCost(x){
  return pickup?money(pickupFeeOf(x)):x.freightNegotiated?'A combinar':money(x.deliveryFee||0);
 }
 function printerSvg(){return'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg>'}
-function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';const pdfAction=x.comandaLumen&&!done?(x.etiquetaPdfConfirmada&&x.etiquetaPrintUrl?
+function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';const pdfAction=!done&&(x.comandaLumen||['WIX_SITE','WIX_PDV','BLING_PDV'].includes(x.origemMulticanal))?(x.etiquetaPdfConfirmada&&x.etiquetaPrintUrl?
 '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn secondary label-pdf-link" data-url="'+esc(x.etiquetaPrintUrl)+'" type="button" style="flex:1">IMPRIMIR PDF 10x15</button><button class="btn secondary label-preview-link" data-url="'+esc(x.etiquetaPreviaPrintUrl)+'" type="button" style="flex:1">VER PREVIA</button></div><div style="margin-top:5px;font-size:11px;color:#17613d;font-weight:700">PDF automatico pronto'+(x.etiquetaPreviaMetaStatus==='ACEITO_META'?' - Previa/link aceitos pela Meta':' - Envio Meta pendente')+'</div>':
-'<div style="margin-top:8px;font-size:12px;color:#b3590d;font-weight:700">Etiqueta PDF em geracao automatica apos pagamento.</div>'):'';
+'<div style="margin-top:8px;font-size:12px;color:#b3590d;font-weight:700">'+(x.etiquetaDadosStatus==='AGUARDANDO_ENDERECO_CLIENTE'?'Etiqueta pendente: falta endereço da cliente.':'Etiqueta PDF aguardando conclusão.')+'</div><button type="button" class="btn secondary retry-label" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:7px">REPROCESSAR ETIQUETA PDF</button>'):'';
 return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Endereço da cliente:</b> '+esc(detailAddress(x.customerAddress||x.deliveryAddress,x.customerCity||x.deliveryCity,x.customerState||x.deliveryState))+'<br><b>Valor:</b> '+rideCost(x)+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+pdfAction+driverPicker(x)+waitingActions+(x.status==='STORE_PICKUP_READY'?'<button type="button" class="btn primary store-complete" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:10px">CONCLUIR RETIRADA NA LOJA</button>':'')+'</article>'}
 
 function fillOrigin(loja){if(!loja)return;[['pickupAddress','pickupAddress'],['pickupNumber','pickupNumber'],['pickupNeighborhood','pickupNeighborhood'],['pickupCity','pickupCity'],['pickupState','pickupState'],['pickupZipCode','pickupZipCode'],['pickupPhone','pickupPhone']].forEach(([id,key])=>{if($(id)&&!$(id).value)$(id).value=loja[key]||''})}
@@ -1532,11 +1532,17 @@ function bindRideActions(){
   document.querySelectorAll('.store-complete').forEach(b=>b.onclick=()=>{if(!confirm('Confirmar que o cliente retirou o pedido na loja?'))return;b.disabled=true;send('COMPLETE_STORE_PICKUP',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.print-one').forEach(b=>b.onclick=()=>{
   const x=rideById(b.dataset.printId);
-  if(x?.comandaLumen&&x.etiquetaPdfConfirmada&&x.etiquetaPrintUrl)
+  if(x?.etiquetaPdfConfirmada&&x.etiquetaPrintUrl)
     return window.open(x.etiquetaPrintUrl,'_blank','noopener');
   return printLabels([x]);
  });
  document.querySelectorAll('.label-upload').forEach(b=>b.onclick=()=>anexarEtiquetaPdfDaCorrida(b));
+ document.querySelectorAll('.retry-label').forEach(b=>b.onclick=()=>{
+   if(b.disabled)return;
+   b.disabled=true;
+   notice('Solicitada nova verificacao e preparacao da etiqueta PDF...',true);
+   send('RETRY_LABEL',{deliveryId:String(b.dataset.id||'')});
+ });
  document.querySelectorAll('.label-pdf-link,.label-preview-link').forEach(b=>b.onclick=()=>{
   const u=String(b.dataset.url||'');
   if(!/^https:\/\/www\.vaidevelum\.com\/_functions\/lumenEtiqueta(?:Previa)?\?token=[a-f0-9]{64}$/i.test(u)){
@@ -1651,6 +1657,13 @@ function ridePhoneWhatsApp(phone){
  if(!/^55\d{10,11}$/.test(digits))return '';
  return 'https://wa.me/'+digits;
 }
+function rideLabelStatus(x){
+ const eligible=['WIX_SITE','WIX_PDV','BLING_PDV'].includes(x.origemMulticanal);
+ if(!eligible||x.etiquetaPdfConfirmada===true)return '';
+ const missing=x.etiquetaDadosStatus==='AGUARDANDO_ENDERECO_CLIENTE';
+ const msg=missing?'Endereço da cliente pendente — complete os dados para emitir a etiqueta.':'PDF ainda não pronto para impressão.';
+ return '<div class="ride-label-warning" style="padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#8c4f0b;font-size:11px"><span>'+esc(msg)+'</span><button type="button" class="btn secondary retry-label" data-id="'+esc(x.deliveryId)+'">REPROCESSAR ETIQUETA PDF</button></div>';
+}
 function renderRideSheet(list){
  const body=$('rideSheetBody');if(!body)return;
  body.innerHTML=list.length?list.map(x=>{
@@ -1679,7 +1692,7 @@ function renderRideSheet(list){
     '<div class="ride-record-field city-column"><small>Cidade</small><div class="ride-card-city">'+esc(city)+'<span>'+esc(mode)+'</span></div></div>'+
     '<div class="ride-record-field status-column"><small>Status</small><span class="ride-status" data-state="'+esc(x.status)+'">'+esc(statusLabel(x.status))+'</span></div>'+
     '<div class="ride-record-field actions-column ride-record-actions">'+nextRideActionButton(x)+'</div>'+
-   '</div></article>';
+   '</div>'+rideLabelStatus(x)+'</article>';
  }).join(''):'<div class="ride-sheet-empty">Nenhuma corrida encontrada nesta fase.</div>';
 }
 function rideMatchesTerm(x,term){return !term||[x.deliveryId,x.orderId,x.orderNumber,x.blingOrderNumber,x.customerName,x.customerPhone,x.recipientName,x.deliveryCity,x.pickupCity,x.finalLogisticsCenterCity,x.deliveryType,statusLabel(x.status)].some(v=>String(v??'').toLocaleLowerCase('pt-BR').includes(term))}
@@ -2108,6 +2121,10 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
     $('blingSearchResults').innerHTML='';
   }
  if(m.type==='SUGGEST_RESULT'){const box=$('deliverySuggestions');const items=Array.isArray(d.items)?d.items:[];box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');box.classList.toggle('on',items.length>0);box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const x=items[Number(el.dataset.i)];$('deliveryAddress').value=x.address||x.label||'';$('deliveryCity').value=x.city||'';$('deliveryState').value=x.state||'';$('deliveryZipCode').value=x.zipCode||'';box.classList.remove('on')})}
+ if(m.type==='RETRY_LABEL_RESULT'){
+   document.querySelectorAll('.retry-label').forEach(b=>b.disabled=false);
+   notice(d.mensagem||'Reprocessamento concluido. Consulte o status atualizado.',d.ok===true);
+ }
  if(m.type==='CALCULATE_RESULT'){freightNegotiated=false;syncNegotiatedUI();$('calc').disabled=false;$('calc').textContent='CALCULAR FRETE';if(!d.ok){currentFee=0;return notice(d.mensagem||'Não foi possível calcular.',false)}currentFee=Number(d.shipping?.amount)||0;routeReview();notice('Trajeto calculado. Revise antes de confirmar.',true)}
  if(m.type==='CREATE_RESULT'){$('create').textContent='GERAR ETIQUETA';if(!d.ok){
   $('create').disabled=false;
