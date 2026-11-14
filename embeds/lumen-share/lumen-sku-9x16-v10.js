@@ -271,7 +271,7 @@ async function warmFile(p){
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),3300);
  }
- function shareFiles(files,after){
+ function shareFiles(files,after,caption){
   if(shareInProgress||!files?.length||Date.now()-lastShareAt<800)return false;
   if(typeof navigator.share!=='function'||typeof File==='undefined'){
    notice('Este navegador não oferece compartilhamento nativo de fotos.');
@@ -285,7 +285,7 @@ async function warmFile(p){
   // Invocado diretamente do evento de toque ou clique: preserva ativação
   // de usuário exigida pelo Web Share API no Safari do iPhone.
   try{
-   Promise.resolve(navigator.share({files})).then(()=>{
+   Promise.resolve(navigator.share(caption?.text ? {files,title:caption.title,text:caption.text} : {files})).then(()=>{
     state.lastShared={count:files.length,names:files.map(x=>x.name),at:Date.now()};
     if(typeof after==='function')after();
    }).catch(error=>{
@@ -342,10 +342,26 @@ async function warmFile(p){
    .catch(e=>{cleanBad.add(id);throw e}).finally(()=>cleanPromises.delete(id));
   cleanPromises.set(id,task);return task;
  }
+ // A legenda utiliza os mesmos atributos oficiais do componente Wix.
+ // A foto compartilhada continua limpa, sem sobreposicao de texto.
+ function captionFromWidget(w,p){
+  const name=String(w.getAttribute('nome')||p[0]||'Produto').trim();
+  const varejo=String(w.getAttribute('varejo')||'').trim();
+  const atacado=String(w.getAttribute('atacado')||'').trim();
+  const sizes=String(w.getAttribute('tamanhos')||(p[3]||[]).join(', ')).trim();
+  const link=String(w.getAttribute('link')||(productPaths[String(p[1])]||'')).trim();
+  const absoluteLink=link?new URL(link,location.origin).href:'';
+  const lines=['✨ *'+name+'*'];
+  if(varejo)lines.push('🛍️ *Valor de varejo:* '+varejo);
+  if(atacado)lines.push('📦 *Valor de atacado:* '+atacado);
+  if(sizes)lines.push('👡 *Numerações disponíveis:* '+sizes);
+  if(absoluteLink)lines.push('🔗 *Link de compra:* '+absoluteLink);
+  return {title:name,text:lines.join('\n')};
+ }
  function shareClean(w){
   const p=widgetProduct(w);if(!p){notice('Foto do produto nao encontrada.');return;}
   const f=cleanReady(p)?cleanFiles.get(String(p[2])):null;
-  if(f){shareFiles([f]);return;}
+  if(f){shareFiles([f],null,captionFromWidget(w,p));return;}
   cleanBad.delete(String(p[2]));
   warmClean(p).then(()=>notice('Foto original pronta! Toque novamente para compartilhar.'))
    .catch(()=>notice('Nao foi possivel preparar a foto original.'));
