@@ -297,7 +297,7 @@ async function warmFile(p){
   try{path=new URL(w.getAttribute('link')||'',location.origin).pathname}catch(_){}
   let p=path?catalogItems.find(x=>productPaths[String(x[1])]===path):null;
   if(!p&&media.has(id))p=media.get(id);
-  if(p){if(id)replacePhoto(p,id);return p;}
+  if(p)return p;
   return id?[w.getAttribute('nome')||'Produto','',id,[],[],true]:null;
  }
  async function cleanOriginal(p){
@@ -334,6 +334,7 @@ async function warmFile(p){
   const p=widgetProduct(w);if(!p){notice('Foto do produto nao encontrada.');return;}
   const f=cleanReady(p)?cleanFiles.get(String(p[2])):null;
   if(f){shareFiles([f]);return;}
+  cleanBad.delete(String(p[2]));
   warmClean(p).then(()=>notice('Foto original pronta! Toque novamente para compartilhar.'))
    .catch(()=>notice('Nao foi possivel preparar a foto original.'));
  }
