@@ -42,6 +42,7 @@
 .store-pickup-option{display:flex;gap:12px;align-items:center;cursor:pointer;background:#fff6eb;border:1px solid #f6d4ae;border-radius:12px;margin-top:12px;padding:12px;color:var(--navy)}
 .store-pickup-option input{width:20px;height:20px;flex:none;accent-color:var(--orange)}
 .store-pickup-option b{display:block;font-size:13px}.store-pickup-option small{display:block;margin-top:3px;line-height:1.5;color:#715c47;font-size:10px}
+#pickupOriginBlock,#deliveryAddressBlock{display:none!important}
 .center-pickup-mode #deliveryAddressBlock,.center-pickup-mode #payerField{display:none!important}
 .store-pickup-mode #deliveryAddressBlock,.store-pickup-mode #stopList,.store-pickup-mode #addStop,.store-pickup-mode #payerField,.store-pickup-mode #centerPickupOption{display:none!important}
 .logistics-pickup-option{background:#eef5fc;border-color:#cadcf0}.logistics-pickup-option small{color:#59708d}.logistics-pickup-option input{accent-color:var(--orange)}
@@ -364,7 +365,7 @@ body.center-pickup-mode #pickupManualFeeBox,body.store-pickup-mode #pickupManual
 <section class="quick"><button class="card call" id="call" type="button"><b>Chamar entregador</b><span>Criar uma nova corrida</span></button><button class="card call lumen-orders-button" id="openLumenOrders" type="button"><b>📦 Pedidos recebidos</b><span>Compras da Lúmen • crédito e Mercado Pago</span></button><button id="openConversationsCard" type="button" class="card call lumen-inbox-card"><b>💬 Conversas WhatsApp</b><span>Ver mensagens em tempo real, assumir e ativar IA</span></button></section>
 
 <section class="card callbox" id="callBox"
-<h3>Chamar entregador</h3><p>Monte o trajeto em etapas. O endereço da LÚMEN vem preenchido por padrão e continua editável.</p>
+<h3>Chamar entregador</h3><p>Informe o endereço da cliente uma única vez. Ele será utilizado na entrega e impresso na etiqueta, inclusive nas retiradas. A origem da loja é preenchida automaticamente.</p>
 <div class="address-block" id="blingLookupPanel">
   <h4>Pesquisar cliente ou pedido no Bling</h4>
   <p>Consulte o Bling antes de preencher a corrida. Escolha um cliente ou um pedido para carregar nome, telefone e endereço cadastrados.</p>
@@ -373,34 +374,35 @@ body.center-pickup-mode #pickupManualFeeBox,body.store-pickup-mode #pickupManual
   <div id="blingSearchResults" class="bling-search-results" role="list"></div>
 </div>
 
-<div class="address-block"><h4>1. Endereço de retirada</h4><p>Endereço padrão LÚMEN • WhatsApp 88 98861-5993</p>
+<div class="address-block" id="pickupOriginBlock"><h4>Origem automática da loja</h4><p>Endereço já cadastrado no VELUM.</p>
 <div class="grid"><div class="field"><label>Rua</label><input id="pickupAddress"></div><div class="field"><label>Número</label><input id="pickupNumber"></div></div>
 <div class="grid three"><div class="field"><label>Bairro</label><input id="pickupNeighborhood"></div><div class="field"><label>Cidade</label><input id="pickupCity"></div><div class="field"><label>UF</label><input id="pickupState" maxlength="2"></div></div>
 <div class="grid"><div class="field"><label>CEP</label><input id="pickupZipCode"></div><div class="field"><label>WhatsApp</label><input id="pickupPhone" value="88 98861-5993"></div></div></div>
 
-<div class="address-block" id="deliveryAddressBlock"><h4>2. Endereço de entrega</h4><p>Digite rua e número. A VELUM mostra sugestões de endereços existentes.</p>
+<div class="address-block" id="deliveryAddressBlock"><h4>Endereço operacional legado</h4><p>Digite rua e número. A VELUM mostra sugestões de endereços existentes.</p>
 <div class="field" style="position:relative"><label>Rua, número e bairro</label><input id="deliveryAddress" autocomplete="off" placeholder="Ex.: Rua Santa Cecília, 515"><div id="deliverySuggestions" class="suggestions"></div></div>
 <div class="grid three"><div class="field"><label>CEP</label><input id="deliveryZipCode"></div><div class="field"><label>Cidade</label><input id="deliveryCity"></div><div class="field"><label>UF</label><input id="deliveryState" maxlength="2"></div></div><div class="field"><label>Complemento do endereço (Bling)</label><input id="deliveryComplement" placeholder="Apto, bloco, sala ou referência"></div></div>
 
-<div class="address-block"><h4>3. Recebedor</h4>
+<div class="address-block"><h4>1. Cliente</h4>
 <div class="grid"><div class="field"><label>Nome do recebedor</label><input id="customerName"></div><div class="field"><label>WhatsApp / telefone</label><input id="customerPhone"></div></div>
 <div class="field full"><label>Instruções / ponto de referência</label><textarea id="instructions"></textarea></div>
 <div class="field" id="payerField"><label>Quem paga</label><select id="payer"><option value="PAY_AT_PICKUP">LÚMEN</option><option value="PAY_AT_DELIVERY">Recebedor</option></select></div></div>
 
-<div class="address-block"><h4>4. Paradas / centros de distribuição</h4><p>Opcional. Adicione uma ou mais paradas antes de chamar o entregador. Cada parada pode ter taxa extra ou não.</p>
+<div class="address-block" id="customerAddressBlock">
+<h4>2. Endereço da cliente (entrega e etiqueta) *</h4>
+<p>Obrigatório em todas as modalidades, incluindo retirada em loja ou centro logístico. Um único endereço serve para a entrega e para a etiqueta. Quando disponível, será preenchido pelo Bling. Retiradas não geram frete automático.</p>
+<div class="field" style="position:relative"><label>Rua, número e bairro da cliente *</label><input id="customerAddress" autocomplete="street-address" required placeholder="Ex.: Rua José Juarez Moreira, 308, Centro"><div id="customerSuggestions" class="suggestions"></div></div>
+<div class="grid three"><div class="field"><label>CEP</label><input id="customerZipCode"></div><div class="field"><label>Cidade *</label><input id="customerCity" required></div><div class="field"><label>UF *</label><input id="customerState" maxlength="2" required></div></div>
+<div class="field"><label>Complemento do endereço da cliente</label><input id="customerComplement"></div>
+</div>
+
+<div class="address-block"><h4>3. Paradas / centros de distribuição</h4><p>Opcional. Adicione uma ou mais paradas antes de chamar o entregador. Cada parada pode ter taxa extra ou não.</p>
 <div id="stopList" class="stop-list"></div><button id="addStop" class="add-stop" type="button">+ ADICIONAR PARADA</button>
-<label class="store-pickup-option logistics-pickup-option" id="centerPickupOption"><input id="centerPickupMode" type="checkbox"><span><b>Retirada no centro logístico</b><small>A cliente retira no último centro. O endereço dela é obrigatório para a etiqueta; o frete da retirada é R$ 0,00, salvo taxa manual.</small></span></label>
+<label class="store-pickup-option logistics-pickup-option" id="centerPickupOption"><input id="centerPickupMode" type="checkbox"><span><b>Retirada no centro logístico</b><small>A cliente retira no último centro. O mesmo endereço informado acima constará na etiqueta. Frete da retirada R$ 0,00, salvo taxa manual.</small></span></label>
 <label class="store-pickup-option"><input id="storePickupMode" type="checkbox"><span><b>Retirada em loja</b><small>A cliente retira na Lúmen. Sem cálculo de frete; a etiqueta traz o endereço da cliente.</small></span></label>
 <label class="ready-check" id="storePickupReadyBox" style="display:none"><input id="storePickupReady" type="checkbox"><span>Confirmo que o pedido está pronto para retirada na loja.</span></label>
 </div>
 
-<div class="address-block" id="customerAddressBlock">
-<h4>Endereço da cliente para a etiqueta</h4>
-<p>Será impresso em todas as etiquetas, inclusive retirada em loja ou no centro logístico. Carregado do Bling quando disponível; se necessário, complete manualmente. Não altera o local de retirada nem cobra frete.</p>
-<div class="field"><label>Rua, número e bairro da cliente</label><input id="customerAddress" autocomplete="street-address" placeholder="Endereço cadastrado da cliente"></div>
-<div class="grid three"><div class="field"><label>CEP</label><input id="customerZipCode"></div><div class="field"><label>Cidade</label><input id="customerCity"></div><div class="field"><label>UF</label><input id="customerState" maxlength="2"></div></div>
-<div class="field"><label>Complemento do endereço da cliente</label><input id="customerComplement"></div>
-</div>
 <div class="address-block" id="pickupManualFeeBox">
 <div class="field"><label>Taxa manual da retirada (opcional) — R$</label><input id="pickupManualFee" type="number" min="0" max="9999" step="0.01" inputmode="decimal" value="0" aria-label="Taxa manual da retirada em reais"></div>
 <p>Sem taxa manual: R$ 0,00. Essa taxa não é frete calculado e não gera pagamento ao entregador.</p>
@@ -1129,7 +1131,11 @@ function startEditRide(x){
   $('customerName').value=x.customerName||'';
   $('customerPhone').value=x.customerPhone||'';
   $('pickupManualFee').value=String(Math.max(0,Number(x.pickupManualFee)||0));
-  for(const k of ['customerAddress','customerCity','customerState','customerZipCode','customerComplement'])$(k).value=x[k]||'';
+  for(const [k,source] of Object.entries({
+   customerAddress:'deliveryAddress',customerCity:'deliveryCity',customerState:'deliveryState',
+   customerZipCode:'deliveryZipCode',customerComplement:'deliveryComplement'
+  }))$(k).value=x[k]||((!store&&x.customerPickupAtCenter!==true)?x[source]||'':'');
+  syncDestinationFromCustomer();
   $('instructions').value=x.deliveryInstructions||'';
   $('payer').value=x.deliveryPaymentMode==='PAY_AT_DELIVERY'?'PAY_AT_DELIVERY':'PAY_AT_PICKUP';
   selectedBlingOrderId=String(x.blingOrderId||'');
@@ -1600,6 +1606,7 @@ function applyBlingRecord(r){
   if(r.deliveryZipCode)$('deliveryZipCode').value=r.deliveryZipCode;
  for(const [k,from] of Object.entries({customerAddress:'deliveryAddress',customerCity:'deliveryCity',customerState:'deliveryState',customerZipCode:'deliveryZipCode',customerComplement:'deliveryComplement'}))$(k).value=r[k]||r[from]||'';
   $('deliveryComplement').value=String(r.deliveryComplement||r.complement||r.addressComplement||'');
+  syncDestinationFromCustomer();
   selectedBlingOrderId=String(r.blingOrderId||'');
   selectedBlingOrderNumber=String(r.orderNumber||'');
   const label=selectedBlingOrderNumber?'Pedido Bling nº '+selectedBlingOrderNumber:'Cliente encontrado no Bling';
@@ -1898,12 +1905,39 @@ function render(d){
   if(openedRideId)renderRideDetail();
 }
 function renderStops(){const box=$('stopList');box.innerHTML=stops.map((x,i)=>'<div class="stop"><div class="stop-head"><b>Parada '+(i+1)+'</b><button class="stop-remove" data-rm="'+i+'" type="button">REMOVER</button></div><div class="grid"><div class="field"><label>Nome do centro</label><input data-stop="'+i+'" data-key="name" value="'+esc(x.name||'')+'" placeholder="Centro de distribuição '+(i+1)+'"></div><div class="field"><label>Endereço</label><input data-stop="'+i+'" data-key="address" value="'+esc(x.address||'')+'"></div></div><div class="grid three"><div class="field"><label>Cidade</label><input data-stop="'+i+'" data-key="city" value="'+esc(x.city||'')+'"></div><div class="field"><label>UF</label><input data-stop="'+i+'" data-key="state" value="'+esc(x.state||'')+'" maxlength="2"></div><div class="field"><label>CEP</label><input data-stop="'+i+'" data-key="zipCode" value="'+esc(x.zipCode||'')+'"></div></div><label class="stop-fee"><input type="checkbox" data-stop="'+i+'" data-key="hasFee" '+(x.hasFee?'checked':'')+'> Adicionar taxa extra <input type="number" min="0" step="0.01" data-stop="'+i+'" data-key="fee" value="'+Number(x.fee||0)+'" placeholder="R$"></label></div>').join('');box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{stops.splice(Number(b.dataset.rm),1);if(!stops.length)$('centerPickupMode').checked=false;renderStops()});box.querySelectorAll('[data-stop][data-key]').forEach(el=>el.oninput=el.onchange=()=>{const i=Number(el.dataset.stop),k=el.dataset.key;stops[i][k]=k==='hasFee'?el.checked:k==='fee'?Number(el.value||0):el.value})}
-function payload(){return{pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),deliveryAddress:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryAddress').value.trim(),deliveryCity:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryCity').value.trim(),deliveryState:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryState').value.trim().toUpperCase(),deliveryZipCode:($('centerPickupMode').checked||$('storePickupMode').checked)?'':$('deliveryZipCode').value.trim(),deliveryComplement:$('deliveryComplement').value.trim(),customerAddress:$('customerAddress').value.trim(),customerCity:$('customerCity').value.trim(),customerState:$('customerState').value.trim().toUpperCase(),customerZipCode:$('customerZipCode').value.trim(),customerComplement:$('customerComplement').value.trim(),customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,pickupManualFee:($('storePickupMode').checked||$('centerPickupMode').checked)?Math.max(0,Number($('pickupManualFee').value)||0):0,freightNegotiated:freightNegotiated&&!$('centerPickupMode').checked&&!$('storePickupMode').checked,deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,customerPickupAtCenter:!!$('centerPickupMode').checked,blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,storePickup:$('storePickupMode').checked,readyConfirmed:$('readyConfirm').checked}}
+function payload(){
+ // Fonte única: endereço da cliente serve para entrega, cotação e etiqueta.
+ // O endereço de origem é carregado automaticamente do cadastro da LÚMEN.
+ const address=$('customerAddress').value.trim();
+ const city=$('customerCity').value.trim();
+ const state=$('customerState').value.trim().toUpperCase();
+ const zip=$('customerZipCode').value.trim();
+ const complement=$('customerComplement').value.trim();
+ return{
+  pickupAddress:$('pickupAddress').value.trim(),pickupNumber:$('pickupNumber').value.trim(),
+  pickupNeighborhood:$('pickupNeighborhood').value.trim(),pickupCity:$('pickupCity').value.trim(),
+  pickupState:$('pickupState').value.trim().toUpperCase(),pickupZipCode:$('pickupZipCode').value.trim(),
+  deliveryAddress:address,deliveryCity:city,deliveryState:state,deliveryZipCode:zip,deliveryComplement:complement,
+  customerAddress:address,customerCity:city,customerState:state,customerZipCode:zip,customerComplement:complement,
+  customerName:$('customerName').value.trim(),customerPhone:$('customerPhone').value.trim(),
+  deliveryInstructions:$('instructions').value.trim(),deliveryPaymentMode:$('payer').value,
+  pickupManualFee:($('storePickupMode').checked||$('centerPickupMode').checked)?
+   Math.max(0,Number($('pickupManualFee').value)||0):0,
+  freightNegotiated:freightNegotiated&&!$('centerPickupMode').checked&&!$('storePickupMode').checked,
+  deliveryFee:currentFee,logisticsStages:$('storePickupMode').checked?[]:stops,
+  customerPickupAtCenter:!!$('centerPickupMode').checked,
+  blingOrderId:selectedBlingOrderId,orderNumber:selectedBlingOrderNumber,
+  storePickup:$('storePickupMode').checked,readyConfirmed:$('readyConfirm').checked
+ };
+}
 function routeReview(){
  const centerPickup=$('centerPickupMode').checked,storePickup=$('storePickupMode').checked;
-  const pts=[['Retirada',[$('pickupAddress').value,$('pickupNumber').value,$('pickupNeighborhood').value,$('pickupCity').value,$('pickupState').value].filter(Boolean).join(', ')],
-   ...stops.map((x,i)=>[centerPickup&&i===stops.length-1?'Retirada pela cliente no centro':'Parada '+(i+1),[x.name,x.address,x.city,x.state].filter(Boolean).join(' • ')]),
-   ...((centerPickup||storePickup)?[]:[['Entrega',[$('deliveryAddress').value,$('deliveryCity').value,$('deliveryState').value].filter(Boolean).join(' • ')]])];
+  const customer=[ $('customerAddress').value,$('customerCity').value,$('customerState').value ].filter(Boolean).join(' • ');
+  const pts=[
+   [centerPickup||storePickup?'Endereço da cliente — etiqueta':'Endereço da cliente — entrega e etiqueta',customer],
+   ...stops.map((x,i)=>[centerPickup&&i===stops.length-1?'Retirada no centro logístico':'Parada '+(i+1),
+    [x.name,x.address,x.city,x.state].filter(Boolean).join(' • ')])
+  ];
  $('routeBox').innerHTML=pts.map(p=>'<div class="route-point"><small>'+esc(p[0])+'</small><b>'+esc(p[1])+'</b></div>').join('');
  const pickupMode=centerPickup||storePickup;
   $('quoteLabel').textContent=pickupMode?'Taxa manual da retirada':freightNegotiated?'Frete negociado diretamente':'Valor da corrida VELUM';
@@ -1926,9 +1960,9 @@ function validateCustomerLabelAddress(){
  $('customerAddressBlock').scrollIntoView({behavior:'smooth',block:'center'});
  return false;
 }
-function syncDestinationFromCustomer(force=false){
+function syncDestinationFromCustomer(){
  const fields={deliveryAddress:'customerAddress',deliveryCity:'customerCity',deliveryState:'customerState',deliveryZipCode:'customerZipCode',deliveryComplement:'customerComplement'};
- for(const [dest,origin] of Object.entries(fields)){if(force||!$(dest).value.trim())$(dest).value=$(origin).value.trim()}
+ for(const [dest,origin] of Object.entries(fields))$(dest).value=$(origin).value.trim();
 }
 function validManualPickupFee(){
  const n=Number($('pickupManualFee').value||0);
@@ -1947,8 +1981,8 @@ $('negotiate').onclick=()=>{
   if(!validateCustomerLabelAddress())return;
   syncDestinationFromCustomer(true);
   const data=payload();
- if(!data.deliveryAddress||!data.deliveryCity||!data.deliveryState)
-   return notice('Informe o destino da entrega para combinar o frete com o motorista.',false);
+ if(!data.customerAddress||!data.customerCity||!data.customerState)
+   return notice('Informe o endereço da cliente para combinar o frete com o motorista.',false);
  if(!data.customerName||data.customerPhone.replace(/\D/g,'').length<10)
    return notice('Informe nome e telefone válidos da cliente.',false);
  if(data.logisticsStages.some(st=>!st.name||!st.address||!st.city||!/^[A-Z]{2}$/.test(st.state)))
@@ -1990,7 +2024,12 @@ $('centerPickupMode').onchange=()=>{
     $('create').textContent='SALVAR ALTERAÇÕES';
   }else clearNotice();
 };
-$('deliveryAddress').oninput=()=>{clearTimeout(suggestTimer);const term=$('deliveryAddress').value.trim();if(term.length<3){$('deliverySuggestions').classList.remove('on');return}suggestTimer=setTimeout(()=>send('SUGGEST_ADDRESS',{term,target:'delivery'}),350)};
+$('customerAddress').oninput=()=>{
+ clearTimeout(suggestTimer);
+ const term=$('customerAddress').value.trim();
+ if(term.length<3){$('customerSuggestions').classList.remove('on');return}
+ suggestTimer=setTimeout(()=>send('SUGGEST_ADDRESS',{term,target:'customer'}),350);
+};
 $('calc').onclick=()=>{
   clearNotice();
   if(!validateCustomerLabelAddress())return;
@@ -2147,7 +2186,21 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
    $('blingSearchStatus').textContent='Retirada registrada. Você pode cadastrar outra.';
     $('blingSearchResults').innerHTML='';
   }
- if(m.type==='SUGGEST_RESULT'){const box=$('deliverySuggestions');const items=Array.isArray(d.items)?d.items:[];box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');box.classList.toggle('on',items.length>0);box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const x=items[Number(el.dataset.i)];$('deliveryAddress').value=x.address||x.label||'';$('deliveryCity').value=x.city||'';$('deliveryState').value=x.state||'';$('deliveryZipCode').value=x.zipCode||'';box.classList.remove('on')})}
+ if(m.type==='SUGGEST_RESULT'){
+  const box=$('customerSuggestions');
+  const items=Array.isArray(d.items)?d.items:[];
+  box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');
+  box.classList.toggle('on',items.length>0);
+  box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{
+   const x=items[Number(el.dataset.i)];
+   $('customerAddress').value=x.address||x.label||'';
+   $('customerCity').value=x.city||'';
+   $('customerState').value=x.state||'';
+   $('customerZipCode').value=x.zipCode||'';
+   syncDestinationFromCustomer();
+   box.classList.remove('on');
+  });
+ }
  if(m.type==='WIX_SYNC_RESULT'){
   const button=$('wixPaidSyncBtn'),status=$('wixPaidSyncStatus');
   if(button)button.disabled=false;
