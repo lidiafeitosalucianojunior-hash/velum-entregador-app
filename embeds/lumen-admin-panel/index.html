@@ -458,6 +458,10 @@ body.center-pickup-mode #pickupManualFeeBox,body.store-pickup-mode #pickupManual
 
 <section class="panel on" id="activePanel">
   <div class="section-head"><h3>Entregas por fase</h3><span id="activeSummary">0 corridas</span></div>
+  <div style="margin:6px 0 11px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+   <button type="button" class="btn secondary" id="wixPaidSyncBtn" style="border:1px solid #a7b2bb;padding:9px 12px;font-weight:800">SINCRONIZAR PEDIDOS WIX PAGOS</button>
+   <span id="wixPaidSyncStatus" role="status" style="font-size:12px;color:#637084">Verificação automática enquanto o painel estiver aberto</span>
+  </div>
   <div class="active-subtabs" role="group" aria-label="Filtrar corridas pela fase de entrega">
     <button type="button" class="active-subtab on" data-active-tab="all" data-stage="all" aria-pressed="true"><span>TODAS AS CORRIDAS</span><span class="phase-count" id="allCount">0</span></button>
     <button type="button" class="active-subtab" data-active-tab="logistics" data-stage="logistics" aria-pressed="false"><span>CENTRO LOGÍSTICO</span><span class="phase-count" id="logisticsCount">0</span></button>
@@ -2041,6 +2045,13 @@ $('rideDetailOverlay').addEventListener('click',event=>{if(event.target.closest(
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('rideDetailOverlay').hidden)closeRideDetail()});
 $('selectVisible').onclick=()=>{const list=filteredRideSheet();const allSelected=list.length&&list.every(x=>selectedLabels.has(x.deliveryId));list.forEach(x=>allSelected?selectedLabels.delete(x.deliveryId):selectedLabels.add(x.deliveryId));renderActiveList()};
 // Selecting visible cards is handled by the toolbar button; each card has its own checkbox.
+$('wixPaidSyncBtn').onclick=()=>{
+ const btn=$('wixPaidSyncBtn');
+ if(btn.disabled)return;
+ btn.disabled=true;
+ $('wixPaidSyncStatus').textContent='Consultando pedidos pagos e preparando PDFs...';
+ send('WIX_SYNC',{});
+};
 $('printSelected').onclick=()=>{
  const list=[...selectedLabels].map(rideById).filter(Boolean);
  const protectedItems=list.filter(x=>x.etiquetaOperacional===true||
@@ -2137,6 +2148,17 @@ window.addEventListener('message',e=>{const m=e.data||{};if(m.source!=='LUMEN_AD
     $('blingSearchResults').innerHTML='';
   }
  if(m.type==='SUGGEST_RESULT'){const box=$('deliverySuggestions');const items=Array.isArray(d.items)?d.items:[];box.innerHTML=items.map((x,i)=>'<div class="suggestion" data-i="'+i+'">'+esc(x.label||x.address)+'</div>').join('');box.classList.toggle('on',items.length>0);box.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const x=items[Number(el.dataset.i)];$('deliveryAddress').value=x.address||x.label||'';$('deliveryCity').value=x.city||'';$('deliveryState').value=x.state||'';$('deliveryZipCode').value=x.zipCode||'';box.classList.remove('on')})}
+ if(m.type==='WIX_SYNC_RESULT'){
+  const button=$('wixPaidSyncBtn'),status=$('wixPaidSyncStatus');
+  if(button)button.disabled=false;
+  if(status){
+   if(d.processando)status.textContent=d.mensagem||'Consulta Wix ja em andamento';
+   else if(d.ativo===false)status.textContent='Integração Wix desativada. Verifique a configuração.';
+   else if(!d.ok)status.textContent='Sincronização pendente: '+(d.webCodigo||d.docsCodigo||'consulte o administrador');
+   else status.textContent='Wix: '+(Number(d.novas)||0)+' novas corridas, '+(Number(d.prontas)||0)+' PDFs prontos'+(d.pendentes?' • '+d.pendentes+' pendentes':'');
+  }
+  if(d.manual&&d.ok===false)notice('Não foi possível concluir a sincronização Wix. Confira o status.',false);
+ }
  if(m.type==='RETRY_LABEL_RESULT'){
    document.querySelectorAll('.retry-label').forEach(b=>b.disabled=false);
    notice(d.mensagem||'Reprocessamento concluido. Consulte o status atualizado.',d.ok===true);
