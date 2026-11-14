@@ -913,7 +913,7 @@ function rideCost(x){
 }
 function printerSvg(){return'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-9a3 3 0 0 1 3 3v5h-4v-2H6v2H2v-5a3 3 0 0 1 3-3h14Zm-2 4h2v-2h-2v2Z"/></svg>'}
 function ride(x,done){const share=x.trackingUrl?'<button class="btn secondary share share-track" data-url="'+esc(x.trackingUrl)+'" data-phone="'+esc(x.customerPhone||'')+'" data-name="'+esc(x.customerName||'')+'">COMPARTILHAR COM A CLIENTE</button>':'';const waitingActions=!done&&x.status==='READY_TO_DISPATCH'?'<div class="waiting-actions"><button class="btn recall ride-call-prepared" data-id="'+esc(x.deliveryId)+'">CHAMAR ENTREGADOR</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':!done&&x.status==='WAITING_DRIVER'?'<div class="waiting-actions"><button class="btn recall ride-recall" data-id="'+esc(x.deliveryId)+'">CHAMAR NOVAMENTE</button><button class="btn secondary ride-edit" data-id="'+esc(x.deliveryId)+'">EDITAR</button><button class="btn danger ride-cancel" data-id="'+esc(x.deliveryId)+'">CANCELAR</button></div>':'';const checked=selectedLabels.has(x.deliveryId)?' checked':'';const pdfAction=!done&&(x.comandaLumen||['WIX_SITE','WIX_PDV','BLING_PDV','BLING_PEDIDO'].includes(x.origemMulticanal))?(x.etiquetaPdfConfirmada&&x.etiquetaPrintUrl?
-'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn secondary label-pdf-link" data-url="'+esc(x.etiquetaPrintUrl)+'" type="button" style="flex:1">IMPRIMIR PDF 10x15</button><button class="btn secondary label-preview-link" data-url="'+esc(x.etiquetaPreviaPrintUrl)+'" type="button" style="flex:1">VER PREVIA</button></div><div style="margin-top:5px;font-size:11px;color:#17613d;font-weight:700">PDF automatico pronto'+(x.etiquetaPreviaMetaStatus==='ACEITO_META'?' - Previa/link aceitos pela Meta':' - Envio Meta pendente')+'</div>':
+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn secondary label-pdf-link" data-id="'+esc(x.deliveryId)+'" type="button" style="flex:1">IMPRIMIR ETIQUETA 10x15</button><button class="btn secondary label-preview-link" data-id="'+esc(x.deliveryId)+'" type="button" style="flex:1">VER PREVIA</button></div><div style="margin-top:5px;font-size:11px;color:#17613d;font-weight:700">PDF automatico pronto'+(x.etiquetaPreviaMetaStatus==='ACEITO_META'?' - Previa/link aceitos pela Meta':' - Envio Meta pendente')+'</div>':
 '<div style="margin-top:8px;font-size:12px;color:#b3590d;font-weight:700">'+(x.etiquetaDadosStatus==='AGUARDANDO_ENDERECO_CLIENTE'?'Etiqueta pendente: falta endereço da cliente.':'Etiqueta PDF aguardando conclusão.')+'</div><button type="button" class="btn secondary retry-label" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:7px">REPROCESSAR ETIQUETA PDF</button>'):'';
 return'<article class="card ride"><div class="ride-top"><label class="ride-select"><input class="label-check" type="checkbox" data-label-id="'+esc(x.deliveryId)+'"'+checked+'> Selecionar etiqueta</label><button class="print-one" data-print-id="'+esc(x.deliveryId)+'" type="button" aria-label="Imprimir etiqueta">'+printerSvg()+'</button></div><div class="ride-title-line"><span class="status">'+esc(statusLabel(x.status))+'</span></div><h4>'+esc(x.customerName||'Recebedor')+'</h4><div class="meta"><b>Cliente:</b> '+esc(x.customerName||'—')+(x.customerPhone?' • '+esc(x.customerPhone):'')+'<br><b>Retirada:</b> '+esc(x.originalPickupAddress||x.pickupAddress||'—')+'<br><b>Endereço da cliente:</b> '+esc(detailAddress(x.customerAddress||x.deliveryAddress,x.customerCity||x.deliveryCity,x.customerState||x.deliveryState))+'<br><b>Valor:</b> '+rideCost(x)+' • '+esc(x.payerLabel||'')+'<br><b>Criada:</b> '+esc(dt(x.createdAt))+'</div>'+timeline(x)+logisticsButtons(x)+driverHtml(x.driver)+share+pdfAction+driverPicker(x)+waitingActions+(x.status==='STORE_PICKUP_READY'?'<button type="button" class="btn primary store-complete" data-id="'+esc(x.deliveryId)+'" style="width:100%;margin-top:10px">CONCLUIR RETIRADA NA LOJA</button>':'')+'</article>'}
 
@@ -1009,6 +1009,62 @@ const shippingCost=(isPickup||isCenterPickup)?money(pickupFeeOf(x)):orderLabel?(
   '<div class="label-collection-steps"><span><b>1</b>Abra a câmera</span><span><b>2</b>Aponte para o QR</span><span><b>3</b>'+(orderQrOnly?'Confira o pedido':'Consulte os dados')+'</span></div></div></section>'+
   '</article>';
 }
+
+// Exibe a previa oficial do arquivo privado no papel 10 x 15 cm.
+// Evita abrir a URL do PDF diretamente (Chrome a trata como download).
+// A mesma imagem validada pelo backend pode ser impressa sem reconstruir o rotulo.
+function printOfficialLabels(items,autoPrint=true){
+ const list=(Array.isArray(items)?items:[]).filter(Boolean);
+ const previewPattern=/^https:\/\/www\.vaidevelum\.com\/_functions\/lumenEtiquetaPrevia\?token=[a-f0-9]{64}$/i;
+ const valid=list.length&&list.every(x=>x.etiquetaPdfConfirmada&&
+  x.etiquetaPreviaConfirmada&&previewPattern.test(String(x.etiquetaPreviaPrintUrl||'')));
+ if(!valid){
+  notice('A etiqueta oficial 10 x 15 cm ainda nao esta pronta. Use Reprocessar etiqueta PDF.',false);
+  return;
+ }
+ const w=window.open('','_blank');
+ if(!w||w.closed)return notice('Permita a abertura de janelas para imprimir a etiqueta.',false);
+ const sheets=list.map((x,i)=>'<section class="label-print-sheet" aria-label="Etiqueta '+(i+1)+'">'+
+   '<img src="'+esc(x.etiquetaPreviaPrintUrl)+'" alt="Etiqueta VELUM 10 por 15 centimetros" loading="eager"></section>').join('');
+ const css=[
+  '@page{size:100mm 150mm;margin:0}',
+  '*{box-sizing:border-box}',
+  'html,body{padding:0;margin:0;background:#fff;color:#132c4d;font-family:Arial,sans-serif}',
+  '.label-print-sheet{width:100mm;height:150mm;overflow:hidden;display:flex;align-items:center;justify-content:center;break-inside:avoid;page-break-inside:avoid;page-break-after:always}',
+  '.label-print-sheet:last-of-type{page-break-after:auto}',
+  '.label-print-sheet img{display:block;width:100mm;height:150mm;object-fit:contain}',
+  '.print-controls{position:sticky;top:0;background:#fff;border-bottom:1px solid #dce3ed;padding:12px;display:flex;gap:10px;align-items:center;justify-content:center;z-index:2}',
+  '.print-controls button{cursor:pointer;padding:11px 18px;border:0;border-radius:8px;background:#142e53;color:#fff;font-size:15px;font-weight:800}',
+  '.print-controls p{margin:0;font-size:12px}',
+  '.label-error{display:none;color:#a32020;padding:14px;font-size:13px;text-align:center}',
+  '@media screen{body{background:#e9eef4}.label-print-sheet{margin:12px auto;background:white;box-shadow:0 4px 16px #132c4d26}}',
+  '@media print{html,body{width:100mm!important;height:auto!important;background:#fff!important}.print-controls,.label-error{display:none!important}.label-print-sheet{margin:0!important;box-shadow:none!important}}'
+ ].join('');
+ const script='<'+'script>(function(){'+
+  'var button=document.getElementById("printNow"),message=document.getElementById("printMessage"),error=document.getElementById("labelError");'+
+  'function doPrint(){window.focus();window.print()}button.addEventListener("click",doPrint);'+
+  'var images=Array.from(document.images);'+
+  'Promise.all(images.map(function(img){return new Promise(function(resolve){'+
+  'if(img.complete)return resolve(img.naturalWidth>0);'+
+  'var done=false;function finish(ok){if(done)return;done=true;resolve(ok)}'+
+  'img.addEventListener("load",function(){finish(true)},{once:true});'+
+  'img.addEventListener("error",function(){finish(false)},{once:true});'+
+  'setTimeout(function(){finish(false)},15000)'+
+  '})})).then(function(outcomes){'+
+  'if(!outcomes.every(Boolean)){button.disabled=true;message.textContent="Nao foi possivel carregar a etiqueta privada.";error.style.display="block";return}'+
+  'button.disabled=false;message.textContent="Etiqueta carregada • papel 10 x 15 cm";'+
+  (autoPrint?'setTimeout(function(){try{doPrint()}catch(e){}},250);':'')+
+  '});'+
+  '})()<'+'/script>';
+ const html='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'+
+  '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Imprimir etiqueta VELUM 10 x 15 cm</title><style>'+
+  css+'</style></head><body><div class="print-controls"><button id="printNow" type="button" disabled>IMPRIMIR ETIQUETA 10 x 15</button>'+
+  '<p id="printMessage">Carregando etiqueta original...</p></div>'+
+  '<div id="labelError" class="label-error">Verifique a conexao e tente novamente pelo painel Lumen.</div>'+
+  sheets+script+'</body></html>';
+ w.document.open();w.document.write(html);w.document.close();
+}
+
 function printLabels(items,existingWindow=null){
  const list=(Array.isArray(items)?items:[]).filter(Boolean).map(x=>{
   if(x.orderLabel===true)return x;
@@ -1542,8 +1598,8 @@ function bindRideActions(){
   document.querySelectorAll('.store-complete').forEach(b=>b.onclick=()=>{if(!confirm('Confirmar que o cliente retirou o pedido na loja?'))return;b.disabled=true;send('COMPLETE_STORE_PICKUP',{deliveryId:b.dataset.id})});
  document.querySelectorAll('.print-one').forEach(b=>b.onclick=()=>{
   const x=rideById(b.dataset.printId);
-  if(x?.etiquetaPdfConfirmada&&x.etiquetaPrintUrl)
-    return window.open(x.etiquetaPrintUrl,'_blank','noopener');
+  if(x?.etiquetaPdfConfirmada&&x.etiquetaPreviaConfirmada&&x.etiquetaPreviaPrintUrl)
+    return printOfficialLabels([x]);
   if(x?.etiquetaOperacional===true||['WIX_SITE','WIX_PDV','BLING_PDV','BLING_PEDIDO'].includes(x?.origemMulticanal)){
     notice('O PDF desta corrida ainda não está pronto. Clique em Reprocessar etiqueta PDF no card.',false);
     return;
@@ -1557,12 +1613,13 @@ function bindRideActions(){
    notice('Solicitada nova verificacao e preparacao da etiqueta PDF...',true);
    send('RETRY_LABEL',{deliveryId:String(b.dataset.id||'')});
  });
- document.querySelectorAll('.label-pdf-link,.label-preview-link').forEach(b=>b.onclick=()=>{
-  const u=String(b.dataset.url||'');
-  if(!/^https:\/\/www\.vaidevelum\.com\/_functions\/lumenEtiqueta(?:Previa)?\?token=[a-f0-9]{64}$/i.test(u)){
-    notice('Link de etiqueta ainda indisponivel.',false);return;
-  }
-  window.open(u,'_blank','noopener');
+ document.querySelectorAll('.label-pdf-link').forEach(b=>b.onclick=()=>{
+  const x=rideById(b.dataset.id);
+  if(x)printOfficialLabels([x],true);
+ });
+ document.querySelectorAll('.label-preview-link').forEach(b=>b.onclick=()=>{
+  const x=rideById(b.dataset.id);
+  if(x)printOfficialLabels([x],false);
  });
 
  document.querySelectorAll('.dispatch-choice').forEach(b=>b.onclick=()=>dispatchOpen(b.dataset.id));
@@ -1804,8 +1861,8 @@ function detailQuickActions(x){
   const removable=(!hasDriver||status==='DELIVERED')&&['READY_TO_DISPATCH','WAITING_DRIVER','PREPARING','LOGISTICS_PACKED','STORE_PICKUP_READY','DELIVERED'].includes(status);
   const button=(cls,icon,label,attrs='',disabled=false,extra='')=>'<button type="button" class="'+cls+' '+extra+'"'+attrs+(disabled?' disabled title="Ação indisponível nesta etapa"':'')+'>'+detailMiniIcon(icon)+'<span>'+esc(label)+'</span></button>';
   let buttons='';
-  if(x.comandaLumen&&x.etiquetaPdfConfirmada&&x.etiquetaPrintUrl)
-    buttons+=button('label-pdf-link','print','Imprimir PDF',' data-url="'+esc(x.etiquetaPrintUrl)+'"');
+  if(x.comandaLumen&&x.etiquetaPdfConfirmada&&x.etiquetaPreviaPrintUrl)
+    buttons+=button('label-pdf-link','print','Imprimir 10x15',' data-id="'+id+'"');
   const pagoLumen=x.comandaLumen?.origem==='LUMEN_WHATSAPP'&&x.storePickup===true&&
     x.comandaLumenStatus==='COMANDA_COMPLETA'&&x.etiquetaPdfConfirmada&&
     x.etiquetaKitDuasPaginas===true&&x.etiquetaKitStatus==='PRONTA';
@@ -2100,8 +2157,8 @@ $('printSelected').onclick=()=>{
   notice(pending.length+' etiqueta(s) ainda sem PDF pronto. Abra o card e use Reprocessar etiqueta PDF.',false);
   return;
  }
- if(list.length===1&&list[0].etiquetaPdfConfirmada&&list[0].etiquetaPrintUrl)
-  return window.open(list[0].etiquetaPrintUrl,'_blank','noopener');
+ if(list.length&&list.every(x=>x.etiquetaPdfConfirmada&&x.etiquetaPreviaConfirmada&&x.etiquetaPreviaPrintUrl))
+  return printOfficialLabels(list);
  return printLabels(list);
 };
 
