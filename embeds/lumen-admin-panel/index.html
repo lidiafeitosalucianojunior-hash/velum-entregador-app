@@ -1534,6 +1534,10 @@ function bindRideActions(){
   const x=rideById(b.dataset.printId);
   if(x?.etiquetaPdfConfirmada&&x.etiquetaPrintUrl)
     return window.open(x.etiquetaPrintUrl,'_blank','noopener');
+  if(x?.etiquetaOperacional===true||['WIX_SITE','WIX_PDV','BLING_PDV','BLING_PEDIDO'].includes(x?.origemMulticanal)){
+    notice('O PDF desta corrida ainda não está pronto. Clique em Reprocessar etiqueta PDF no card.',false);
+    return;
+  }
   return printLabels([x]);
  });
  document.querySelectorAll('.label-upload').forEach(b=>b.onclick=()=>anexarEtiquetaPdfDaCorrida(b));
@@ -1658,7 +1662,7 @@ function ridePhoneWhatsApp(phone){
  return 'https://wa.me/'+digits;
 }
 function rideLabelStatus(x){
- const eligible=['WIX_SITE','WIX_PDV','BLING_PDV','BLING_PEDIDO'].includes(x.origemMulticanal);
+ const eligible=x.etiquetaOperacional===true||['WIX_SITE','WIX_PDV','BLING_PDV','BLING_PEDIDO'].includes(x.origemMulticanal);
  if(!eligible||x.etiquetaPdfConfirmada===true)return '';
  const missing=x.etiquetaDadosStatus==='AGUARDANDO_ENDERECO_CLIENTE';
  const msg=missing?'Endereço da cliente pendente — complete os dados para emitir a etiqueta.':'PDF ainda não pronto para impressão.';
@@ -2037,7 +2041,19 @@ $('rideDetailOverlay').addEventListener('click',event=>{if(event.target.closest(
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('rideDetailOverlay').hidden)closeRideDetail()});
 $('selectVisible').onclick=()=>{const list=filteredRideSheet();const allSelected=list.length&&list.every(x=>selectedLabels.has(x.deliveryId));list.forEach(x=>allSelected?selectedLabels.delete(x.deliveryId):selectedLabels.add(x.deliveryId));renderActiveList()};
 // Selecting visible cards is handled by the toolbar button; each card has its own checkbox.
-$('printSelected').onclick=()=>printLabels([...selectedLabels].map(rideById).filter(Boolean));
+$('printSelected').onclick=()=>{
+ const list=[...selectedLabels].map(rideById).filter(Boolean);
+ const protectedItems=list.filter(x=>x.etiquetaOperacional===true||
+  ['WIX_SITE','WIX_PDV','BLING_PDV','BLING_PEDIDO'].includes(x.origemMulticanal));
+ const pending=protectedItems.filter(x=>!x.etiquetaPdfConfirmada||!x.etiquetaPrintUrl);
+ if(pending.length){
+  notice(pending.length+' etiqueta(s) ainda sem PDF pronto. Abra o card e use Reprocessar etiqueta PDF.',false);
+  return;
+ }
+ if(list.length===1&&list[0].etiquetaPdfConfirmada&&list[0].etiquetaPrintUrl)
+  return window.open(list[0].etiquetaPrintUrl,'_blank','noopener');
+ return printLabels(list);
+};
 
 $('logout').onclick=()=>send('LOGOUT');
 
