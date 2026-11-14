@@ -1,0 +1,22 @@
+name: Lumen long press vs clean share button iPhone smoke
+on:
+  push:
+    paths:
+      - tests/lumen-share-v9-smoke.cjs
+      - .github/workflows/lumen-share-v9.yml
+  workflow_dispatch:
+jobs:
+  iphone-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps webkit
+      - name: Test deployed Lumen V9
+        run: node tests/lumen-share-v9-smoke.cjs
