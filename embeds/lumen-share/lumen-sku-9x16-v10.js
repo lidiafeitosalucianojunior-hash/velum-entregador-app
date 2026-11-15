@@ -351,12 +351,17 @@ async function warmFile(p){
   const sizes=String(w.getAttribute('tamanhos')||(p[3]||[]).join(', ')).trim();
   const link=String(w.getAttribute('link')||(productPaths[String(p[1])]||'')).trim();
   const absoluteLink=link?new URL(link,location.origin).href:'';
-  const lines=['✨ *'+name+'*'];
-  if(varejo)lines.push('🛍️ *Valor de varejo:* '+varejo);
-  if(atacado)lines.push('📦 *Valor de atacado:* '+atacado);
-  if(sizes)lines.push('👡 *Numerações disponíveis:* '+sizes);
-  if(absoluteLink)lines.push('🔗 *Link de compra:* '+absoluteLink);
-  return {title:name,text:lines.join('\n')};
+  const precos=[
+   varejo?'🛍️ *Valor de varejo:* '+varejo:'',
+   atacado?'📦 *Valor de atacado:* '+atacado:''
+  ].filter(Boolean).join('\n');
+  const blocos=[
+   '✨ *'+name+'*',
+   precos,
+   sizes?'👡 *Tamanhos disponíveis:* '+sizes:'',
+   absoluteLink?'🔗 *Link de compra:*\n'+absoluteLink:''
+  ].filter(Boolean);
+  return {title:name,text:blocos.join('\n\n')};
  }
  function shareClean(w){
   const p=widgetProduct(w);if(!p){notice('Foto do produto nao encontrada.');return;}
