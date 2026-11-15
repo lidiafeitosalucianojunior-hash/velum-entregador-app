@@ -663,9 +663,18 @@ async function image916(p){
  try{
   const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1920;
   const c=canvas.getContext('2d');if(!c)throw Error('Canvas indisponível');
-  const factor=Math.max(1080/photo.width,1920/photo.height);
-  const w=1080/factor,h=1920/factor;
-  c.drawImage(photo,(photo.width-w)/2,(photo.height-h)/2,w,h,0,0,1080,1920);
+  // Fundo preenchido pela própria foto, levemente desfocado; sem bordas brancas.
+  // A fotografia principal fica INTEIRA no enquadramento 9:16 (sem cortar o tênis).
+  const cover=Math.max(1080/photo.width,1920/photo.height);
+  const cw=1080/cover,ch=1920/cover;
+  c.save();
+  c.filter='blur(38px) brightness(.65)';
+  c.drawImage(photo,(photo.width-cw)/2,(photo.height-ch)/2,cw,ch,0,0,1080,1920);
+  c.restore();
+  c.fillStyle='rgba(66,42,26,.20)';c.fillRect(0,0,1080,1920);
+  const contain=Math.min(1080/photo.width,1540/photo.height);
+  const dw=photo.width*contain,dh=photo.height*contain;
+  c.drawImage(photo,(1080-dw)/2,(1540-dh)/2+70,dw,dh);
   const shade=c.createLinearGradient(0,1440,0,1920);
   shade.addColorStop(0,'rgba(46,29,19,0)');shade.addColorStop(1,'rgba(46,29,19,.5)');
   c.fillStyle=shade;c.fillRect(0,1440,1080,480);
@@ -697,7 +706,12 @@ function runNextPhoto(){
 function nativeLimit(files){
  if(!files.length||typeof navigator.share!=='function')return 0;
  if(typeof navigator.canShare!=='function')return files.length;
- let lo=0,hi=files.length;
+ // O Chromium pode limitar a 10 imagens por invocação, mesmo com canShare=true.
+ // Em outros navegadores, consulta-se o maior lote aceito pela API nativa.
+ const ua=navigator.userAgent||'';
+ const chromium=/Chrom(e|ium)|EdgA|Edg\\/|SamsungBrowser/i.test(ua)&&!/CriOS|FxiOS/i.test(ua);
+ const ceiling=chromium?Math.min(files.length,10):files.length;
+ let lo=0,hi=ceiling;
  while(lo<hi){
   const mid=Math.ceil((lo+hi)/2);
   try{if(navigator.canShare({files:files.slice(0,mid)}))lo=mid;else hi=mid-1}
