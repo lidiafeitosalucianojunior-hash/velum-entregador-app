@@ -351,16 +351,18 @@ async function createShareProductImage(product,mode,position){
 async function prepareMediaShareSession(){
  const s=lumenShareSession;if(!s)return;
  const key=s.mode+'|'+s.size+'|'+s.index+'|'+s.products.length;
- if(s.cache.has(key)){s.ready=s.cache.get(key);refreshMediaShareDialog();return;}
+ s.requestToken=(s.requestToken||0)+1;
+ const token=s.requestToken;
+ if(s.cache.has(key)){s.ready=s.cache.get(key);s.loading=false;s.error='';refreshMediaShareDialog();return;}
  s.ready=null;s.error='';s.loading=true;refreshMediaShareDialog();
  try{
   const list=shareGroupForSession();
   if(!list.length)throw Error('Não há produtos neste lote.');
   const result=await Promise.all(list.map((p,i)=>createShareProductImage(p,s.mode,s.index*LUMEN_SHARE_BATCH_SIZE+i)));
-  if(lumenShareSession!==s)return;
+  if(lumenShareSession!==s||s.requestToken!==token)return;
   s.cache.set(key,result);s.ready=result;
- }catch(err){if(lumenShareSession===s)s.error=String(err.message||err);}
- finally{if(lumenShareSession===s){s.loading=false;refreshMediaShareDialog();}}
+ }catch(err){if(lumenShareSession===s&&s.requestToken===token)s.error=String(err.message||err);}
+ finally{if(lumenShareSession===s&&s.requestToken===token){s.loading=false;refreshMediaShareDialog();}}
 }
 function refreshMediaShareDialog(){
  const s=lumenShareSession;if(!s)return;
