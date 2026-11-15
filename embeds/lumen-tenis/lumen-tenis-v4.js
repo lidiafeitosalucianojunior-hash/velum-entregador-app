@@ -262,7 +262,7 @@ function buildBatchProducts(){
  return [...unique.values()];
 }
 
-const instagramImages=new Map(),instagramPromises=new Map();
+const instagramImages=new Map(),instagramPromises=new Map(),instagramFailures=new Set();
 let instagramIndex=0;
 function igKey(){
  const products=buildBatchProducts();return (state.size||'todos')+'|'+instagramIndex+'|'+products.length;
@@ -332,8 +332,8 @@ async function renderIg(){
 }
 function prepareInstagramImage(){
  if(!batchDone||batchLoading||state.scanning)return;
- const key=igKey();if(instagramImages.has(key)||instagramPromises.has(key))return;
- const task=renderIg().then(file=>{instagramImages.set(key,file)}).catch(err=>console.warn('Lúmen imagem do Instagram',err)).finally(()=>{instagramPromises.delete(key);updateShareControl()});
+ const key=igKey();if(instagramImages.has(key)||instagramPromises.has(key)||instagramFailures.has(key)||!buildBatchProducts().length)return;
+ const task=renderIg().then(file=>{instagramImages.set(key,file)}).catch(err=>{instagramFailures.add(key);console.warn('Lúmen imagem do Instagram',err)}).finally(()=>{instagramPromises.delete(key);updateShareControl()});
  instagramPromises.set(key,task);
 }
 function updateInstagramControl(){
@@ -342,9 +342,9 @@ function updateInstagramControl(){
  if(!share||!next)return;
  const count=buildBatchProducts().length,lots=Math.ceil(count/4),key=igKey(),ready=instagramImages.has(key);
  share.disabled=!ready;next.disabled=!batchDone||lots<=1;
- share.textContent=ready?'📸 Instagram • Lote '+(instagramIndex+1)+'/'+lots:'📸 Preparando imagem…';
+ share.textContent=ready?'📸 Instagram • Lote '+(instagramIndex+1)+'/'+lots:instagramFailures.has(key)?'Imagem indisponível':'📸 Preparando imagem…';
  next.textContent=lots>1?'Próximo lote →':'Lote único';
- if(batchDone&&!batchLoading&&!ready)prepareInstagramImage();
+ if(batchDone&&!batchLoading&&!ready&&!instagramFailures.has(key)&&count)prepareInstagramImage();
 }
 function shareInstagramBatch(){
  const key=igKey(),file=instagramImages.get(key);
