@@ -153,7 +153,7 @@ const root=document.querySelector(gallerySelector);if(!root)return false;
 if(document.getElementById("lumen-tenis-filter"))return true;
 const el=document.createElement("div");el.id="lumen-tenis-filter";
 el.innerHTML="<div class=\"ll-top\">LÚMEN LUXOS · CURADORIA PREMIUM</div><h1>Tênis femininos</h1><p class=\"ll-intro\">Seus modelos favoritos, na sua numeração.</p><p class=\"ll-label\">SELECIONE O TAMANHO</p><div class=\"ll-btns\" role=\"group\" aria-label=\"Filtrar por numeração\"></div><p class=\"ll-count\" aria-live=\"polite\"></p><button type=\"button\" class=\"ll-open-results\">↗ Compartilhar resultados</button><p class=\"ll-share-hint\" role=\"status\">Escolha o formato e o tamanho do lote na janela de compartilhamento.</p>";
-for(const n of ["Todos",...sizes]){const b=document.createElement("button");b.type="button";b.textContent=n;b.dataset.size=n==="Todos"?"":n;b.onclick=()=>{state.size=b.dataset.size;selectedProducts.clear();manualSelection=false;shareCursors.clear();shareSignatures.clear();activeMode=null;shareNotice="";sessionStorage.setItem("lumen_tenis_size",state.size);const url=new URL(location.href);if(state.size)url.searchParams.set("tamanho",state.size);else url.searchParams.delete("tamanho");history.replaceState(history.state,"",url.pathname+url.search);apply();pagination();};el.querySelector(".ll-btns").appendChild(b)}
+for(const n of ["Todos",...sizes]){const b=document.createElement("button");b.type="button";b.textContent=n;b.dataset.size=n==="Todos"?"":n;b.onclick=()=>{state.size=b.dataset.size;selectedProducts.clear();manualSelection=false;shareCursors.clear();shareSignatures.clear();shareCaps.clear();while(photoQueue.length)photoQueued.delete(photoQueue.pop().key);activeMode=null;shareNotice="";sessionStorage.setItem("lumen_tenis_size",state.size);const url=new URL(location.href);if(state.size)url.searchParams.set("tamanho",state.size);else url.searchParams.delete("tamanho");history.replaceState(history.state,"",url.pathname+url.search);apply();pagination();};el.querySelector(".ll-btns").appendChild(b)}
 el.querySelector('.ll-open-results').addEventListener('click',openShareModal);
 root.parentElement?.insertBefore(el,root);if(!new URLSearchParams(location.search).has('lumen_export'))setTimeout(preparePages,900);return true;
 }
@@ -420,15 +420,18 @@ function productsForNativeShare(){
 const photoByMode=new Map(),failedByMode=new Set(),photoQueued=new Set(),photoQueue=[];
 let photoWorkers=0,shareBusy=false,shareNotice='',activeMode=null;
 const shareCursors=new Map(),shareSignatures=new Map(),shareCaps=new Map();
-let shareProfile='max'; // 'max' or 'ten'
+let shareProfile='ten'; // 'max' or 'ten'
 let selectedShareMode='clean';
 let shareModal=null,priorOverflow='';
 function batchIdentity(mode){return mode+'|'+shareProfile}
 function maxProfileFiles(){return shareProfile==='ten'?10:Infinity}
 function changeShareChoice(mode,profile){
  if(shareBusy)return;
+ const changed=(mode&&modes[mode]&&mode!==selectedShareMode)||
+  (profile&&['max','ten'].includes(profile)&&profile!==shareProfile);
  if(mode&&modes[mode])selectedShareMode=mode;
  if(profile&&['max','ten'].includes(profile))shareProfile=profile;
+ if(changed)while(photoQueue.length)photoQueued.delete(photoQueue.pop().key);
  activeMode=selectedShareMode;shareNotice='';
  updateShareControl();
 }
