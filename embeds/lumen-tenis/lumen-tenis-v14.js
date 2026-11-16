@@ -143,7 +143,8 @@ sty.textContent+="\n/* Lúmen Tênis: seis tamanhos sempre cabem numa linha, com
 sty.textContent+="\n/* V11: three choices on the same line, mobile-friendly */\n#lumen-tenis-filter .ll-share-trio{\n display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;\n width:100%;max-width:660px;box-sizing:border-box;margin:10px auto 8px;\n padding:0 4px;\n}\n#lumen-tenis-filter .ll-share-trio button{\n min-width:0;min-height:59px;max-width:100%;height:auto;\n border:1.5px solid #9d7b5f;border-radius:15px;\n background:#60432f;color:#fff;box-sizing:border-box;\n padding:7px 3px;display:flex;align-items:center;justify-content:center;\n flex-direction:column;gap:3px;white-space:normal;cursor:pointer;\n font:600 10px/1.18 Arial,Helvetica,sans-serif;text-align:center;\n}\n#lumen-tenis-filter .ll-share-trio button span{\n font:600 10px/1.18 Arial,Helvetica,sans-serif;text-align:center;\n max-width:100%;overflow-wrap:normal;\n}\n#lumen-tenis-filter .ll-share-trio button[aria-pressed=\"true\"]{\n background:#4b321f;border-color:#c49a6b;box-shadow:inset 0 0 0 1px #d4b187;\n}\n#lumen-tenis-filter .ll-share-trio button:disabled{opacity:.62;cursor:wait}\n@media(min-width:650px){\n #lumen-tenis-filter .ll-share-trio button{min-height:57px;font-size:12px}\n #lumen-tenis-filter .ll-share-trio button span{font-size:12px}\n}\n";
 sty.textContent+="\n/* Instagram accepts fewer images than the iOS file share sheet in some contexts. */\n#lumen-tenis-filter .ll-instagram-compat{\n display:flex;align-items:center;justify-content:center;flex-wrap:wrap;\n gap:5px;margin:5px auto 7px;padding:0 6px;\n max-width:660px;box-sizing:border-box;\n}\n#lumen-tenis-filter .ll-instagram-compat .ll-compat-label{\n font:600 10px/1.3 Arial,Helvetica,sans-serif;color:#72533c;white-space:nowrap;\n}\n#lumen-tenis-filter .ll-instagram-compat button{\n border:1px solid #ad917b;background:#fff;color:#73553f;\n border-radius:99px;min-height:27px;padding:4px 8px;\n font:600 10px/1.15 Arial,Helvetica,sans-serif;\n white-space:nowrap;cursor:pointer;\n}\n#lumen-tenis-filter .ll-instagram-compat button[aria-pressed=\"true\"]{\n background:#735039;color:#fff;border-color:#735039;\n}\n@media(max-width:380px){\n #lumen-tenis-filter .ll-instagram-compat{gap:3px}\n #lumen-tenis-filter .ll-instagram-compat button{padding:3px 5px;font-size:9px}\n #lumen-tenis-filter .ll-instagram-compat .ll-compat-label{font-size:9px}\n}\n";
 sty.textContent+="\n#lumen-tenis-filter .ll-open-results{display:block;width:min(100%,570px);min-height:48px;margin:10px auto 5px;padding:10px 15px;border:1px solid #b49375;border-radius:99px;background:#563b28;color:white;font:700 14px Arial,sans-serif;text-align:center;cursor:pointer}\n#ll-tenis-share-modal{position:fixed;inset:0;z-index:2147483600;display:none;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}\n#ll-tenis-share-modal.ll-visible{display:flex}\n#ll-tenis-share-modal .ll-backdrop{position:absolute;inset:0;background:rgba(35,23,15,.65)}\n#ll-tenis-share-modal .ll-dialog{position:relative;z-index:1;width:100%;max-width:470px;max-height:calc(100dvh - 26px);overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #d1baa1;border-radius:23px;padding:17px 14px 19px;background:#fffaf6;color:#553a29;box-sizing:border-box;box-shadow:0 16px 45px rgba(30,17,9,.28)}\n#ll-tenis-share-modal .ll-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}\n#ll-tenis-share-modal h2{font:700 21px Georgia,serif;margin:0}\n#ll-tenis-share-modal .ll-close{border:0;background:transparent;color:#61462f;font:700 24px Arial,sans-serif;min-height:34px;min-width:34px;cursor:pointer}\n#ll-tenis-share-modal .ll-description{font:400 12px/1.5 Arial,sans-serif;color:#826b56;margin:8px 0 13px}\n#ll-tenis-share-modal .ll-choice-label{font:700 12px Arial,sans-serif;margin:13px 0 7px}\n#ll-tenis-share-modal .ll-formats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}\n#ll-tenis-share-modal .ll-formats button{min-width:0;min-height:75px;padding:8px 4px;border:1px solid #ac8c71;border-radius:13px;background:white;color:#634631;font:600 10px/1.3 Arial,sans-serif;cursor:pointer;overflow-wrap:break-word}\n#ll-tenis-share-modal .ll-emoji{display:block;font-size:18px;margin-bottom:4px}\n#ll-tenis-share-modal .ll-quantities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}\n#ll-tenis-share-modal .ll-quantities button{min-height:41px;padding:7px;border:1px solid #ae8e72;border-radius:15px;background:white;color:#634631;font:700 12px Arial,sans-serif;cursor:pointer}\n#ll-tenis-share-modal button[aria-pressed=\"true\"]{background:#5d412b!important;color:#fff!important;border-color:#5d412b!important}\n#ll-tenis-share-modal .ll-status{min-height:43px;margin:12px 0 10px;padding:10px;border-radius:10px;background:#f1e7dc;color:#654d38;font:500 12px/1.4 Arial,sans-serif;text-align:center}\n#ll-tenis-share-modal .ll-execute{width:100%;min-height:48px;padding:10px;border:1px solid #b18a68;border-radius:99px;background:#573b26;color:#fff;font:700 14px Arial,sans-serif;cursor:pointer}\n#ll-tenis-share-modal .ll-execute:disabled{opacity:.55;cursor:wait}\n#ll-tenis-share-modal .ll-note{font:400 10px/1.45 Arial,sans-serif;color:#876b54;text-align:center;margin:10px 0 0}\n@media(max-width:390px){#ll-tenis-share-modal .ll-dialog{padding:14px 10px}#ll-tenis-share-modal .ll-formats button{font-size:9px;padding:7px 3px}}\n";
-sty.textContent+="\nhtml body [data-hook=\"product-list-grid-item\"]{position:relative!important}\nhtml body [data-hook=\"product-list-grid-item\"] [data-hook=\"product-item-add-to-cart-button\"]{position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;min-height:0!important;max-height:1px!important;min-width:1px!important;max-width:1px!important;padding:0!important;margin:0!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-cart-float{position:absolute!important;z-index:25;display:flex!important;align-items:center!important;justify-content:center!important;width:49px!important;height:49px!important;min-width:49px!important;min-height:49px!important;max-width:49px!important;max-height:49px!important;margin:0!important;padding:0!important;border:2px solid #c8a684!important;border-radius:50%!important;background:#4a3020!important;color:#fff!important;font:700 17px/1 Arial,sans-serif!important;text-align:center!important;-webkit-text-stroke:.35px #d3ae88;text-shadow:0 0 4px #fff,0 1px 2px #fff;box-shadow:0 1px 6px rgba(255,255,255,.85),0 2px 7px rgba(45,27,12,.3);touch-action:manipulation;cursor:pointer}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-cart-float:active{transform:scale(.96)}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-cart-message{position:absolute!important;z-index:26;max-width:88%!important;background:#fffaf5!important;color:#64422d!important;border:1px solid #b69a7d!important;border-radius:8px!important;padding:5px 7px!important;text-align:center!important;font:600 10px/1.3 Arial,sans-serif!important;box-shadow:0 2px 5px #49321f33;pointer-events:none}\n";
+
+sty.textContent+="\n/* V14 - produto: botões finos e espaçados como na página inicial */\nhtml body [data-hook=\"product-list-grid-item\"] .ll-extra{\n gap:5px!important;margin:5px 0 0!important;padding:0!important;\n}\nhtml body [data-hook=\"product-list-grid-item\"] [data-hook=\"product-item-add-to-cart-button\"],\nhtml body [data-hook=\"product-list-grid-item\"] .ll-extra a{\n position:static!important;left:auto!important;top:auto!important;\n display:flex!important;flex-direction:row!important;align-items:center!important;\n justify-content:center!important;box-sizing:border-box!important;\n width:100%!important;max-width:100%!important;min-width:0!important;\n height:31px!important;min-height:31px!important;max-height:31px!important;\n margin:0!important;padding:3px 6px!important;border-radius:99px!important;\n text-align:center!important;font-size:10.5px!important;line-height:1.08!important;\n white-space:nowrap!important;opacity:1!important;pointer-events:auto!important;\n box-shadow:0 1px 2px rgba(63,40,26,.08)!important;\n}\nhtml body [data-hook=\"product-list-grid-item\"] [data-hook=\"product-item-add-to-cart-button\"]{\n background:#503820!important;border:1.5px solid #91715b!important;\n color:#fff!important;font-weight:500!important;\n}\nhtml body [data-hook=\"product-list-grid-item\"] [data-hook=\"product-item-add-to-cart-button\"]::before{\n display:inline-block!important;content:\"\"!important;\n margin:0!important;width:0!important;height:0!important;visibility:hidden!important;\n}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-extra .ll-checkout{\n order:1!important;background:#050505!important;color:#f5ca44!important;\n border:2px solid #ed7b2c!important;font-weight:800!important;\n box-shadow:0 1px 3px rgba(220,110,25,.16)!important;\n}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-extra .ll-whatsapp{\n order:2!important;background:#fff!important;color:#8b6451!important;\n border:1.5px solid #9c7966!important;font-weight:500!important;\n}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-foot{\n margin:3px 0 5px!important;min-height:20px!important;gap:7px!important;\n}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-price-pair{margin:2px 0 4px!important;gap:0!important}\nhtml body [data-hook=\"product-list-grid-item\"] [data-hook=\"product-item-name\"]{margin:2px 0!important}\nhtml body [data-hook=\"product-list-grid-item\"] [data-hook=\"product-item-options\"]{padding:2px 0 3px!important}\nhtml body [data-hook=\"product-list-wrapper\"]{row-gap:13px!important}\n@media(min-width:650px){\n html body [data-hook=\"product-list-grid-item\"] .ll-extra a,\n html body [data-hook=\"product-list-grid-item\"] [data-hook=\"product-item-add-to-cart-button\"]{\n  height:35px!important;min-height:35px!important;max-height:35px!important;font-size:12px!important;\n }\n}\n";
 function trim(x){return String(x||"").trim()}
 function name(li){return trim(li.querySelector('[data-hook="product-item-name"]')?.textContent)}
 function realShoe(li){return !!name(li)&&!/(sapatilha|rasteira|tamanco|sand[aá]lia|papete|chinelo|bota|bolsa|salto|crocs)/i.test(name(li))}
@@ -196,62 +197,6 @@ function checkoutUrl(li,base){
 }
 
 
-const cartResizeObserver=typeof ResizeObserver==='function'?new ResizeObserver(entries=>{
- for(const entry of entries){const li=entry.target.closest(itemSelector);if(li)positionFloatingCart(li)}
-}):null;
-const observedCartAnchors=new WeakSet();
-function positionFloatingCart(li){
- const button=li.querySelector('.ll-cart-float'),photo=li.querySelector('[data-hook="product-item-container"]');
- if(!button||!photo)return;
- const rect=photo.getBoundingClientRect(),item=li.getBoundingClientRect();
- if(rect.width<30||rect.height<30)return;
- const top=Math.max(0,Math.round(rect.bottom-item.top-(button.offsetHeight||49)-9));
- const left=Math.max(0,Math.round(rect.right-item.left-(button.offsetWidth||49)-9));
- if(button.style.top!==top+'px')button.style.top=top+'px';
- if(button.style.left!==left+'px')button.style.left=left+'px';
-}
-function cartMessage(li,message){
- let tip=li.querySelector('.ll-cart-message');
- if(!tip){tip=document.createElement('div');tip.className='ll-cart-message';li.appendChild(tip)}
- tip.textContent=message;
- const b=li.querySelector('.ll-cart-float');
- tip.style.top=Math.max(0,parseInt(b?.style.top||'0',10)-37)+'px';
- tip.style.left='8px';
- setTimeout(()=>{if(tip.isConnected&&tip.textContent===message)tip.remove()},2700);
-}
-function attachFloatingCart(li){
- const img=li.querySelector('[data-hook="product-item-container"]');
- const wix=li.querySelector('[data-hook="product-item-add-to-cart-button"]');
- if(!img||!wix)return;
- let overlay=li.querySelector('.ll-cart-float');
- if(!overlay){
-  overlay=document.createElement('button');
-  overlay.type='button';overlay.className='ll-cart-float';
-  overlay.textContent='+🛒';
-  overlay.title='Adicionar ao carrinho';
-  overlay.setAttribute('aria-label','Adicionar '+name(li)+' ao carrinho');
-  overlay.addEventListener('click',event=>{
-   event.preventDefault();event.stopPropagation();
-   const original=li.querySelector('[data-hook="product-item-add-to-cart-button"]');
-   if(!original){cartMessage(li,'Carrinho indisponível');return}
-   if(original.disabled||original.getAttribute('aria-disabled')==='true'){
-    cartMessage(li,'Escolha uma numeração antes de adicionar ao carrinho');return
-   }
-   original.click();
-  });
-  li.appendChild(overlay);
- }
- positionFloatingCart(li);
- if(cartResizeObserver&&!observedCartAnchors.has(img)){
-  observedCartAnchors.add(img);cartResizeObserver.observe(img);
- }
-}
-window.addEventListener('resize',()=>{
- document.querySelectorAll(gallerySelector+' '+itemSelector+' .ll-cart-float').forEach(button=>{
-  const li=button.closest(itemSelector);if(li)positionFloatingCart(li);
- });
-},{passive:true});
-
 function decorate(li){
 if(li.dataset.llDone==="yes")return;
 const select=li.querySelector('select[data-hook="native-select"]'),options=li.querySelector('[data-hook="product-item-options"]'),opts=variants(li);
@@ -279,7 +224,7 @@ const share=document.createElement("button");share.type="button";share.textConte
 share.onclick=()=>shareSingleNative(li,share);
 const choose=document.createElement("label");choose.className="ll-select-item";const check=document.createElement("input");check.type="checkbox";check.className="ll-select-checkbox";check.dataset.productLink=link;check.checked=manualSelection&&selectedProducts.has(link);check.setAttribute("aria-label","Selecionar "+name(li)+" para o lote");check.onchange=()=>{const p=productInfo(li);if(check.checked&&p){manualSelection=true;selectedProducts.set(p.link,p)}else{selectedProducts.delete(link);if(!selectedProducts.size)manualSelection=false}shareCursors.clear();shareSignatures.clear();shareNotice="";updateShareControl()};const caption=document.createElement("span");caption.textContent="Selecionar";choose.append(check,caption);foot.append(choose,share);extra.insertAdjacentElement("afterend",foot);
 }
-li.dataset.llDone="yes";attachFloatingCart(li);const pi=productInfo(li);if(pi){
+li.dataset.llDone="yes";const pi=productInfo(li);if(pi){
  if(cleanObserver){if(!cleanCardsWatched.has(li)){cleanCardsWatched.add(li);cleanObserver.observe(li)}}
  else if(li.getBoundingClientRect().top<window.innerHeight+300)warmClean(pi);
 }
@@ -291,7 +236,7 @@ let n=0;
 for(const li of items){
 const real=realShoe(li);const pending=!li.querySelector('select[data-hook="native-select"]')&&li.dataset.llInventory===undefined;const pass=real&&(pending||!state.size||variants(li).some(o=>trim(o.textContent)===state.size));
 li.classList.toggle("ll-hide",!pass);if(pass)n++;
-if(real){decorate(li);renderPrice(li);attachFloatingCart(li);}
+if(real){decorate(li);renderPrice(li);}
 const checkout=li.querySelector(".ll-checkout");
 if(checkout){const link=li.querySelector('[data-hook="product-item-container"]')?.href;if(link)checkout.href=checkoutUrl(li,link);}
 const wa=li.querySelector(".ll-whatsapp");
