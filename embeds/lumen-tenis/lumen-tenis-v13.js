@@ -420,20 +420,16 @@ function productsForNativeShare(){
 const photoByMode=new Map(),failedByMode=new Set(),photoQueued=new Set(),photoQueue=[];
 let photoWorkers=0,shareBusy=false,shareNotice='',activeMode=null;
 const shareCursors=new Map(),shareSignatures=new Map(),shareCaps=new Map();
-let shareProfile='max';
-function maxProfileFiles(){return shareProfile==='ig3'?3:shareProfile==='ig1'?1:Infinity}
-function setShareProfile(next){
- if(!['max','ig3','ig1'].includes(next)||shareBusy)return;
- if(next!==shareProfile){
-  shareProfile=next;
-  shareCursors.clear();shareSignatures.clear();shareCaps.clear();
-  activeMode=null;
-  shareNotice=next==='max'
-   ?'Envio máximo selecionado. Escolha um formato acima.'
-   :next==='ig3'
-    ?'Compatibilidade Instagram: até 3 fotos por lote. Escolha um formato acima. Se o Instagram não aparecer, tente 1 foto.'
-    :'Compatibilidade Instagram: 1 foto por envio. Escolha um formato acima.';
- }
+let shareProfile='max'; // 'max' or 'ten'
+let selectedShareMode='clean';
+let shareModal=null,priorOverflow='';
+function batchIdentity(mode){return mode+'|'+shareProfile}
+function maxProfileFiles(){return shareProfile==='ten'?10:Infinity}
+function changeShareChoice(mode,profile){
+ if(shareBusy)return;
+ if(mode&&modes[mode])selectedShareMode=mode;
+ if(profile&&['max','ten'].includes(profile))shareProfile=profile;
+ activeMode=selectedShareMode;shareNotice='';
  updateShareControl();
 }
 let refreshTimer=null;
@@ -570,6 +566,60 @@ function shareSingleNative(li,button){
   if(navigator.clipboard?.writeText)navigator.clipboard.writeText(caption).catch(()=>{});
  }).catch(e=>{if(e?.name!=='AbortError')noteNative('Erro no envio da foto: '+(e.message||'tente novamente'))});
 }
+
+/* The secondary dialog lets the customer choose image design and quantity.
+   It never opens a second browser window or leaves the collection page. */
+function ensureShareModal(){
+ if(shareModal?.isConnected)return shareModal;
+ const el=document.createElement('div');
+ el.id='ll-tenis-share-modal';
+ el.setAttribute('role','dialog');
+ el.setAttribute('aria-modal','true');
+ el.setAttribute('aria-label','Compartilhar resultados');
+ el.innerHTML='<div class="ll-backdrop"></div>'+
+  '<section class="ll-dialog" tabindex="-1">'+
+  '<div class="ll-heading"><h2>Compartilhar resultados</h2><button type="button" class="ll-close" aria-label="Fechar">×</button></div>'+
+  '<p class="ll-description">Escolha o formato da fotografia e o tamanho do lote.</p>'+
+  '<p class="ll-choice-label">Formato das fotos</p>'+
+  '<div class="ll-formats" role="group" aria-label="Formato da foto">'+
+  '<button type="button" data-share-mode="clean"><span class="ll-emoji">📷</span>Foto limpa</button>'+
+  '<button type="button" data-share-mode="sizes"><span class="ll-emoji">🔢</span>Foto + numeração</button>'+
+  '<button type="button" data-share-mode="retail"><span class="ll-emoji">💰</span>Foto + numeração + varejo</button></div>'+
+  '<p class="ll-choice-label">Quantidade por envio</p>'+
+  '<div class="ll-quantities" role="group" aria-label="Quantidade por envio">'+
+  '<button type="button" data-share-profile="max">Envio máximo</button>'+
+  '<button type="button" data-share-profile="ten">Lotes de 10 em 10</button></div>'+
+  '<p class="ll-status" role="status" aria-live="polite"></p>'+
+  '<button type="button" class="ll-execute">Compartilhar fotos</button>'+
+  '<p class="ll-note">O menu nativo do celular oferece os aplicativos compatíveis com a quantidade escolhida.</p>'+
+  '</section>';
+ document.body.appendChild(el);shareModal=el;
+ el.querySelector('.ll-backdrop').addEventListener('click',closeShareModal);
+ el.querySelector('.ll-close').addEventListener('click',closeShareModal);
+ el.querySelectorAll('[data-share-mode]').forEach(b=>b.addEventListener('click',()=>changeShareChoice(b.dataset.shareMode,null)));
+ el.querySelectorAll('[data-share-profile]').forEach(b=>b.addEventListener('click',()=>changeShareChoice(null,b.dataset.shareProfile)));
+ el.querySelector('.ll-execute').addEventListener('click',()=>shareFilteredList(selectedShareMode));
+ return el;
+}
+function openShareModal(){
+ ensureShareModal();
+ shareModal.classList.add('ll-visible');
+ priorOverflow=document.body.style.overflow;
+ document.body.style.overflow='hidden';
+ activeMode=selectedShareMode;shareNotice='';
+ if(!batchTask&&!batchDone)preparePages();
+ updateShareControl();
+ shareModal.querySelector('.ll-dialog')?.focus({preventScroll:true});
+}
+function closeShareModal(){
+ if(!shareModal)return;
+ shareModal.classList.remove('ll-visible');
+ document.body.style.overflow=priorOverflow;
+}
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&shareModal?.classList.contains('ll-visible'))closeShareModal();
+});
+
 /* Browser canShare is a browser-level estimate, never an Instagram/WhatsApp
    app-specific limit. Send the largest accepted set; lower the cap after a
    real non-cancellation rejection, requiring a new tap for the next attempt. */
