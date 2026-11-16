@@ -620,120 +620,141 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&shareModal?.classList.contains('ll-visible'))closeShareModal();
 });
 
-/* Browser canShare is a browser-level estimate, never an Instagram/WhatsApp
-   app-specific limit. Send the largest accepted set; lower the cap after a
-   real non-cancellation rejection, requiring a new tap for the next attempt. */
-function maxBrowserFiles(files,mode){
+/* Native share must run immediately from the dialog button's click gesture.
+   Quantity "max" uses the browser's supported file count; quantity "ten"
+   caps each invocation at 10 and prepares the following ten before it is needed. */
+function currentShareState(mode=selectedShareMode){
+ const products=productsForNativeShare(),key=batchIdentity(mode);
+ const signature=products.map(p=>imageKey(p,mode)).join('§');
+ if(signature!==shareSignatures.get(key)){
+  shareSignatures.set(key,signature);
+  shareCursors.set(key,0);
+ }
+ const cursor=shareCursors.get(key)||0;
+ const cap=shareProfile==='ten'?10:(shareCaps.get(key)||Infinity);
+ const candidates=products.slice(cursor,cursor+cap);
+ const next=shareProfile==='ten'?products.slice(cursor+10,cursor+20):[];
+ return {products,key,cursor,candidates,next};
+}
+function warmShareGroups(){
+ if(!shareModal?.classList.contains('ll-visible')||!batchDone)return;
+ const state=currentShareState(selectedShareMode);
+ if(state.cursor>=state.products.length)return;
+ preloadNative([...state.candidates,...state.next],selectedShareMode);
+}
+function maxBrowserFiles(files,key){
  if(!files.length||typeof navigator.share!=='function')return 0;
- const cap=Math.min(files.length,shareCaps.get(mode)||files.length,maxProfileFiles());
+ const cap=Math.min(files.length,shareProfile==='ten'?10:Infinity,shareCaps.get(key)||Infinity);
  if(typeof navigator.canShare!=='function')return cap;
  let low=0,high=cap;
  while(low<high){
   const n=Math.ceil((low+high)/2);
-  try{if(navigator.canShare({files:files.slice(0,n)}))low=n;else high=n-1}
-  catch(error){high=n-1}
+  try{
+   if(navigator.canShare({files:files.slice(0,n)}))low=n;
+   else high=n-1;
+  }catch(error){high=n-1}
  }
  return low;
 }
-function batchStatus(mode,message){activeMode=mode;shareNotice=message;updateShareControl()}
 function shareFilteredList(mode){
- if(!modes[mode]||shareBusy)return;
- activeMode=mode;shareNotice='';
+ if(shareBusy||!modes[mode])return;
  if(!batchDone){
   if(!batchTask)preparePages();
-  batchStatus(mode,'Reunindo os produtos de todas as páginas do filtro. Toque novamente quando estiverem carregados.');
-  return;
+  shareNotice='Carregando os modelos de todas as páginas. Confira novamente quando estiver pronto.';
+  updateShareControl();return;
  }
- const products=productsForNativeShare();
- if(!products.length){batchStatus(mode,'Não há modelos disponíveis neste filtro.');return}
- const signature=products.map(p=>imageKey(p,mode)).join('§');
- if(signature!==shareSignatures.get(mode)){shareSignatures.set(mode,signature);shareCursors.set(mode,0)}
- let cursor=shareCursors.get(mode)||0;
- if(cursor>=products.length){cursor=0;shareCursors.set(mode,0)}
- const remaining=products.slice(cursor);
- // For Instagram only prepare the selected 3- or 1-image group, not the
- // entire 41-product catalog; this also reduces peak Safari memory usage.
- const candidates=shareProfile==='max'?remaining:remaining.slice(0,maxProfileFiles());
- preloadNative(candidates,mode);
+ const state=currentShareState(mode),{products,key,cursor,candidates}=state;
+ if(!products.length){shareNotice='Nenhum modelo disponível neste filtro.';updateShareControl();return}
+ if(cursor>=products.length){
+  shareCursors.set(key,0);shareNotice='Sequência reiniciada. Os primeiros modelos estão disponíveis.';
+  warmShareGroups();updateShareControl();return;
+ }
+ warmShareGroups();
  const waiting=candidates.filter(p=>!photoByMode.has(imageKey(p,mode))&&!failedByMode.has(imageKey(p,mode)));
  if(waiting.length){
-  const ready=candidates.length-waiting.length-candidates.filter(p=>failedByMode.has(imageKey(p,mode))).length;
-  batchStatus(mode,'Preparando '+modes[mode]+': '+ready+' de '+candidates.length+' fotos. Toque novamente quando estiverem prontas.');
-  return;
+  shareNotice='Preparando '+waiting.length+' foto(s). O botão será liberado quando estiverem prontas.';
+  updateShareControl();return;
  }
  const valid=candidates.map(p=>({p,file:photoByMode.get(imageKey(p,mode))})).filter(x=>x.file);
- if(!valid.length){batchStatus(mode,'As fotos deste filtro não puderam ser carregadas. Confira as imagens dos produtos.');return}
- const files=valid.map(x=>x.file);
- const count=maxBrowserFiles(files,mode);
- if(count===0){batchStatus(mode,'Este navegador não permite compartilhar essas fotos. Abra no Safari do iPhone.');return}
- let requested;
+ if(!valid.length){
+  shareNotice='As imagens deste grupo estão indisponíveis. Verifique as fotos no catálogo.';
+  updateShareControl();return;
+ }
+ const files=valid.map(x=>x.file),count=maxBrowserFiles(files,key);
+ if(!count){
+  shareNotice='O navegador não aceita estas imagens. Selecione lotes de 10 ou outro formato.';
+  updateShareControl();return;
+ }
+ let request;
  try{
-  // MUST be synchronous inside the user click. No await or clipboard before this.
-  requested=navigator.share({files:files.slice(0,count)});
+  // Synchronous direct user interaction; no await, clipboard, rendering or fetch.
+  request=navigator.share({files:files.slice(0,count)});
  }catch(error){
-  if(count>1)shareCaps.set(mode,Math.max(1,Math.floor(count/2)));
-  batchStatus(mode,'Compartilhamento recusado. Toque novamente para tentar um lote menor. '+(error.message||''));
-  return;
+  if(count>1)shareCaps.set(key,Math.max(1,Math.floor(count/2)));
+  shareNotice='O lote foi recusado. Toque novamente para tentar com menos fotos.';
+  updateShareControl();return;
  }
  shareBusy=true;updateShareControl();
- Promise.resolve(requested).then(()=>{
-  // Advance to the last included product, skipping unavailable photos.
+ Promise.resolve(request).then(()=>{
   const last=valid[count-1].p;
-  const position=remaining.findIndex(p=>p.link===last.link);
-  shareCursors.set(mode,cursor+Math.max(1,position+1));
-  shareNotice=(shareCursors.get(mode)<products.length)
-   ?'Lote aberto no celular. Restam '+(products.length-shareCursors.get(mode))+' modelos. Toque no mesmo formato para continuar.'
-   :'Todas as fotos deste filtro foram encaminhadas ao compartilhamento.';
+  const moved=candidates.findIndex(p=>p.link===last.link);
+  shareCursors.set(key,cursor+Math.max(1,moved+1));
+  shareNotice='';
+  warmShareGroups();
  }).catch(error=>{
-  if(error?.name==='AbortError'){
-   shareNotice='Compartilhamento cancelado. Toque novamente para tentar.';
-  }else{
-   if(count>1)shareCaps.set(mode,Math.max(1,Math.floor(count/2)));
-   shareNotice='O aplicativo recusou o lote. Toque novamente para tentar com menos fotos: '+(error.message||'erro do aplicativo.');
+  if(error?.name==='AbortError')shareNotice='Compartilhamento cancelado. Toque novamente para tentar.';
+  else{
+   if(count>1)shareCaps.set(key,Math.max(1,Math.floor(count/2)));
+   shareNotice='O aplicativo recusou o lote. Toque novamente para tentar com menos fotos.';
   }
  }).finally(()=>{shareBusy=false;updateShareControl()});
 }
 function updateShareControl(){
- const head=document.getElementById('lumen-tenis-filter');if(!head)return;
- const buttons=[...head.querySelectorAll('[data-share-mode]')];
- if(!buttons.length)return;
- const products=productsForNativeShare();
- for(const button of head.querySelectorAll('[data-share-profile]')){
-  const selected=button.dataset.shareProfile===shareProfile;
-  if(button.getAttribute('aria-pressed')!==String(selected))button.setAttribute('aria-pressed',String(selected));
+ const header=document.getElementById('lumen-tenis-filter');if(!header)return;
+ syncSelections();
+ const trigger=header.querySelector('.ll-open-results');
+ if(trigger)trigger.disabled=!productsForNativeShare().length;
+ if(!shareModal?.classList.contains('ll-visible'))return;
+ const mode=selectedShareMode;
+ const state=currentShareState(mode),{products,cursor,candidates,next}=state;
+ shareModal.querySelectorAll('[data-share-mode]').forEach(button=>{
+  const pressed=String(button.dataset.shareMode===mode);
+  if(button.getAttribute('aria-pressed')!==pressed)button.setAttribute('aria-pressed',pressed);
   button.disabled=shareBusy;
+ });
+ shareModal.querySelectorAll('[data-share-profile]').forEach(button=>{
+  const pressed=String(button.dataset.shareProfile===shareProfile);
+  if(button.getAttribute('aria-pressed')!==pressed)button.setAttribute('aria-pressed',pressed);
+  button.disabled=shareBusy;
+ });
+ if(batchDone&&products.length&&cursor<products.length)warmShareGroups();
+ const ready=candidates.filter(p=>photoByMode.has(imageKey(p,mode))).length;
+ const failed=candidates.filter(p=>failedByMode.has(imageKey(p,mode))).length;
+ const pending=candidates.length-ready-failed;
+ const nextReady=next.filter(p=>photoByMode.has(imageKey(p,mode))).length;
+ let status=shareNotice;
+ if(!status){
+  if(!batchDone)status='Reunindo os modelos do catálogo…';
+  else if(!products.length)status='Nenhum produto disponível neste filtro.';
+  else if(cursor>=products.length)status='Todos os '+products.length+' modelos concluídos. Você pode recomeçar.';
+  else if(pending)status='Preparando fotos '+ready+'/'+candidates.length+'…';
+  else if(shareProfile==='ten'){
+   const begin=cursor+1,last=Math.min(cursor+10,products.length);
+   status='Lote '+begin+'–'+last+' de '+products.length+' pronto ('+ready+' fotos).';
+   if(next.length)status+=' Próximas '+nextReady+'/'+next.length+' fotos preparadas.';
+  }else status='Prontas '+ready+' fotos. Envie o máximo permitido pelo celular.';
  }
- for(const button of buttons){
-  const mode=button.dataset.shareMode;
-  const selected=mode===activeMode;
-  button.setAttribute('aria-pressed',String(selected));
-  button.disabled=shareBusy||!products.length;
+ const text=shareModal.querySelector('.ll-status');
+ if(text&&text.textContent!==status)text.textContent=status;
+ const button=shareModal.querySelector('.ll-execute');
+ if(button){
+  const total=products.length,done=total>0&&cursor>=total;
+  const label=done?'Recomeçar compartilhamento':shareBusy?'Abrindo compartilhamento…':
+    pending?'Preparando '+ready+'/'+candidates.length+' fotos…':
+    'Compartilhar '+ready+' foto'+(ready===1?'':'s');
+  if(button.textContent!==label)button.textContent=label;
+  button.disabled=shareBusy||!batchDone||!total||(!done&&pending>0)||(!done&&ready===0);
  }
- const hint=head.querySelector('.ll-share-hint');
- if(!hint)return;
- let message=shareNotice;
- if(!message&&activeMode&&batchDone){
-  const mode=activeMode,cursor=shareCursors.get(mode)||0;
-  const remaining=products.slice(cursor);
-  if(remaining.length){
-   const ready=remaining.filter(p=>photoByMode.has(imageKey(p,mode))).length;
-   const failed=remaining.filter(p=>failedByMode.has(imageKey(p,mode))).length;
-   if(ready+failed<remaining.length)message='Preparando '+modes[mode]+': '+ready+' de '+remaining.length+' fotos…';
-   else message=ready+' fotos prontas em '+modes[mode]+'. Toque novamente para abrir o compartilhamento nativo.';
-  }
- }
- if(!message){
-  message=(shareProfile==='max'
-   ?'Envio máximo. Para exibir o Instagram, selecione "Instagram · até 3" e escolha um formato. '
-   :shareProfile==='ig3'
-   ?'Instagram · até 3 fotos por envio. Se não aparecer, experimente 1 foto. '
-   :'Instagram · 1 foto por envio. Se ainda não aparecer, o aplicativo pode não oferecer esta opção no iPhone. ')+
-   'O lote usa todos os modelos do filtro, ou somente os marcados. '+
-   (batchLoading?'Reunindo produtos de outras páginas. ':'')+
-   (batchError?batchError+' ':'')+
-   'O máximo permitido depende do navegador e do aplicativo escolhido.';
- }
- if(hint.textContent!==message)hint.textContent=message;
 }
 
 function pagination(){
