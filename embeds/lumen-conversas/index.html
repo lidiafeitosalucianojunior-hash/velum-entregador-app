@@ -14,6 +14,7 @@
 .brandmark{height:43px;width:43px;border-radius:15px;background:#173d61;color:#fff;display:grid;place-items:center;font-size:19px;font-weight:900;letter-spacing:-1px}
 .brandcopy{flex:1;min-width:0}.brandcopy b{font-size:19px;display:block;letter-spacing:-.5px}.brandcopy small{font-size:11px;color:#78858e}.refresh{width:38px;height:38px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:20px;color:#456274}
 .live{display:flex;align-items:center;gap:7px;color:#528168;font-size:11px;margin:15px 2px 12px}.live i{height:7px;width:7px;border-radius:50%;background:#28bb7e;box-shadow:0 0 0 3px #dff8e9}.live.warn{color:var(--red)}.live.warn i{background:var(--red);box-shadow:0 0 0 3px #ffe5e5}
+.global-ai{display:flex;align-items:center;gap:9px;margin:10px 0 13px;padding:10px 11px;border:1px solid #e9e0d6;border-radius:13px;background:#faf7f3}.global-ai-info{flex:1;min-width:0}.global-ai-info b{display:block;color:#594130;font-size:12px}.global-ai-info small{display:block;color:#877669;font-size:10px;line-height:1.4;margin-top:2px}.global-ai button{font-size:11px;font-weight:800;border:1px solid #a28b7b;background:#f1e9e1;border-radius:999px;padding:9px 12px;color:#644537;white-space:nowrap}.global-ai button.on{background:#1a795c;border-color:#147354;color:white}.global-ai button:disabled{opacity:.65}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:14px}.stat{border:1px solid #e9eeef;background:#f9fbfb;border-radius:12px;padding:9px 8px;min-height:55px}.stat strong{display:block;font-size:18px;line-height:1;color:var(--navy)}.stat span{display:block;font-size:10px;color:var(--muted);margin-top:5px}.stat.red strong{color:var(--red)}.stat.green strong{color:var(--green)}
 .search{display:flex;align-items:center;gap:9px;background:#f1f3f4;border:1px solid #edf0f1;border-radius:12px;padding:10px 12px;margin-bottom:11px}.search span{font-size:18px;color:#839198}.search input{background:transparent;min-width:0;width:100%;border:0;outline:0;font-size:13px;color:var(--ink)}
 .filters{display:flex;gap:7px;overflow:auto;padding:2px 1px 4px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.filter{white-space:nowrap;border-radius:999px;background:#f3f5f6;color:#63737e;border:1px solid #edf0f1;padding:7px 10px;font-size:11px;font-weight:700}.filter.on{background:#e8f4ee;color:#14734e;border-color:#cfebdb}
@@ -60,6 +61,8 @@
         <div class="brandmark">L</div><div class="brandcopy"><b>Conversas</b><small>Lúmen Luxos · WhatsApp + Instagram</small></div>
         <button class="refresh" type="button" id="refresh" title="Atualizar conversas" aria-label="Atualizar">↻</button></div>
       <div class="live" id="live"><i></i><span>Carregando conversas…</span></div>
+      <div class="global-ai"><div class="global-ai-info"><b>🤖 IA · WhatsApp e Instagram</b><small id="globalAiDescription">Verificando estado no servidor…</small></div>
+      <button id="globalAiButton" type="button" disabled aria-pressed="false">Verificando…</button></div>
       <div class="stats"><div class="stat"><strong id="total">—</strong><span>Conversas</span></div>
         <div class="stat red"><strong id="waitingCount">—</strong><span>Aguardando humano</span></div>
         <div class="stat green"><strong id="paidCount">—</strong><span>Pagamento aprovado</span></div></div>
@@ -97,7 +100,7 @@ const $=id=>document.getElementById(id);
 const state={items:[],detail:null,selected:'',filter:'ALL',search:'',
   listing:false,opening:false,working:false,loadingId:'',lastList:'',lastDetail:'',
   mediaCache:new Map(),mediaAttempted:new Set(),mediaInFlight:new Set(),
-  listRequestedAt:0,detailRequestedAt:0};
+  listRequestedAt:0,detailRequestedAt:0,globalAiOn:false,globalAiReady:false,globalAiBusy:false,globalRequestedAt:0};
 function post(type,payload={}){window.parent.postMessage({source:'LUMEN_ADMIN_PANEL',type,payload},'*')}
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]))}
 const initials=x=>String(x||'C').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
@@ -111,6 +114,14 @@ function toast(message,isError=false){
  const e=$('toast');e.textContent=String(message||'');e.className='toast on'+(isError?' error':'');
  clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='toast',4600);
 }
+function updateGlobalAi(){
+ const btn=$('globalAiButton'),label=$('globalAiDescription'),on=state.globalAiReady&&state.globalAiOn===true;
+ btn.classList.toggle('on',on);btn.disabled=!state.globalAiReady||state.globalAiBusy;
+ btn.setAttribute('aria-pressed',String(on));
+ btn.textContent=state.globalAiBusy?'Salvando…':!state.globalAiReady?'Indisponível':on?'🟢 IA ligada':'🔴 IA desligada';
+ label.textContent=on?'Respostas automáticas liberadas nos dois canais.':'Silenciosa: recebe mensagens e atualiza cadastro no Bling.';
+}
+function globalAiRequest(){if(state.globalAiBusy)return;state.globalRequestedAt=Date.now();post('CONVERSAS_GLOBAL_STATUS')}
 function live(text,isError=false){
  $('live').className='live'+(isError?' warn':'');
  $('live').querySelector('span').textContent=text;
@@ -162,7 +173,7 @@ function renderList(){
   const selected=x.id===state.selected?' selected':'';
   const mode=x.somenteLeitura?
     (x.canal==='INSTAGRAM'?'Instagram Direct (consulta)':'Consulta temporária — controles indisponíveis'):
-    x.modo==='IA'?'🤖 IA ativa':x.iaPausaManual?'⛔ IA pausada manualmente':'👩 Atendimento humano';
+    x.modo==='IA'?(state.globalAiOn?'🤖 IA ativa':'🤖 IA suspensa'):x.iaPausaManual?'⛔ IA pausada manualmente':'👩 Atendimento humano';
   return '<article class="conv'+edge+selected+'" data-id="'+esc(x.id)+'">'+
    '<div class="conv-main" role="button" tabindex="0" data-open="'+esc(x.id)+'" aria-label="Abrir conversa com '+esc(x.nome)+'">'+
    '<div class="avatar">'+esc(initials(x.nome))+'</div><div class="conv-info">'+
@@ -296,6 +307,7 @@ function renderDetail(){
   'Você assumiu a conversa. Sem interação humana por 10 minutos, a IA retoma o atendimento.';
 }
 function setMode(id,mode,action='ASSUMIR'){
+ if(mode==='IA'&&(!state.globalAiReady||!state.globalAiOn)){toast('IA desligada para ambos os canais na chave geral.',true);return}
  if(state.working)return;
  state.working=true;state.loadingId=id;
  post('CONVERSAS_MODE',{id,modo:mode,acao:action});
@@ -315,6 +327,16 @@ function send(){
 function onResponse(data){
  if(data?.source!=='LUMEN_ADMIN_PANEL_PAGE')return;
  const {type,payload={}}=data;
+ if(type==='CONVERSAS_GLOBAL_STATUS_RESULT'){
+  state.globalAiReady=payload.ok===true;state.globalAiOn=payload.ok===true&&payload.ativo===true;
+  updateGlobalAi();renderList();return;
+ }
+ if(type==='CONVERSAS_GLOBAL_SET_RESULT'){
+  state.globalAiBusy=false;
+  if(payload.ok===true){state.globalAiReady=true;state.globalAiOn=payload.ativo===true;toast(payload.mensagem||'Controle geral atualizado.')}
+  else{state.globalAiReady=false;state.globalAiOn=false;toast(payload.mensagem||'Não foi possível confirmar.',true);globalAiRequest()}
+  updateGlobalAi();renderList();if(state.detail)renderDetail();return;
+ }
  if(type==='CONVERSAS_LIST_RESULT'||type==='IA_LIST_RESULT'){
   // Nao substituir lista rica por retorno legado se ambos chegarem.
   if(type==='IA_LIST_RESULT'&&!state.listing&&state.items.length)return;
@@ -413,15 +435,16 @@ $('search').addEventListener('input',ev=>{state.search=ev.target.value.trim();re
 document.querySelectorAll('.filter').forEach(btn=>btn.addEventListener('click',()=>{
  state.filter=btn.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('on',x===btn));renderList()
 }));
+$('globalAiButton').addEventListener('click',()=>{if(!state.globalAiReady||state.globalAiBusy)return;state.globalAiBusy=true;updateGlobalAi();post('CONVERSAS_GLOBAL_SET',{ativo:!state.globalAiOn})});
 $('backPanel').addEventListener('click',()=>post('CONVERSAS_BACK'));
 $('refresh').addEventListener('click',()=>{listRequest();detailRequest()});
 $('send').addEventListener('click',send);
 $('text').addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();send()}});
 window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;onResponse(ev.data)});
-window.setInterval(()=>{if(document.hidden)return;listRequest();detailRequest()},10000);
-window.addEventListener('pageshow',()=>listRequest());
+window.setInterval(()=>{if(document.hidden)return;listRequest();detailRequest();if(Date.now()-state.globalRequestedAt>30000)globalAiRequest()},10000);
+window.addEventListener('pageshow',()=>{listRequest();globalAiRequest()});
 window.addEventListener('focus',()=>{listRequest();detailRequest()});
-listRequest();
+updateGlobalAi();globalAiRequest();listRequest();
 })();
 </script>
 </body>
