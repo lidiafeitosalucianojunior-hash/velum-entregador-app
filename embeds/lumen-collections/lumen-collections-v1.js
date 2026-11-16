@@ -262,7 +262,16 @@ li.dataset.llDone="yes";const pi=productInfo(li);if(pi){
 }
 function apply(){
 const items=[...document.querySelectorAll(gallerySelector+" "+itemSelector)];
-if(!items.length)return;
+if(!items.length){
+ const emptyHead=document.getElementById('lumen-tenis-filter');
+ if(emptyHead){
+  const count=emptyHead.querySelector('.ll-count');
+  if(count&&count.textContent!=='Nenhum produto disponível nesta coleção.')count.textContent='Nenhum produto disponível nesta coleção.';
+  const share=emptyHead.querySelector('.ll-open-results');
+  if(share)share.disabled=true;
+ }
+ return;
+}
 let n=0;
 for(const li of items){
 const real=realShoe(li);const pending=!li.querySelector('select[data-hook="native-select"]')&&li.dataset.llInventory===undefined;const pass=real&&(pending||!state.size||variants(li).some(o=>sizeMatches(o.textContent,state.size)));
@@ -441,7 +450,8 @@ async function image916(p,mode){
  const retail=String(p.price||'').trim();
  // Never export a clean-looking picture from a mode that requires text:
  // missing data is a visible failure rather than silently omitting labels.
- if(!available)throw Error('Numerações disponíveis não cadastradas para '+p.title);
+ if(!available&&collection.sized)throw Error('Numerações disponíveis não cadastradas para '+p.title);
+ if(!available&&mode==='sizes')throw Error('Este produto não possui numeração cadastrada: '+p.title);
  if(mode==='retail'&&!/R\$\s*\d/.test(retail))throw Error('Preço de varejo indisponível para '+p.title);
  const photo=await igPhoto(p.photo);
  if(!photo?.width||!photo?.height)throw Error('Fotografia indisponível para '+p.title);
@@ -462,10 +472,10 @@ async function image916(p,mode){
   shade.addColorStop(0,'rgba(43,29,19,0)');
   shade.addColorStop(1,'rgba(43,29,19,.70)');
   c.fillStyle=shade;c.fillRect(0,1330,1080,490);
-  if(mode==='sizes')outlined(c,'Numerações: '+available,1630,62);
+  if(mode==='sizes'&&available)outlined(c,'Numerações: '+available,1630,62);
   if(mode==='retail'){
-   outlined(c,'Varejo: '+retail,1540,70);
-   outlined(c,'Numerações: '+available,1660,58);
+   outlined(c,'Varejo: '+retail,available?1540:1620,70);
+   if(available)outlined(c,'Numerações: '+available,1660,58);
   }
   return await saveCanvasImage(canvas,p,mode);
  }finally{if(typeof photo.close==='function')photo.close()}
