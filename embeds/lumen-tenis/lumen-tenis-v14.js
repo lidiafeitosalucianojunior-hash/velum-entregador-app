@@ -372,7 +372,7 @@ const photoFailureDetails=new Map();
 let photoWorkers=0,shareBusy=false,shareNotice='',activeMode=null;
 const shareCursors=new Map(),shareSignatures=new Map(),shareCaps=new Map();
 let shareProfile='ten'; // 'max' or 'ten'
-let selectedShareMode='clean';
+let selectedShareMode='retail';
 let shareModal=null,priorOverflow='';
 function batchIdentity(mode){return mode+'|'+shareProfile}
 function maxProfileFiles(){return shareProfile==='ten'?10:Infinity}
@@ -707,8 +707,8 @@ function updateShareControl(){
   else if(failed&&!ready)status='Não foi possível preparar as fotos: '+(failures[0]||'dados indisponíveis');
   else if(shareProfile==='ten'){
    const begin=cursor+1,last=Math.min(cursor+10,products.length);
-   status='Lote '+begin+'–'+last+' de '+products.length+' pronto ('+ready+' fotos).';
-   if(next.length)status+=' Próximas '+nextReady+'/'+next.length+' fotos preparadas.';
+   status='Fotos '+begin+'–'+last+' de '+products.length+' · '+ready+' prontas.';
+   if(next.length)status+=' Próximo lote: '+nextReady+'/'+next.length+'.';
   }else status='Prontas '+ready+' fotos. Envie o máximo permitido pelo celular.';
  }
  const text=shareModal.querySelector('.ll-status');
