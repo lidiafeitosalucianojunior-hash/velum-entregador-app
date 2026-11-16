@@ -543,14 +543,17 @@ function shareFilteredList(mode){
  let cursor=shareCursors.get(mode)||0;
  if(cursor>=products.length){cursor=0;shareCursors.set(mode,0)}
  const remaining=products.slice(cursor);
- preloadNative(remaining,mode);
- const waiting=remaining.filter(p=>!photoByMode.has(imageKey(p,mode))&&!failedByMode.has(imageKey(p,mode)));
+ // For Instagram only prepare the selected 3- or 1-image group, not the
+ // entire 41-product catalog; this also reduces peak Safari memory usage.
+ const candidates=shareProfile==='max'?remaining:remaining.slice(0,maxProfileFiles());
+ preloadNative(candidates,mode);
+ const waiting=candidates.filter(p=>!photoByMode.has(imageKey(p,mode))&&!failedByMode.has(imageKey(p,mode)));
  if(waiting.length){
-  const ready=remaining.length-waiting.length-remaining.filter(p=>failedByMode.has(imageKey(p,mode))).length;
-  batchStatus(mode,'Preparando '+modes[mode]+': '+ready+' de '+remaining.length+' fotos. Toque novamente quando estiverem prontas.');
+  const ready=candidates.length-waiting.length-candidates.filter(p=>failedByMode.has(imageKey(p,mode))).length;
+  batchStatus(mode,'Preparando '+modes[mode]+': '+ready+' de '+candidates.length+' fotos. Toque novamente quando estiverem prontas.');
   return;
  }
- const valid=remaining.map(p=>({p,file:photoByMode.get(imageKey(p,mode))})).filter(x=>x.file);
+ const valid=candidates.map(p=>({p,file:photoByMode.get(imageKey(p,mode))})).filter(x=>x.file);
  if(!valid.length){batchStatus(mode,'As fotos deste filtro não puderam ser carregadas. Confira as imagens dos produtos.');return}
  const files=valid.map(x=>x.file);
  const count=maxBrowserFiles(files,mode);
