@@ -258,12 +258,16 @@ function productInfo(li){
  const title=name(li);if(!title||!realShoe(li))return null;
  const link=li.querySelector('[data-hook="product-item-container"]')?.href||li.querySelector('[data-hook="product-item-product-details-link"]')?.href||'';
  if(!link)return null;
- const available=variants(li).map(o=>trim(o.textContent));
+ const rawSizes=variants(li).map(o=>trim(o.textContent));
+ const chips=[...li.querySelectorAll('.ll-variant button')].filter(b=>!b.disabled).map(b=>trim(b.textContent));
+ const available=[...new Set([...rawSizes,...chips].filter(v=>/^\d{2}$/.test(v)))].sort((a,b)=>Number(a)-Number(b));
  const prices=currentPrices(li);
+ const shownRetail=li.querySelector('.ll-price-pair .ll-retail .ll-value')?.textContent||'';
+ const retail=prices.retail?brl(prices.retail):shownRetail.trim();
 let photo='';
 try{const raw=li.querySelector('wow-image')?.getAttribute('data-image-info');const data=raw?JSON.parse(raw):null;photo=data?.imageData?.uri?'https://static.wixstatic.com/media/'+data.imageData.uri:'';}catch(e){}
 if(!photo)photo=li.querySelector('img')?.currentSrc||li.querySelector('img')?.src||'';
-return {title,link,price:prices.retail?brl(prices.retail):'',wholesale:prices.wholesale?brl(prices.wholesale):'',sizes:available,photo};
+return {title,link,price:retail,wholesale:prices.wholesale?brl(prices.wholesale):'',sizes:available,photo};
 }
 function buildBatchProducts(){
  const all=[...[...document.querySelectorAll(gallerySelector+' '+itemSelector)].map(productInfo).filter(Boolean)];
@@ -363,6 +367,7 @@ function productsForNativeShare(){
 }
 /* Three independent photo formats, one unified native sharing flow. */
 const photoByMode=new Map(),failedByMode=new Set(),photoQueued=new Set(),photoQueue=[];
+const photoFailureDetails=new Map();
 let photoWorkers=0,shareBusy=false,shareNotice='',activeMode=null;
 const shareCursors=new Map(),shareSignatures=new Map(),shareCaps=new Map();
 let shareProfile='ten'; // 'max' or 'ten'
@@ -400,33 +405,41 @@ function outlined(ctx,txt,y,size){
 }
 async function image916(p,mode){
  if(mode==='clean')return cleanPhoto(p);
+ const available=[...new Set((p.sizes||[]).map(n=>String(n).trim()).filter(n=>/^\d{2}$/.test(n)))]
+  .sort((a,b)=>Number(a)-Number(b)).join(' · ');
+ const retail=String(p.price||'').trim();
+ // Never export a clean-looking picture from a mode that requires text:
+ // missing data is a visible failure rather than silently omitting labels.
+ if(!available)throw Error('Numerações disponíveis não cadastradas para '+p.title);
+ if(mode==='retail'&&!/R\$\s*\d/.test(retail))throw Error('Preço de varejo indisponível para '+p.title);
  const photo=await igPhoto(p.photo);
- if(!photo?.width||!photo?.height)throw Error('Fotografia indisponível');
+ if(!photo?.width||!photo?.height)throw Error('Fotografia indisponível para '+p.title);
  try{
   const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1920;
   const c=canvas.getContext('2d');if(!c)throw Error('Canvas indisponível');
   const cover=Math.max(1080/photo.width,1920/photo.height);
   const cropW=1080/cover,cropH=1920/cover;
-  c.save();c.filter='blur(30px) brightness(.75)';
+  c.save();c.filter='blur(28px) brightness(.77)';
   c.drawImage(photo,(photo.width-cropW)/2,(photo.height-cropH)/2,cropW,cropH,0,0,1080,1920);
   c.restore();
-  const fit=Math.min(1080/photo.width,1550/photo.height);
+  const fit=Math.min(1080/photo.width,1600/photo.height);
   const dw=photo.width*fit,dh=photo.height*fit;
-  c.drawImage(photo,(1080-dw)/2,(1550-dh)/2+60,dw,dh);
-  const shade=c.createLinearGradient(0,1440,0,1920);
+  c.drawImage(photo,(1080-dw)/2,(1600-dh)/2+30,dw,dh);
+  // Lower-center safe area: text remains visible when Instagram previews
+  // crop the bottom of a portrait. White lettering + dark-brown outline.
+  const shade=c.createLinearGradient(0,1330,0,1820);
   shade.addColorStop(0,'rgba(43,29,19,0)');
-  shade.addColorStop(1,'rgba(43,29,19,.63)');
-  c.fillStyle=shade;c.fillRect(0,1440,1080,480);
-  const available=(p.sizes||[]).filter(n=>/^\d{2}$/.test(String(n))).join(' · ');
-  if(mode==='sizes'){
-   if(available)outlined(c,'Numerações: '+available,1800,60);
-  }else if(mode==='retail'){
-   if(available)outlined(c,'Numerações: '+available,1702,57);
-   if(p.price)outlined(c,'Varejo: '+p.price,1822,70);
+  shade.addColorStop(1,'rgba(43,29,19,.70)');
+  c.fillStyle=shade;c.fillRect(0,1330,1080,490);
+  if(mode==='sizes')outlined(c,'Numerações: '+available,1630,62);
+  if(mode==='retail'){
+   outlined(c,'Varejo: '+retail,1540,70);
+   outlined(c,'Numerações: '+available,1660,58);
   }
   return await saveCanvasImage(canvas,p,mode);
  }finally{if(typeof photo.close==='function')photo.close()}
 }
+
 function refreshNativeSoon(){
  if(refreshTimer)return;
  refreshTimer=setTimeout(()=>{refreshTimer=null;updateShareControl()},170);
@@ -444,7 +457,7 @@ function runNextPhoto(){
  while(photoWorkers<2&&photoQueue.length){
   const task=photoQueue.shift();photoWorkers++;
   image916(task.p,task.mode).then(file=>photoByMode.set(task.key,file))
-   .catch(error=>{failedByMode.add(task.key);console.warn('Lúmen share',task.mode,task.p.title,error)})
+   .catch(error=>{failedByMode.add(task.key);photoFailureDetails.set(task.key,String(error?.message||error));console.warn('Lúmen share',task.mode,task.p.title,error)})
    .finally(()=>{
     photoQueued.delete(task.key);photoWorkers--;
     runNextPhoto();refreshNativeSoon();
@@ -679,6 +692,9 @@ function updateShareControl(){
  const ready=candidates.filter(p=>photoByMode.has(imageKey(p,mode))).length;
  const failed=candidates.filter(p=>failedByMode.has(imageKey(p,mode))).length;
  const pending=candidates.length-ready-failed;
+ const failures=candidates.filter(p=>failedByMode.has(imageKey(p,mode)))
+  .map(p=>photoFailureDetails.get(imageKey(p,mode))).filter(Boolean);
+
  const nextReady=next.filter(p=>photoByMode.has(imageKey(p,mode))).length;
  let status=shareNotice;
  if(!status){
@@ -686,6 +702,8 @@ function updateShareControl(){
   else if(!products.length)status='Nenhum produto disponível neste filtro.';
   else if(cursor>=products.length)status='Todos os '+products.length+' modelos concluídos. Você pode recomeçar.';
   else if(pending)status='Preparando fotos '+ready+'/'+candidates.length+'…';
+  else if(failed&&ready)status=ready+' fotos prontas; '+failed+' sem dados completos. '+(failures[0]||'');
+  else if(failed&&!ready)status='Não foi possível preparar as fotos: '+(failures[0]||'dados indisponíveis');
   else if(shareProfile==='ten'){
    const begin=cursor+1,last=Math.min(cursor+10,products.length);
    status='Lote '+begin+'–'+last+' de '+products.length+' pronto ('+ready+' fotos).';
