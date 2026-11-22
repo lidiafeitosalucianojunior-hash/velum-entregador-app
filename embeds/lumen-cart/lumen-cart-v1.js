@@ -35,8 +35,10 @@ async function checkVisibility(id){
    if(!anchor||getId(anchor)!==id)return;
    const parent=anchor.closest('[data-hook="CheckoutButtons.default"]');if(!parent)return;
    parent.querySelectorAll('.lumen-cart-choice').forEach(n=>{if(n.dataset.lumenCheckoutId!==id)n.remove()});
-   if(answer?.eligible!==true||answer?.canPayPilot!==true){parent.querySelectorAll('.lumen-cart-choice').forEach(n=>n.remove());return}
-   if(!parent.querySelector('.lumen-cart-choice'))anchor.insertAdjacentElement('afterend',newCard(id));
+   const visible=parent.querySelector('.lumen-cart-choice')||newCard(id);
+   if(!visible.isConnected)anchor.insertAdjacentElement('afterend',visible);
+   const description=visible.querySelector('.lumen-cart-choice-description');
+   if(description){description.textContent=answer?.eligible===true&&answer?.canPayPilot===true?'Crédito aprovado para esta conta. Confira os dados antes de confirmar.':'Exclusivo para clientes Atacado Ativo com limite aprovado.';}
  }catch(e){console.warn('LUMEN_CART_CREDIT_CHECK_FAILED',String(e?.message||e).slice(0,90))}
 }
 function sync(){
@@ -47,8 +49,9 @@ function sync(){
  const id=getId(anchor);if(!validateId(id))return;
  const parent=anchor.closest('[data-hook="CheckoutButtons.default"]');
  const existing=parent?.querySelector('.lumen-cart-choice');if(existing&&existing.dataset.lumenCheckoutId!==id)existing.remove();
+ if(!existing)anchor.insertAdjacentElement('afterend',newCard(id));
  if(controller.checkoutId!==id){controller.checkoutId=id;controller.pending=''}
- if(!existing&&controller.pending!==id)checkVisibility(id);
+ if(controller.pending!==id)checkVisibility(id);
 }
 function schedule(){if(controller.timer)return;controller.timer=setTimeout(()=>{controller.timer=null;sync()},180)}
 const observer=new MutationObserver(schedule);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['href']});
