@@ -2,13 +2,13 @@
 (()=>{'use strict';
 const KEY='__lumenCreditFrameSizeV1';if(window[KEY]?.active)return;
 const state={active:true,target:null,height:0,scheduled:false};window[KEY]=state;
-const isCreditPage=()=>/^\\/account\\/blank-1\\/?$/i.test(location.pathname);
+const isCreditPage=()=>location.pathname==='/account/blank-1'||location.pathname==='/account/blank-1/';
 function findFrame(){
  const frames=[...document.querySelectorAll('iframe')];
  const list=frames.map(frame=>{
    const src=frame.getAttribute('src')||'',title=frame.getAttribute('title')||'';
    const htmlHost=frame.closest('[data-testid="html-comp"],[data-hook="html-comp"]');
-   const score=/credito-lumen|wix-host\\.com/i.test(src)?100:htmlHost?40:/html iframe|html component/i.test(title)?20:0;
+   const score=/credito-lumen|wix-host[.]com/i.test(src)?100:htmlHost?40:/html iframe|html component/i.test(title)?20:0;
    return {frame,score};
  }).filter(x=>x.score>0&&x.frame.getBoundingClientRect().width>200&&x.frame.getBoundingClientRect().height>100);
  list.sort((a,b)=>b.score-a.score);return list[0]?.frame||null;
