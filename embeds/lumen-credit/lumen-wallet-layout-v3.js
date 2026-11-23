@@ -27,16 +27,20 @@ function hideNativeDropdown(){
  const sel=[...document.querySelectorAll('select')].find(x=>[...x.options].some(o=>/meus endere.os/i.test(o.textContent||''))&&[...x.options].some(o=>/minha conta/i.test(o.textContent||'')));
  const candidates=sel?[sel]:[...document.querySelectorAll('button,[role="combobox"]')].filter(e=>/^(meu cr[eé]dito l[uú]men)$/i.test((e.textContent||'').trim()));
  for(const candidate of candidates){
-   let node=candidate;
-   for(let i=0;node&&i<5;i++,node=node.parentElement){
+   let node=candidate,match=null;
+   for(let i=0;node&&i<6;i++,node=node.parentElement){
      const r=node.getBoundingClientRect();
-     if(r.width>=Math.min(300,window.innerWidth*.7)&&r.height>=40&&r.height<=135){
+     if(r.width>=Math.min(300,window.innerWidth*.7)&&r.height>=40&&r.height<=145){
        if(node.closest('#SITE_FOOTER')||node.closest('header'))break;
-       node.setAttribute('data-lumen-credit-old-menu','hidden');
-       set(node,'display','none');
-       state.menuHidden=true;
-       return;
+       match=node;continue;
      }
+     if(match)break;
+   }
+   if(match){
+     match.setAttribute('data-lumen-credit-old-menu','hidden');
+     set(match,'display','none');
+     state.menuHidden=true;
+     return;
    }
  }
 }
