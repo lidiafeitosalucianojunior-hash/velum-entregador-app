@@ -24,6 +24,25 @@ function hideNativeDropdown(){
  // Acesso à navegação continua pelos quatro cards da carteira; outros
  // destinos do Wix fora desta página não são alterados.
  if(state.menuHidden)return;
+ // Desktop Wix Members pode exibir a mesma navegação como menu vertical.
+ // Ocultá-la somente quando contiver múltiplas rotas da área de membros.
+ const navigation=[...document.querySelectorAll('aside,nav,[role="navigation"]')].filter(el=>{
+   if(el.closest('header,#SITE_HEADER,#SITE_FOOTER'))return false;
+   const rect=el.getBoundingClientRect();
+   if(rect.width<140||rect.width>480||rect.height>1000)return false;
+   const count=[...el.querySelectorAll('a[href]')].filter(a=>{
+     try{return new URL(a.href,location.origin).pathname.startsWith('/account/')}catch{return false}
+   }).length;
+   return count>=3;
+ });
+ if(navigation.length){
+   for(const el of navigation){
+     el.setAttribute('data-lumen-credit-old-menu','hidden');
+     set(el,'display','none');
+   }
+   state.menuHidden=true;
+   return;
+ }
  const sel=[...document.querySelectorAll('select')].find(x=>[...x.options].some(o=>/meus endere.os/i.test(o.textContent||''))&&[...x.options].some(o=>/minha conta/i.test(o.textContent||'')));
  const candidates=sel?[sel]:[...document.querySelectorAll('button,[role="combobox"]')].filter(e=>/^(meu cr[eé]dito l[uú]men)$/i.test((e.textContent||'').trim()));
  for(const candidate of candidates){
