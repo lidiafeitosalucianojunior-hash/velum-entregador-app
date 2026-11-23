@@ -15,7 +15,7 @@ function findFrame(){
 }
 function adjust(height){
  const frame=findFrame();if(!frame)return false;
- const h=Math.max(680,Math.min(1700,Math.ceil(Number(height)||1100)));
+ const h=Math.max(1100,Math.min(1700,Math.ceil(Number(height)||1100)));
  state.target=frame;state.height=h;
  const host=frame.closest('[data-testid="html-comp"],[data-hook="html-comp"]')||frame.parentElement;
  if(!host)return false;
