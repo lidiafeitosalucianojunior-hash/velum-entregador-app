@@ -3,7 +3,7 @@
 (()=>{'use strict';
  const VERSION='2.0.0',KEY='__lumenCreditFrameSizeV2';
  if(window[KEY]?.version===VERSION)return;
- const state={version:VERSION,frame:null,height:0,scheduled:false};window[KEY]=state;
+ const state={version:VERSION,frame:null,height:0,requested:0,scheduled:false};window[KEY]=state;
  const page=()=>location.pathname==='/account/blank-1'||location.pathname==='/account/blank-1/';
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const shouldChoose=f=>{
@@ -86,13 +86,13 @@
  function schedule(){
    if(state.scheduled)return;
    state.scheduled=true;
-   setTimeout(()=>{state.scheduled=false;adjust(state.height||0)},170);
+   setTimeout(()=>{state.scheduled=false;adjust(state.requested||0)},170);
  }
  window.addEventListener('message',e=>{
    if(!page()||!state.frame||e.source!==state.frame.contentWindow)return;
    const m=e.data;if(m?.kind!=='LUMEN_ONLINE_CREDIT_UI'||m?.type!=='RESIZE')return;
    const raw=Number(m.data?.height);
-   if(Number.isFinite(raw)&&raw>=180&&raw<=1600)adjust(raw);
+   if(Number.isFinite(raw)&&raw>=180&&raw<=1600){state.requested=raw;adjust(raw);}
  });
  const observer=new MutationObserver(schedule);
  observer.observe(document.documentElement,{childList:true,subtree:true});
