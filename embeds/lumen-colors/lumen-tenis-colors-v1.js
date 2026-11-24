@@ -474,11 +474,40 @@ function saveCanvasImage(canvas,p,mode){
   resolve(new File([blob],'Lumen-'+name+'-'+mode+'.jpg',{type:'image/jpeg'}));
  },'image/jpeg',.96));
 }
-function outlined(ctx,txt,y,size){
- let fontSize=size;ctx.save();ctx.textAlign='left';ctx.textBaseline='middle';ctx.lineJoin='round';
- do{ctx.font='600 '+fontSize+'px Arial,Helvetica,sans-serif';if(ctx.measureText(txt).width<=960)break;fontSize-=2}while(fontSize>22);
- ctx.strokeStyle='rgba(63,40,26,.72)';ctx.lineWidth=2.5;ctx.shadowColor='rgba(51,32,19,.65)';ctx.shadowBlur=7;ctx.shadowOffsetY=2;
- ctx.strokeText(txt,56,y);ctx.fillStyle='#fff';ctx.fillText(txt,56,y);ctx.restore();
+function storyText(ctx,txt,y,size,maxWidth){
+ ctx.save();ctx.textAlign='left';ctx.textBaseline='middle';
+ let fontSize=size;do{ctx.font='600 '+fontSize+'px Arial,Helvetica,sans-serif';if(ctx.measureText(txt).width<=maxWidth)break;fontSize-=2}while(fontSize>22);
+ const width=ctx.measureText(txt).width;
+ ctx.fillStyle='#fff';ctx.shadowColor='rgba(0,0,0,.7)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+ ctx.fillText(txt,72,y);ctx.restore();return width;
+}
+function storyTag(ctx,x,y){
+ // Tag tip and hole face the upper right. Vector icon, not an emoji.
+ ctx.save();ctx.translate(x,y);ctx.scale(.93,.93);
+ ctx.strokeStyle='#f3d3a0';ctx.lineWidth=3.5;ctx.lineJoin='round';ctx.lineCap='round';
+ ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=4;
+ ctx.beginPath();ctx.moveTo(40,0);ctx.lineTo(40,18);ctx.lineTo(18,40);ctx.lineTo(0,22);ctx.lineTo(22,0);ctx.closePath();ctx.stroke();
+ ctx.beginPath();ctx.arc(30,10,3,0,Math.PI*2);ctx.stroke();ctx.restore();
+}
+function storyDetails(ctx,mode,retail,available){
+ const hasPrice=mode==='retail';
+ const label=available?'Numerações: '+available:'';
+ // Smooth black translucent vignette behind the labels, no rectangular edge.
+ ctx.save();ctx.translate(160,hasPrice?268:245);ctx.scale(1,.47);
+ const shade=ctx.createRadialGradient(0,0,30,0,0,660);
+ shade.addColorStop(0,'rgba(0,0,0,.62)');shade.addColorStop(.40,'rgba(0,0,0,.48)');
+ shade.addColorStop(.72,'rgba(0,0,0,.20)');shade.addColorStop(1,'rgba(0,0,0,0)');
+ ctx.fillStyle=shade;ctx.fillRect(-660,-660,1320,1320);ctx.restore();
+ // 220px+ top safe area for the Instagram profile identification.
+ if(hasPrice){
+  const width=storyText(ctx,retail,250,50,875);
+  storyTag(ctx,72+width+16,231);
+  if(label){
+   ctx.save();ctx.strokeStyle='#e9c794';ctx.lineWidth=2;
+   ctx.beginPath();ctx.moveTo(72,291);ctx.lineTo(Math.min(1000,72+width+56),291);ctx.stroke();ctx.restore();
+   storyText(ctx,label,326,35,936);
+  }
+ }else if(label){storyText(ctx,label,250,35,936)}
 }
 async function image916(p,mode){
  if(mode==='clean')return cleanPhoto(p);
@@ -498,12 +527,8 @@ async function image916(p,mode){
   const cropW=1080/cover,cropH=1920/cover;
   c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
   c.drawImage(photo,(photo.width-cropW)/2,(photo.height-cropH)/2,cropW,cropH,0,0,1080,1920);
-  // One full-bleed photo; keep the bottom 350px clear for Stories UI.
-  if(mode==='sizes')outlined(c,'Numerações: '+available,1550,32);
-  if(mode==='retail'){
-   outlined(c,'Varejo: '+retail,1502,36);
-   outlined(c,'Numerações: '+available,1550,32);
-  }
+  // Single high-quality 9:16 photo; top-left details, bottom fully clear.
+  storyDetails(c,mode,retail,available);
   return await saveCanvasImage(canvas,p,mode);
  }finally{if(typeof photo.close==='function')photo.close()}
 }
