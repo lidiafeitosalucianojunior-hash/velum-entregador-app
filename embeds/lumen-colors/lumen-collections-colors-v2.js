@@ -174,6 +174,8 @@ function trim(x){return String(x||"").trim()}
 function name(li){return trim(li.querySelector('[data-hook="product-item-name"]')?.textContent)}
 function realShoe(li){return !!name(li)&&!!li.querySelector('[data-hook="product-item-container"],[data-hook="product-item-product-details-link"]')}
 function variants(li){
+ const record=catalogRecord(li);
+ if(record){const select=li.querySelector('select[data-hook="native-select"]');return record.sizes.map(size=>[...(select?.options||[])].find(o=>trim(o.textContent)===size&&!o.disabled)||({textContent:size,value:size,disabled:false}));}
  const ok=s=>/^\d{2}(?:\/\d{1,2})?$/.test(trim(s));
  const select=li.querySelector('select[data-hook="native-select"]');
  if(select)return [...select.options].filter(o=>!o.disabled&&ok(o.textContent));
@@ -196,6 +198,7 @@ const llColorKeys=["preto","branco","marrom","nude","dourado","prata","vinho"];
 const llColorHex=["#191919","#f2f1ed","#81502f","#d5aa80","#dcae3f","#b8bcc3","#79243e"];
 const llProductColors={"tenis-adidas-samba-preto":1,"tenis-adidas-samba-branco-preto":2,"tenis-adidas-samba-caramelo":4,"schutz-x-trico-off":2,"schutz-x-trico-nude":8,"schutz-x-trico-preto":1,"tamanco-schutz-branco":2,"tamanco-schutz-preto":1,"tamanco-schutz-caramelo":4,"tamanco-laco-di-valentini-ouro":16,"tamanco-laco-di-valentini-prata":32,"tamanco-laco-di-valentini-preto":1,"tamanco-laco-di-valentini-branco":2,"sapatilha-gucci-telinha-preto":1,"sapatilha-gucci-telinha-marom":4,"tamanco-biqueira-preto":1,"tamanco-ouro":16,"saltinho-tira-preto":1,"tenis-nikev-7-cafe":4,"tenis-nikev-7-off-cafe":2,"tamanco-prata":32,"tamanco-luxo-preto":1,"tamanco-luxo-whisky":4,"tamanco-luxo-ouro":16,"tamanco-tarca-ouro":16,"saltinho-tira-ouro":16,"rasteira-rafia-preta":1,"rasteira-rafia-caramelo":4,"rasteira-esferas-prata":32,"papete-birken-schutz-preto":1,"papete-birken-schutz-off":2,"papete-birken-schutz-caramelo":4,"flat-schutz-fivela-caramelo":4,"flat-schutz-fivela-preto":1,"flat-schutz-fivela-branco":2,"rasteira-strass-ouro":16,"slingback-telinha-caramelo":4,"tamanco-lumen-caramelo":4,"tamanco-lumen-cafe":4,"tamanco-lumen-ouro":16,"tamanco-lumen-branco":2,"tamanco-lumen-preto":1,"papete-prada":4,"papete-schuts-preta":1,"schutz-preta":1,"schutz-caramelo":4,"schutz-off":2,"tenis-nb-preto":1,"tenis-nb-9060-branco-preto":3,"rasteira-arezzo-prata":32,"papete-vitoria-off":2,"papete-aurora-caramelo":4,"papete-aurora-off":2,"tamanco-schuts-off":2,"tamanco-schuts-preto":1,"tamanco-schuts-prata":32,"tamanco-schuts-caramelo":4,"papete-luxo-schuts-preto":1,"papete-luxo-schuts-caramelo":4,"rasteira-boutique-ouro":16,"rasteira-serpente-marrom":4,"tenis-nb-9060-marrom":4,"tenis-nb-9060-off-vinho":66,"rasteira-prenium-prata":16,"rasteira-prenium-prata-azu":32,"schuts-cobra-strass-prata":32,"tenis-nike-fit-off-cinza":2,"nike-fit-cafe":4,"adidas-cafe":4,"tenis-nb-9060-branco-prata":34,"tamanquinho-bloco-prata":32,"rasteira-luxo-off":2,"rasteira-luxo-preto":1,"rasteira-luxo-caramelo":4,"tamanquinho-bloco-caramelo":4,"tamanquinho-bloco-preto":1,"tamanquinho-bloco-off":2,"tamanquinho-bloco-ouro":16,"anabela-monaco-preto":1,"anabela-monaco-caramelo":4,"nike-fit-branco-rose":2,"tenis-nb-9060-off-limao":2,"adidas-boston-preto":3,"adidas-boston-lilas":2,"nuvem-brizza-arezzo-branco":2,"nuvem-brizza-arezzo-preto":1,"brizza-arezzo-off":2,"brizza-arezzo-preto":1,"brizza-arezzo-branco":2,"plataforma-gucci-off":2,"tenis-nb-9060-off-cafe":2,"tenis-nb-9060-off-azul":2,"nike-fit-off-cafe":8,"nike-fit-off-caramelo":18,"salto-fino-bebece-off":2,"salto-fino-bebece-preto":1,"flatform-brizza-square-preta":1,"flatform-brizza-square-marsala":64,"flatform-brizza-square-cafe":4,"flatform-brizza-square-off":2,"flatform-brizza-arezzo-capuchinho":4,"brizza-arezzo-square-at-off":2,"brizza-arezzo-square-at-preto":1,"new-9060-off-canela":2,"new-9060-off-rosa":2,"chinelo-arezzo-caramelo":4,"chinelo-arezzo-off-3":2,"salto-mariotta-42694-ouro":16,"salto-mariotta-elettra-ouro":16,"salto-mariotta-elettra-prata":32,"salto-mariotta-ii-preto":1,"salto-mariotta-ii-dourado":16,"scarpin-mariotta-preto":1,"scarpin-mariotta-nude":8,"ana-bela-mariotta-caramelo":4,"salto-dourado-mariotta-1":2,"salto-dourado-mariotta":16,"ana-bela-mariotta-preta":1,"salto-festa-mariotta-preta":16,"saltinho-mariotta-cafe":4,"salto-mariotta-plus-preto-1":1,"salto-mariotta-plus-off":2,"nike-zoom-x-preto":1,"chinelo-arezzo-preto":1,"chinelo-arezzo-capuchinho":4,"schutz-x-preto":1,"tamanco-tais-ameixa":64,"sandalia-gisele-ouro-2":16,"ana-bela-pitaya-vermelho":64,"ana-bela-pitaya-ouro":16,"tamanco-laco-ouro":16,"tamanco-laco-caramelo":4,"tamanco-lais-marsala":64,"tamanco-lais-ouro":16,"tamanco-tais-ouro":16,"tamanco-tais-caramelo":4,"sandalia-minimalista-ouro":16,"sandalia-minimalista-caramelo":4,"sandalia-minimalista-pretro":1,"sandalia-minimalista-marsala":64,"tenis-nike-off-1":2,"salto-cristal-preto-lumen":1,"salto-cristal-off-lumen":2,"tamanco-bico-folha-lumen-off":2,"chinelo-slide-lv-off":2,"chinelo-slide-lv-preta":1,"rasteira-logo-off":2,"rasteira-medalha":4,"rasteira-carmel":4,"rasteira-fio-prata":32,"rasteira-fio-ouro":16,"rasteira-fio-caramelo":4,"saltinho-victoria-ouro":16,"tamanco-bloco-baixo-prata":32,"tamanco-bloco-off":2,"tamanco-bloco-caramelo":4,"tamanco-bloco-preto":1,"rasteira-schutz-fio-off":2,"tenis-nike-zoom-off":2,"salto-dedinho-lumen-caramelo":4,"salto-luxo-lumen-caramelo":4,"saltinho-traca-caramelo":4,"scarpin-salto-preto":1,"scarpin-salto-caramelo":4,"scarpin-cristal-preto":1,"sandalia-gisele-caramelo-2":4,"sandalia-gisele-caramelo-1":4,"sandalia-gisele-cafe":4,"sandalia-dedinho-caramelo":4,"sandalia-di-valentini-preta":1,"sandalia-di-valentini-caramelo":4,"sandalia-di-valentini-off":2,"sandalia-gisele-caramelo":4,"tenis-nb-9060-off":2,"bota-mariotta-bege":8,"bota-mariotta-cafe":4,"bota-mariotta-preta":1,"scar-flare-preto":1,"scar-flare-prata":32,"scar-flare-ouro":16,"tenis-nb-9060-vinho":64,"arezzo-brasil-cafe":4,"arezzo-brasil-preto":1,"arezzo-brasil-off":2,"rasteira-schutz-cobra-ouro":16,"rasteira-schutz-cobra-prata":32,"tenis-schutz-ii-preto":1,"rasteira-schutz-x-preto":1,"rasteira-schutz-x-off":2,"rasteira-pena-ouro":16,"rasteira-tropical-prata":32,"rasteira-h-ouro":16,"rasteira-gold-prata":32,"chinelo-virginia-preta":1,"chinelo-virginia-off":2,"tenis-nike-off":2,"rasteira-fivela-off":2,"rasteira-fivela-caramelo":4,"rasteira-fivela-prata":32,"chinelo-schutz-logo-off":2,"chinelo-schutz-logo-preto":1,"rasteira-couro-off":2,"papete-caribe-off":2,"rasteira-schutz-classica-nude":8,"rasteira-miu-miu-ouro":16,"chinelo-schutz-off-1":2,"divalentini-5409-preto-1":1,"divalentini-5409-prata-1":32,"divalentini-5406-prata-1":32,"scarpin-preto":1,"rasteira-boutique-nude":8,"rasteira-boutique-prata":32,"rasteira-boutique-02-prata":32,"rasteira-boutique-02-nude":8,"papete-dolores-cafe":4,"papete-dolores-off":2,"sandalia-salto-thay-preto":1,"sandalia-salto-gregoria-off":2,"tamanco-salto-lores-ambar":4,"falt-bloco-preta":1,"rasteira-eloah-preta":1,"chinelo-arezzo-off-1":2,"tamanco-elani-cafe":4,"tamanco-araci-cafe":4,"tamanco-araci-off":2,"rasteira-vick-cafe":4,"rasteira-vick-off":2,"rasteira-bell-off":2,"rasteira-bell-caramelo":4,"papete-couro-caramelo":4,"salto-eudora-preto":1,"salto-eudora-cafe":4,"salto-jaspira-ouro":16,"salto-jaspira-prata":32,"salto-jaspira-off":2,"salto-midian-off":2,"salto-naia-caramelo":4,"salto-light-prata":32,"chinelo-schutz-logo-preta":1,"chinelo-schutz-logo-off-1":2,"tamanco-bico-folha-caramelo":4,"tamanco-salto-fino-caramelo":4,"salto-madri-cafe":4,"salto-v-preto":1,"salto-v-off":2,"sandalia-salto-baixo-mrtt-off":2,"sandalia-de-dedo-salto-fino-mrtt-off":2,"bolsa-balada-caramelo":4,"bolsa-balada-preta":1,"papete-couro-preta":1,"salto-fino-e-calcanhar-fechado-mrtt-preta":1,"salto-croco-off":2,"salto-allm-caramelo":4,"havaiana-boho-off":2,"sandalia-essenza-mrtt-cafe":4,"chinelo-arezzo-off":2,"colcci-pandora-preta":1,"papete-birken-gringa-ouro":16,"papete-birken-gringa-caramelo":4,"papete-flor-preta":1,"rasteira-schutz-nude":8,"papete-arezzo-pedras-2":4};
 state.color=llColorKeys.includes((new URLSearchParams(location.search).get("cor")||"").toLowerCase())?(new URLSearchParams(location.search).get("cor")||"").toLowerCase():"";
+if(new URLSearchParams(location.search).has("lumen_export")){state.size="";state.color="";}
 function llSlugFromLink(link){
  try{
   const path=new URL(link,location.origin).pathname;
@@ -355,6 +358,40 @@ li.dataset.llDone="yes";const pi=productInfo(li);if(pi){
  else if(li.getBoundingClientRect().top<window.innerHeight+300)warmClean(pi);
 }
 }
+const catalogStock=new Map();
+let catalogRecords=null,catalogComplete=false;
+function catalogRecord(li){
+ const link=li.querySelector('[data-hook="product-item-container"]')?.href||li.querySelector('[data-hook="product-item-product-details-link"]')?.href||'';
+ return catalogStock.get(llSlugFromLink(link));
+}
+function stockSoldOut(li){
+ const record=catalogRecord(li);if(record)return !record.inStock;
+ const button=li.querySelector('[data-hook="product-item-add-to-cart-button"]');
+ const status=(button?.textContent||'')+' '+(button?.getAttribute('aria-label')||'');
+ if(/esgotad[oa]|sem estoque|out of stock|sold out/i.test(status))return true;
+ const select=li.querySelector('select[data-hook="native-select"]');
+ if(select){
+  const numeric=[...select.options].filter(o=>/^\d{2}(?:\/\d{1,2})?$/.test(trim(o.textContent)));
+  if(numeric.length&&numeric.every(o=>o.disabled||o.getAttribute('aria-disabled')==='true'))return true;
+ }
+ return false;
+}
+function inventoryReady(li){
+ if(catalogRecord(li))return true;
+ return stockSoldOut(li)||!!li.querySelector('select[data-hook="native-select"]')||
+  li.dataset.llInventory!==undefined||!li.querySelector('[data-hook="product-item-options"]');
+}
+function inventoryPending(li){return !inventoryReady(li)}
+function catalogMatches(p){
+ return llColorAllowedLink(p.link)&&(!state.size||p.sizes.some(x=>sizeMatches(x,state.size)));
+}
+function catalogCount(n){
+ if(new URLSearchParams(location.search).has('lumen_export'))return n+' modelos nesta página';
+ if(!batchDone||state.scanning)return 'Consultando disponibilidade em todo o catálogo…';
+ const count=buildBatchProducts().length;
+ const title=count+' modelo'+(count===1?'':'s')+(state.size?' no tamanho '+state.size:' disponíveis');
+ return title+(batchError?' (consulta parcial)': ' no catálogo')+(count!==n?' · '+n+' nesta página':'');
+}
 function apply(){
 const items=[...document.querySelectorAll(gallerySelector+" "+itemSelector)];
 if(!items.length){
@@ -369,7 +406,7 @@ if(!items.length){
 }
 let n=0;
 for(const li of items){
-const real=realShoe(li);const pending=!li.querySelector('select[data-hook="native-select"]')&&li.dataset.llInventory===undefined;const pass=real&&llColorAllowed(li)&&(pending||!state.size||variants(li).some(o=>sizeMatches(o.textContent,state.size)));
+const real=realShoe(li);const pending=inventoryPending(li);const pass=real&&!stockSoldOut(li)&&llColorAllowed(li)&&(!state.size||(pending||variants(li).some(o=>sizeMatches(o.textContent,state.size))));
 li.classList.toggle("ll-hide",!pass);if(pass)n++;
 if(real){decorate(li);renderPrice(li);}
 const checkout=li.querySelector(".ll-checkout");
@@ -384,18 +421,29 @@ const head=document.getElementById("lumen-tenis-filter");
 if(head){
 head.querySelectorAll("button[data-size]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.size===state.size)));
 llUpdateColorUI();
-const cnt=state.scanning&&state.size?"Verificando tamanhos disponíveis…":n+" modelo"+(n===1?"":"s")+(state.size?" no tamanho "+state.size:" disponíveis")+" nesta página";if(head.querySelector('.ll-count').textContent!==cnt)head.querySelector('.ll-count').textContent=cnt;updateShareControl();
+const cnt=catalogCount(n);if(head.querySelector('.ll-count').textContent!==cnt)head.querySelector('.ll-count').textContent=cnt;
+ const current=Number(new URLSearchParams(location.search).get('page')||1);
+ const matching=[...batchCache.entries()].filter(([num,p])=>num!==current&&p.items.some(catalogMatches)).map(([num])=>num).sort((a,b)=>a-b);
+ let jump=head.querySelector('.ll-catalog-jump');
+ if(!n&&batchDone&&matching.length){
+  if(!jump){jump=document.createElement('a');jump.className='ll-catalog-jump';jump.style.cssText='display:block;margin:8px auto;color:#68452b;font-weight:600;text-decoration:underline';head.querySelector('.ll-count').after(jump);}
+  const url=new URL(location.href);url.searchParams.set('page',String(matching[0]));if(state.size)url.searchParams.set('tamanho',state.size);else url.searchParams.delete('tamanho');if(state.color)url.searchParams.set('cor',state.color);else url.searchParams.delete('cor');
+  if(jump.href!==url.href)jump.href=url.href;
+  if(jump.textContent!=='Ver modelos disponíveis em outra página')jump.textContent='Ver modelos disponíveis em outra página';
+ }else if(jump)jump.remove();
+ updateShareControl();
 }
 }
 
 const batchCache=new Map();
-let batchTask=null,batchError='',batchLoading=false,batchDone=false;
+let batchTask=null,batchError='',batchLoading=false,batchDone=false,lastCatalogCheck=0;
 function productInfo(li){
- const title=name(li);if(!title||!realShoe(li))return null;
+ const title=name(li);if(!title||!realShoe(li)||stockSoldOut(li))return null;
+ const record=catalogRecord(li);if(record)return record;
  const link=li.querySelector('[data-hook="product-item-container"]')?.href||li.querySelector('[data-hook="product-item-product-details-link"]')?.href||'';
- if(!link||!llColorAllowedLink(link))return null;
+ if(!link)return null;
  const rawSizes=variants(li).map(o=>trim(o.textContent));
- const chips=[...li.querySelectorAll('.ll-variant button')].filter(b=>!b.disabled).map(b=>trim(b.textContent));
+ const chips=[];
  const available=[...new Set([...rawSizes,...chips].filter(v=>/^\d{2}(?:\/\d{1,2})?$/.test(v)))].sort((a,b)=>parseInt(a,10)-parseInt(b,10));
  const prices=currentPrices(li);
  const shownRetail=li.querySelector('.ll-price-pair .ll-retail .ll-value')?.textContent||'';
@@ -406,10 +454,11 @@ if(!photo)photo=li.querySelector('img')?.currentSrc||li.querySelector('img')?.sr
 return {title,link,price:retail,wholesale:prices.wholesale?brl(prices.wholesale):'',sizes:available,photo};
 }
 function buildBatchProducts(){
- const all=[...[...document.querySelectorAll(gallerySelector+' '+itemSelector)].map(productInfo).filter(Boolean)];
+ if(catalogComplete&&catalogRecords)return catalogRecords.filter(p=>p.inStock&&p.eligible&&catalogMatches(p));
+ const all=[...[...document.querySelectorAll(gallerySelector+' '+itemSelector)].map(productInfo).filter(Boolean),...(catalogRecords||[]).filter(p=>p.inStock&&p.eligible)];
  for(const pages of batchCache.values())all.push(...pages.items);
  const unique=new Map();
- for(const p of all)if(!unique.has(p.link)&&(!state.size||p.sizes.some(x=>sizeMatches(x,state.size))))llColorAllowedLink(p.link)&&unique.set(p.link,p);
+ for(const p of all)if(!unique.has(p.link)&&catalogMatches(p))unique.set(p.link,p);
  return [...unique.values()];
 }
 
@@ -454,7 +503,7 @@ async function loadOtherPage(pageNo){
      const cards=doc?[...doc.querySelectorAll(itemSelector)]:[];
      if(!doc||!s||!cards.length||s.scanning)return;
      const confirmed=cards.filter(realShoe);
-     if(!confirmed.every(li=>li.querySelector('select[data-hook="native-select"]')||li.dataset.llInventory!==undefined))return;
+     if(!confirmed.every(inventoryReady))return;
      if(++readyCount<2)return;
      clearInterval(poll);clearTimeout(timer);
      resolve({items:confirmed.map(productInfo).filter(Boolean),links:pageNumbers(doc,pageNo)});
@@ -465,30 +514,93 @@ async function loadOtherPage(pageNo){
   return data;
  }finally{clearInterval(poll);clearTimeout(timer);frame.remove()}
 }
+function getCatalogMeta(data){
+ const app=data?.appsWarmupData?.['1380b703-ce81-ff05-f115-39571d94dfcd'];
+ const matches=Object.values(app||{}).map(v=>v?.catalog?.category?.productsWithMetaData).filter(m=>Array.isArray(m?.list)&&Number.isFinite(m.totalCount));
+ return matches.sort((a,b)=>b.list.length-a.list.length)[0]||null;
+}
+async function fetchCatalogPage(page){
+ const u=new URL(collectionPath,location.origin);if(page>1)u.searchParams.set('page',String(page));
+ let response;
+ for(let attempt=0;attempt<3;attempt++){
+  response=await fetch(u.href,{cache:'no-store',credentials:'same-origin'});
+  if(response.ok||response.status!==429)break;
+  if(attempt<2)await new Promise(done=>setTimeout(done,1800*(attempt+1)));
+ }
+ if(!response.ok)throw Error('Catálogo HTTP '+response.status);
+ const html=await response.text();
+ const raw=html.match(/<script[^>]*id=[\x22\x27]wix-warmup-data[\x22\x27][^>]*>([\s\S]*?)<\/script>/i)?.[1];
+ if(!raw)throw Error('Dados do catálogo indisponíveis');
+ const meta=getCatalogMeta(JSON.parse(raw));
+ if(!meta)throw Error('Coleção não encontrada');
+ return meta;
+}
+function variantInStock(v,tracked){
+ if(v.isVisible===false)return false;
+ const inv=v.inventory||{};
+ if(tracked&&typeof inv.quantity==='number')return inv.quantity>0;
+ if(/out.of.stock|sold.out/i.test(String(inv.status||'')))return false;
+ if(typeof inv.quantity==='number'&&inv.quantity>0)return true;
+ return /in.stock/i.test(String(inv.status||''));
+}
+function fromCatalog(p){
+ const title=trim(p.name),slug=trim(p.urlPart);
+ if(!slug||!title)return null;
+ const tracked=p.isTrackingInventory===true;
+ const items=Array.isArray(p.productItems)?p.productItems:[];
+ const options=Array.isArray(p.options)?p.options:[];
+ const sizeIndex=options.findIndex(o=>/tamanho|numera|size/i.test(o.title||o.key||''));
+ const live=items.filter(v=>variantInStock(v,tracked));
+ const numeric=s=>/^\d{2}(?:\/\d{1,2})?$/.test(s);
+ let available=[];
+ if(sizeIndex>=0){
+  const choices=options[sizeIndex].selections||[];
+  available=choices.filter(c=>c.visible!==false&&numeric(trim(c.value||c.description))&&
+   (p.isManageProductItems&&items.length?live.some(v=>String(v.optionsSelections?.[sizeIndex])===String(c.id)):c.inStock!==false)).map(c=>trim(c.value||c.description));
+ }
+ const inv=p.inventory||{};
+ let inStock=p.isInStock===true;
+ if(p.isManageProductItems&&items.length&&tracked)inStock=inStock&&live.length>0;
+ else if(tracked&&!p.isManageProductItems&&typeof inv.quantity==='number')inStock=inStock&&inv.quantity>0;
+ if(!inStock)available=[];
+ const rawPrice=Number(p.comparePrice)>0?Number(p.comparePrice):Number(p.price)||0;
+ const photo=p.media?.[0]?.url?'https://static.wixstatic.com/media/'+p.media[0].url:(p.media?.[0]?.fullUrl||'');
+ const eligible=true;
+ return {title,link:new URL('/product-page/'+encodeURIComponent(slug),location.origin).href,price:rawPrice?brl(rawPrice):'',wholesale:rawPrice?brl(Math.round(rawPrice*75)/100):'',sizes:[...new Set(available)].sort((a,b)=>parseInt(a,10)-parseInt(b,10)),photo,inStock,eligible,slug};
+}
 async function preparePages(){
  if(new URLSearchParams(location.search).has('lumen_export'))return;
  if(batchTask)return batchTask;
  batchLoading=true;batchError='';updateShareControl();
- const current=Number(new URLSearchParams(location.search).get('page')||1);
  batchTask=(async()=>{
-  const queue=pageNumbers(document,current),seen=new Set([current]);
-  while(queue.length&&seen.size<80){
-   const number=queue.shift();if(seen.has(number))continue;
-   seen.add(number);
-   try{
-    const result=await loadOtherPage(number);
-    batchCache.set(number,result);
-    for(const next of result.links)if(!seen.has(next)&&!queue.includes(next))queue.push(next);
-    updateShareControl();
-   }catch(error){
-    batchError='Algumas páginas não carregaram; os modelos encontrados continuam disponíveis.';
-    console.warn('Lúmen catálogo página '+number,error);
-   }
+  let first=null;
+ if(Number(new URLSearchParams(location.search).get('page')||1)===1){
+  try{first=getCatalogMeta(JSON.parse(document.getElementById('wix-warmup-data')?.textContent||'null'))}catch(e){}
+ }
+ if(!first)first=await fetchCatalogPage(1);
+  const pageSize=first.list.length||32;
+  const total=first.totalCount;
+  const pages=Math.max(1,Math.ceil(total/pageSize));
+  const merged=new Map();const add=meta=>{for(const p of meta.list){const r=fromCatalog(p);if(r)merged.set(r.slug,r)}};
+  add(first);
+  // Apply known stock immediately, even when a later request is rate-limited.
+  for(const [slug,r] of merged)catalogStock.set(slug,r);
+  catalogRecords=[...merged.values()];
+  if(pages>1)add(await fetchCatalogPage(pages));
+  if(merged.size<total&&pages>2){
+   for(let i=2;i<pages;i++){add(await fetchCatalogPage(i));if(merged.size>=total)break;}
   }
+  if(merged.size<total)throw Error('Catálogo incompleto: '+merged.size+'/'+total);
+  catalogStock.clear();for(const [slug,r] of merged)catalogStock.set(slug,r);
+  catalogRecords=[...merged.values()];catalogComplete=true;
+  batchCache.clear();
+  const current=Number(new URLSearchParams(location.search).get('page')||1);
+  for(let i=1;i<=pages;i++)if(i!==current)batchCache.set(i,{items:catalogRecords.slice((i-1)*pageSize,i*pageSize).filter(p=>p.inStock&&p.eligible),links:[]});
+  state.catalogTotal=total;state.catalogAvailable=catalogRecords.filter(p=>p.inStock&&p.eligible).length;
  })().catch(error=>{
-  batchError='Não foi possível concluir a busca; os produtos desta página continuam disponíveis.';
+  batchError='Não foi possível consultar todo o catálogo; os produtos desta página continuam disponíveis.';
   console.warn('Lúmen catálogo',error);
- }).finally(()=>{batchDone=true;batchLoading=false;updateShareControl()});
+ }).finally(()=>{batchDone=true;batchLoading=false;lastCatalogCheck=Date.now();apply();pagination();updateShareControl()});
  return batchTask;
 }
 /* V6 - unified native mobile share. No dialog, no app-specific buttons. */
@@ -499,7 +611,7 @@ function syncSelections(){document.querySelectorAll('.ll-select-checkbox').forEa
 function productsForNativeShare(){
  if(!manualSelection||!selectedProducts.size)return buildBatchProducts();
  const fresh=new Map(buildBatchProducts().map(p=>[p.link,p]));
- return [...selectedProducts.values()].map(p=>fresh.get(p.link)||p);
+ return [...selectedProducts.values()].map(p=>fresh.get(p.link)).filter(Boolean);
 }
 /* Three independent photo formats, one unified native sharing flow. */
 const photoByMode=new Map(),failedByMode=new Set(),photoQueued=new Set(),photoQueue=[];
@@ -825,7 +937,7 @@ function updateShareControl(){
  const header=document.getElementById('lumen-tenis-filter');if(!header)return;
  syncSelections();
  const trigger=header.querySelector('.ll-open-results');
- if(trigger)trigger.disabled=!productsForNativeShare().length;
+ if(trigger)trigger.disabled=batchDone&&!productsForNativeShare().length;
  if(!shareModal?.classList.contains('ll-visible'))return;
  const mode=selectedShareMode;
  const state=currentShareState(mode),{products,cursor,candidates,next}=state;
@@ -892,17 +1004,19 @@ const a=box.querySelector("a");a.href=url.href;a.textContent=next?"VER MAIS "+co
 }
 let scanning=false;
 async function scanDesktop(){
-if(scanning||document.querySelector(gallerySelector+" select[data-hook=native-select]"))return;
-scanning=true;state.scanning=true;
+if(scanning)return;
 const items=[...document.querySelectorAll(gallerySelector+" "+itemSelector)];
+if(!items.some(li=>realShoe(li)&&inventoryPending(li)&&li.querySelector('button[data-hook="dropdown-base"]')))return;
+scanning=true;state.scanning=true;
 for(const li of items){
-if(!realShoe(li)||li.dataset.llInventory!==undefined)continue;
+if(!realShoe(li)||catalogRecord(li)||stockSoldOut(li)||li.querySelector('select[data-hook="native-select"]')||li.dataset.llInventory!==undefined)continue;
 const btn=li.querySelector('button[data-hook="dropdown-base"]');
-if(!btn){li.dataset.llInventory="";continue}
+if(!btn){if(!li.querySelector('[data-hook="product-item-options"]'))li.dataset.llInventory="";continue}
 btn.click();
 await new Promise(done=>setTimeout(done,135));
-const labels=[...li.querySelectorAll('[data-hook="dropdown-content-option"]')].filter(o=>o.getAttribute("aria-disabled")!=="true").map(o=>trim(o.getAttribute("title"))).filter(Boolean);
-li.dataset.llInventory=labels.join("|");
+const choices=[...li.querySelectorAll('[data-hook="dropdown-content-option"]')];
+const labels=choices.filter(o=>o.getAttribute("aria-disabled")!=="true"&&!o.disabled).map(o=>trim(o.getAttribute("title")||o.textContent)).filter(Boolean);
+if(choices.length)li.dataset.llInventory=labels.join("|");
 if(btn.isConnected)btn.click();
 await new Promise(done=>setTimeout(done,20));
 }
@@ -912,5 +1026,13 @@ let busy=false;function run(){
  if(location.pathname.replace(/\/+$/,'').toLowerCase()!==collectionPath||busy)return;
  busy=true;setTimeout(()=>{busy=false;if(location.pathname.replace(/\/+$/,'').toLowerCase()!==collectionPath)return;if(header()){apply();pagination();scanDesktop().catch(console.warn)}},120)
 }
-run();const mo=new MutationObserver(()=>run());mo.observe(document.body,{childList:true,subtree:true});setInterval(()=>{const count=document.querySelectorAll(gallerySelector+" "+itemSelector).length;if(count!==state.items||!document.getElementById("lumen-tenis-filter")){state.items=count;run()}},2000);
+function refreshCatalogOnReturn(){
+ if(document.visibilityState!=='visible'||batchLoading||!lastCatalogCheck||Date.now()-lastCatalogCheck<120000)return;
+ if(new URLSearchParams(location.search).has('lumen_export'))return;
+ if(!document.getElementById('lumen-tenis-filter'))return;
+ batchTask=null;preparePages();
+}
+document.addEventListener('visibilitychange',refreshCatalogOnReturn);
+window.addEventListener('focus',refreshCatalogOnReturn);
+run();const mo=new MutationObserver(records=>{if(records.some(r=>r.type==="childList"||r.type==="characterData"||r.target.closest?.(gallerySelector+" "+itemSelector)))run()});mo.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["disabled","aria-disabled"]});setInterval(()=>{const count=document.querySelectorAll(gallerySelector+" "+itemSelector).length;if(count!==state.items||!document.getElementById("lumen-tenis-filter")){state.items=count;run()}},2000);
 })();
