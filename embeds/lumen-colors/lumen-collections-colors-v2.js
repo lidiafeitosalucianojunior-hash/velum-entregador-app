@@ -530,14 +530,13 @@ function saveCanvasImage(canvas,p,mode){
   const name=String(p.title||'tenis').normalize('NFD')
    .replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').slice(0,46);
   resolve(new File([blob],'Lumen-'+name+'-'+mode+'.jpg',{type:'image/jpeg'}));
- },'image/jpeg',.88));
+ },'image/jpeg',.96));
 }
 function outlined(ctx,txt,y,size){
- let fontSize=size;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
- do{ctx.font='700 '+fontSize+'px Arial,Helvetica,sans-serif';if(ctx.measureText(txt).width<=980)break;fontSize-=2}while(fontSize>28);
- ctx.strokeStyle='#3f281a';ctx.lineWidth=11;ctx.shadowColor='#332013';ctx.shadowBlur=18;ctx.shadowOffsetY=5;
- ctx.strokeText(txt,540,y);ctx.fillStyle='#fff';ctx.fillText(txt,540,y);
- ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ let fontSize=size;ctx.save();ctx.textAlign='left';ctx.textBaseline='middle';ctx.lineJoin='round';
+ do{ctx.font='600 '+fontSize+'px Arial,Helvetica,sans-serif';if(ctx.measureText(txt).width<=960)break;fontSize-=2}while(fontSize>22);
+ ctx.strokeStyle='rgba(63,40,26,.72)';ctx.lineWidth=2.5;ctx.shadowColor='rgba(51,32,19,.65)';ctx.shadowBlur=7;ctx.shadowOffsetY=2;
+ ctx.strokeText(txt,56,y);ctx.fillStyle='#fff';ctx.fillText(txt,56,y);ctx.restore();
 }
 async function image916(p,mode){
  if(mode==='clean')return cleanPhoto(p);
@@ -556,22 +555,13 @@ async function image916(p,mode){
   const c=canvas.getContext('2d');if(!c)throw Error('Canvas indisponível');
   const cover=Math.max(1080/photo.width,1920/photo.height);
   const cropW=1080/cover,cropH=1920/cover;
-  c.save();c.filter='blur(28px) brightness(.77)';
+  c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
   c.drawImage(photo,(photo.width-cropW)/2,(photo.height-cropH)/2,cropW,cropH,0,0,1080,1920);
-  c.restore();
-  const fit=Math.min(1080/photo.width,1600/photo.height);
-  const dw=photo.width*fit,dh=photo.height*fit;
-  c.drawImage(photo,(1080-dw)/2,(1600-dh)/2+30,dw,dh);
-  // Lower-center safe area: text remains visible when Instagram previews
-  // crop the bottom of a portrait. White lettering + dark-brown outline.
-  const shade=c.createLinearGradient(0,1330,0,1820);
-  shade.addColorStop(0,'rgba(43,29,19,0)');
-  shade.addColorStop(1,'rgba(43,29,19,.70)');
-  c.fillStyle=shade;c.fillRect(0,1330,1080,490);
-  if(mode==='sizes'&&available)outlined(c,'Numerações: '+available,1630,62);
+  // One full-bleed photo; keep the bottom 350px clear for Stories UI.
+  if(mode==='sizes'&&available)outlined(c,'Numerações: '+available,1550,32);
   if(mode==='retail'){
-   outlined(c,'Varejo: '+retail,available?1540:1620,70);
-   if(available)outlined(c,'Numerações: '+available,1660,58);
+   outlined(c,'Varejo: '+retail,available?1502:1550,36);
+   if(available)outlined(c,'Numerações: '+available,1550,32);
   }
   return await saveCanvasImage(canvas,p,mode);
  }finally{if(typeof photo.close==='function')photo.close()}
@@ -630,10 +620,9 @@ async function cleanPhoto(p){
 const photo=await igPhoto(p.photo);if(!photo?.width||!photo?.height)throw Error('Foto indisponível');
 try{const canvas=document.createElement('canvas');canvas.width=1440;canvas.height=2560;
 const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas indisponível');
-const bg=Math.max(1440/photo.width,2560/photo.height),bw=1440/bg,bh=2560/bg;
-ctx.save();ctx.filter='blur(32px)';ctx.drawImage(photo,(photo.width-bw)/2,(photo.height-bh)/2,bw,bh,0,0,1440,2560);ctx.restore();
-const fit=Math.min(1440/photo.width,2560/photo.height),w=photo.width*fit,h=photo.height*fit;
-ctx.drawImage(photo,(1440-w)/2,(2560-h)/2,w,h);
+const cover=Math.max(1440/photo.width,2560/photo.height),w=1440/cover,h=2560/cover;
+ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ctx.drawImage(photo,(photo.width-w)/2,(photo.height-h)/2,w,h,0,0,1440,2560);
 const jpeg=await new Promise((resolve,reject)=>canvas.toBlob(x=>x?resolve(x):reject(Error('JPEG')),'image/jpeg',.95));
 return new File([jpeg],'Lumen-'+String(p.title||'tenis').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').slice(0,50)+'.jpg',{type:'image/jpeg'});
 }finally{if(typeof photo.close==='function')photo.close()}}
