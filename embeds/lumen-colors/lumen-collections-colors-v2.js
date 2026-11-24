@@ -701,7 +701,53 @@ function storySizesCard(ctx,available){
  sparkle(cx-70,heartY-13,14);sparkle(cx+70,heartY-13,11);
  ctx.restore();
 }
+function storyRetailCard(ctx,retail,available){
+ const cx=540,top=230,h=120;
+ ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineCap='round';
+ function rounded(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+ function gold(x,y,w,h){
+  const g=ctx.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,'#ba8546');g.addColorStop(.24,'#f7d99e');g.addColorStop(.5,'#fff0c5');g.addColorStop(.73,'#d4a460');g.addColorStop(1,'#f5d69b');return g;
+ }
+ function border(x,y,w,h){
+  ctx.save();ctx.strokeStyle=gold(x,y,w,h);ctx.lineWidth=2.8;ctx.shadowColor='rgba(255,197,105,.6)';ctx.shadowBlur=11;ctx.stroke();ctx.restore();
+ }
+ function heart(x,y){
+  ctx.beginPath();ctx.moveTo(x,y+25);ctx.bezierCurveTo(x-13,y+12,x-33,y-2,x-29,y-15);
+  ctx.bezierCurveTo(x-23,y-32,x-7,y-30,x,y-16);ctx.bezierCurveTo(x+7,y-30,x+23,y-32,x+29,y-15);
+  ctx.bezierCurveTo(x+33,y-2,x+13,y+12,x,y+25);ctx.strokeStyle='#f7d593';ctx.lineWidth=5;ctx.stroke();
+ }
+ function glow(x,y,w){
+  ctx.save();const g=ctx.createRadialGradient(x,y,0,x,y,w);g.addColorStop(0,'rgba(255,240,184,.65)');g.addColorStop(.23,'rgba(255,215,145,.25)');g.addColorStop(1,'rgba(255,215,145,0)');ctx.fillStyle=g;ctx.fillRect(x-w,y-w,w*2,w*2);ctx.restore();
+ }
+ let priceSize=72;ctx.font='bold '+priceSize+'px Georgia, "Times New Roman", serif';
+ const w=Math.max(586,Math.min(820,ctx.measureText(retail).width+215)),x=cx-w/2,creamW=w-132;
+ while(ctx.measureText(retail).width>creamW-58&&priceSize>34){priceSize--;ctx.font='bold '+priceSize+'px Georgia, "Times New Roman", serif';}
+ const bg=ctx.createLinearGradient(x,top,x+w,top+h);bg.addColorStop(0,'rgba(142,81,35,.64)');bg.addColorStop(1,'rgba(92,43,16,.76)');
+ rounded(x,top,w,h,h/2);ctx.fillStyle=bg;ctx.fill();border(x,top,w,h);
+ const cream=ctx.createLinearGradient(x,top,x+creamW,top+h);cream.addColorStop(0,'rgba(255,236,208,.91)');cream.addColorStop(1,'rgba(247,221,182,.91)');
+ rounded(x+2,top+2,creamW-2,h-4,(h-4)/2);ctx.fillStyle=cream;ctx.fill();ctx.strokeStyle='#e5b86e';ctx.lineWidth=1.5;ctx.stroke();
+ ctx.font='bold '+priceSize+'px Georgia, "Times New Roman", serif';ctx.fillStyle='#542807';ctx.fillText(retail,x+creamW/2,top+h/2+4);
+ heart(x+w-67,top+h/2);glow(cx,top,27);glow(x+w-53,top+h,20);
+ if(available){
+  const label='Numerações: ',sizes=available.split('·').map(v=>v.trim()).filter(Boolean).join(' · ');
+  const sy=375,sh=92;let size=35;
+  function measure(){ctx.font='400 '+size+'px Arial, Helvetica, sans-serif';const a=ctx.measureText(label).width;ctx.font='700 '+size+'px Arial, Helvetica, sans-serif';return [a,ctx.measureText(sizes).width];}
+  let [a,b]=measure();const sw=Math.max(810,Math.min(960,a+b+145)),sx=cx-sw/2;
+  while(a+b>sw-150&&size>20){size--;[a,b]=measure();}
+  const glass=ctx.createLinearGradient(sx,sy,sx+sw,sy+sh);glass.addColorStop(0,'rgba(132,75,36,.57)');glass.addColorStop(1,'rgba(94,46,24,.60)');
+  rounded(sx,sy,sw,sh,sh/2);ctx.fillStyle=glass;ctx.fill();border(sx,sy,sw,sh);
+  ctx.save();ctx.translate(sx+42,sy+20);ctx.scale(1.28,1.28);
+  ctx.strokeStyle='#f5d492';ctx.lineWidth=3.4;ctx.beginPath();ctx.moveTo(40,0);ctx.lineTo(40,18);ctx.lineTo(18,40);ctx.lineTo(0,22);ctx.lineTo(22,0);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(30,10,3,0,Math.PI*2);ctx.stroke();ctx.restore();
+  const start=sx+110+(sw-145-a-b)/2;
+  ctx.textAlign='left';ctx.fillStyle='#fff8ef';ctx.shadowColor='rgba(45,17,3,.42)';ctx.shadowBlur=3;
+  ctx.font='400 '+size+'px Arial, Helvetica, sans-serif';ctx.fillText(label,start,sy+sh/2+1);
+  ctx.font='700 '+size+'px Arial, Helvetica, sans-serif';ctx.fillText(sizes,start+a,sy+sh/2+1);ctx.shadowBlur=0;
+  glow(sx+10,sy+sh/2,23);glow(cx+50,sy+sh,24);
+ }
+ ctx.restore();
+}
 function storyDetails(ctx,mode,retail,available){
+ if(mode==='retail'){storyRetailCard(ctx,retail,available);return;}
  if(mode==='sizes'){storySizesCard(ctx,available);return;}
  const hasPrice=mode==='retail';
  const label=available?'Numerações: '+available:'';
