@@ -653,7 +653,50 @@ function storyTag(ctx,x,y){
  ctx.beginPath();ctx.moveTo(40,0);ctx.lineTo(40,18);ctx.lineTo(18,40);ctx.lineTo(0,22);ctx.lineTo(22,0);ctx.closePath();ctx.stroke();
  ctx.beginPath();ctx.arc(30,10,3,0,Math.PI*2);ctx.stroke();ctx.restore();
 }
+function storySizesCard(ctx,available){
+ if(!available)return;
+ const sizes=available.split('·').map(s=>s.trim()).filter(Boolean).join(' · ');
+ const cx=540,top=268,h=182,heartY=248;
+ ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineCap='round';
+ let fontSize=40;ctx.font='400 '+fontSize+'px Georgia, "Times New Roman", serif';
+ let width=Math.max(558,Math.min(850,ctx.measureText(sizes).width+100));
+ while(ctx.measureText(sizes).width>width-94&&fontSize>20){fontSize-=1;ctx.font='400 '+fontSize+'px Georgia, "Times New Roman", serif';}
+ const x=cx-width/2;
+ function rounded(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+ // Transparent champagne glass, preserving the original photograph.
+ const glass=ctx.createLinearGradient(x,top,x+width,top+h);
+ glass.addColorStop(0,'rgba(255,230,201,.47)');glass.addColorStop(.55,'rgba(244,216,188,.48)');glass.addColorStop(1,'rgba(255,232,208,.38)');
+ rounded(x,top,width,h,65);ctx.fillStyle=glass;ctx.fill();ctx.strokeStyle='rgba(255,236,209,.9)';ctx.lineWidth=1.8;ctx.stroke();
+ // Translucent caramel capsule for the available sizes.
+ const inset=28,pillY=355,pillH=67;
+ const brown=ctx.createLinearGradient(x,pillY,x+width,pillY+pillH);
+ brown.addColorStop(0,'rgba(139,77,39,.64)');brown.addColorStop(1,'rgba(112,55,26,.66)');
+ rounded(x+inset,pillY,width-2*inset,pillH,pillH/2);ctx.fillStyle=brown;ctx.fill();ctx.strokeStyle='rgba(255,222,183,.45)';ctx.lineWidth=1.4;ctx.stroke();
+ const title='Numerações disponíveis';ctx.font='italic 36px Georgia, "Times New Roman", serif';
+ const tw=ctx.measureText(title).width;
+ ctx.fillStyle='#482917';ctx.fillText(title,cx,320);
+ ctx.strokeStyle='rgba(147,87,47,.8)';ctx.lineWidth=1.8;
+ const left=cx-tw/2-20,right=cx+tw/2+20;
+ ctx.beginPath();ctx.moveTo(Math.max(x+36,left-46),321);ctx.lineTo(left,321);ctx.moveTo(right,321);ctx.lineTo(Math.min(x+width-36,right+46),321);ctx.stroke();
+ ctx.font='400 '+fontSize+'px Georgia, "Times New Roman", serif';ctx.fillStyle='#fff0dc';
+ ctx.shadowColor='rgba(56,25,10,.25)';ctx.shadowBlur=2;ctx.fillText(sizes,cx,pillY+pillH/2+1);ctx.shadowBlur=0;
+ // Small generic heart medallion, suitable for every product category.
+ ctx.beginPath();ctx.arc(cx,heartY,40,0,Math.PI*2);
+ const medal=ctx.createLinearGradient(cx-30,heartY-40,cx+35,heartY+40);
+ medal.addColorStop(0,'rgba(179,121,74,.86)');medal.addColorStop(1,'rgba(112,61,34,.83)');
+ ctx.fillStyle=medal;ctx.fill();ctx.strokeStyle='#f8dfb8';ctx.lineWidth=1.8;ctx.stroke();
+ ctx.beginPath();ctx.moveTo(cx,heartY+17);
+ ctx.bezierCurveTo(cx-10,heartY+7,cx-22,heartY-2,cx-19,heartY-10);
+ ctx.bezierCurveTo(cx-15,heartY-24,cx-3,heartY-19,cx,heartY-10);
+ ctx.bezierCurveTo(cx+3,heartY-19,cx+15,heartY-24,cx+19,heartY-10);
+ ctx.bezierCurveTo(cx+22,heartY-2,cx+10,heartY+7,cx,heartY+17);
+ ctx.strokeStyle='#ffebc9';ctx.lineWidth=2.1;ctx.stroke();
+ function sparkle(x,y,r){ctx.beginPath();ctx.moveTo(x,y-r);ctx.quadraticCurveTo(x+2,y-2,x+r,y);ctx.quadraticCurveTo(x+2,y+2,x,y+r);ctx.quadraticCurveTo(x-2,y+2,x-r,y);ctx.quadraticCurveTo(x-2,y-2,x,y-r);ctx.fillStyle='#f5ce91';ctx.fill();}
+ sparkle(cx-70,heartY-13,14);sparkle(cx+70,heartY-13,11);
+ ctx.restore();
+}
 function storyDetails(ctx,mode,retail,available){
+ if(mode==='sizes'){storySizesCard(ctx,available);return;}
  const hasPrice=mode==='retail';
  const label=available?'Numerações: '+available:'';
  // Smooth black translucent vignette behind the labels, no rectangular edge.
