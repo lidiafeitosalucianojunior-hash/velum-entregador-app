@@ -321,6 +321,38 @@ function checkoutUrl(li,base){
 }
 
 
+sty.textContent+= "\nhtml body [data-hook=\"product-list-grid-item\"] .ll-foot{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;justify-content:center!important;align-items:center!important;gap:10px!important;min-height:34px!important;margin:3px auto!important;width:100%!important}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-foot .ll-card-icon,html body [data-hook=\"product-list-grid-item\"] .ll-foot .ll-select-item{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 34px!important;width:34px!important;height:34px!important;min-height:34px!important;box-sizing:border-box!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:#80654e!important;text-decoration:none!important;cursor:pointer}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-foot .ll-select-checkbox{appearance:auto!important;width:17px!important;height:17px!important;margin:0!important;accent-color:#725139!important;cursor:pointer}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-foot .ll-card-icon svg{width:20px!important;height:20px!important;display:block!important;flex:none!important}\nhtml body [data-hook=\"product-list-grid-item\"] .ll-foot .ll-card-icon:disabled{opacity:.5!important}\nhtml body [data-hook=\"product-list-grid-item\"] .lumen-v6-ref,html body .lumen-v6-ref{display:none!important;visibility:hidden!important}\n";
+function cardActionIcon(kind){
+ const body={share:'<path d="M12 16V3m-5 5 5-5 5 5"/><path d="M5 12H3v9h18v-9h-2"/>',copy:'<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 5V3H3v13h2"/>',done:'<path d="m5 12 4 4L19 6"/>',busy:'<path d="M12 3a9 9 0 1 1-9 9"/>'}[kind];
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+body+'</svg>';
+}
+let cardToastTimer;
+function cardActionNotice(message){
+ let el=document.getElementById('ll-card-action-notice');
+ if(!el){el=document.createElement('div');el.id='ll-card-action-notice';el.setAttribute('role','status');el.style.cssText='position:fixed;left:50%;bottom:calc(74px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:calc(100vw - 30px);width:max-content;z-index:2147483601;background:#493626;color:#fffaf4;border-radius:14px;padding:11px 16px;font:500 12px/1.4 Arial,sans-serif;text-align:center;box-shadow:0 3px 16px #0003;pointer-events:none';document.body.appendChild(el)}
+ el.textContent=message;el.hidden=false;clearTimeout(cardToastTimer);cardToastTimer=setTimeout(()=>{el.hidden=true},3500);
+}
+function setCardAction(button,kind,label){button.innerHTML=cardActionIcon(kind);button.title=label;button.setAttribute('aria-label',label)}
+function copyCardImage(li,button){
+ if(button.disabled)return;
+ const p=productInfo(li);
+ if(!p){cardActionNotice('Produto indisponível.');return}
+ if(!inventoryReady(li)){cardActionNotice('Consultando estoque. Tente novamente em instantes.');return}
+ if(typeof ClipboardItem!=='function'||!navigator.clipboard?.write){cardActionNotice('Este navegador não permite copiar imagens. Use o botão de compartilhar.');return}
+ button.disabled=true;setCardAction(button,'busy','Copiando imagem');
+ // Safari needs clipboard.write during the original click, not after image generation.
+ // PNG is the portable image MIME type for ClipboardItem.
+ let png;
+ try{
+  png=image916(p,'retail','image/png');
+  const item=new ClipboardItem({'image/png':png});
+  Promise.resolve(navigator.clipboard.write([item])).then(()=>{
+   setCardAction(button,'done','Imagem copiada');cardActionNotice('Imagem copiada! Agora é só colar.');
+  }).catch(e=>{
+   console.warn('Lúmen copiar imagem',e);cardActionNotice('Não foi possível copiar a imagem. Verifique a permissão do navegador e tente novamente.');
+  }).finally(()=>{setTimeout(()=>{button.disabled=false;setCardAction(button,'copy','Copiar foto com preço e numeração')},1200)});
+ }catch(e){png?.catch(()=>{});button.disabled=false;setCardAction(button,'copy','Copiar foto com preço e numeração');cardActionNotice('Não foi possível copiar a imagem neste navegador.')}
+}
 function decorate(li){
 if(li.dataset.llDone==="yes")return;
 const select=li.querySelector('select[data-hook="native-select"]'),options=li.querySelector('[data-hook="product-item-options"]'),opts=variants(li);
@@ -349,9 +381,9 @@ const det=document.createElement("a");det.className="ll-checkout";det.textConten
 extra.append(wa,det);
 root.appendChild(extra);
 const foot=document.createElement("div");foot.className="ll-foot";
-const share=document.createElement("button");share.type="button";share.textContent="Compartilhar";
+const share=document.createElement("button");share.type="button";share.className="ll-card-icon ll-card-share";setCardAction(share,"share","Compartilhar produto");
 share.onclick=()=>shareSingleNative(li,share);
-const choose=document.createElement("label");choose.className="ll-select-item";const check=document.createElement("input");check.type="checkbox";check.className="ll-select-checkbox";check.dataset.productLink=link;check.checked=manualSelection&&selectedProducts.has(link);check.setAttribute("aria-label","Selecionar "+name(li)+" para o lote");check.onchange=()=>{const p=productInfo(li);if(check.checked&&p){manualSelection=true;selectedProducts.set(p.link,p)}else{selectedProducts.delete(link);if(!selectedProducts.size)manualSelection=false}shareCursors.clear();shareSignatures.clear();shareNotice="";updateShareControl()};const caption=document.createElement("span");caption.textContent="Selecionar";choose.append(check,caption);foot.append(choose,share);extra.insertAdjacentElement("afterend",foot);
+const choose=document.createElement("label");choose.className="ll-select-item";const check=document.createElement("input");check.type="checkbox";check.className="ll-select-checkbox";check.dataset.productLink=link;check.checked=manualSelection&&selectedProducts.has(link);check.setAttribute("aria-label","Selecionar "+name(li)+" para o lote");check.onchange=()=>{const p=productInfo(li);if(check.checked&&p){manualSelection=true;selectedProducts.set(p.link,p)}else{selectedProducts.delete(link);if(!selectedProducts.size)manualSelection=false}shareCursors.clear();shareSignatures.clear();shareNotice="";updateShareControl()};choose.title="Selecionar produto";choose.append(check);const copy=document.createElement("button");copy.type="button";copy.className="ll-card-icon ll-card-copy";setCardAction(copy,"copy","Copiar foto com preço e numeração");copy.onclick=()=>copyCardImage(li,copy);foot.append(choose,share,copy);extra.insertAdjacentElement("afterend",foot);
 }
 li.dataset.llDone="yes";const pi=productInfo(li);if(pi){
  if(cleanObserver){if(!cleanCardsWatched.has(li)){cleanCardsWatched.add(li);cleanObserver.observe(li)}}
@@ -636,13 +668,13 @@ function changeShareChoice(mode,profile){
 let refreshTimer=null;
 const modes={clean:'Imagem limpa',sizes:'Foto + numeração',retail:'Varejo + numeração'};
 function imageKey(p,mode){return mode+'¦'+[p.link,p.photo,p.price,(p.sizes||[]).join(',')].join('¦')}
-function saveCanvasImage(canvas,p,mode){
+function saveCanvasImage(canvas,p,mode,mime="image/jpeg"){
  return new Promise((resolve,reject)=>canvas.toBlob(blob=>{
   if(!blob){reject(new Error('Não foi possível gerar a foto.'));return}
   const name=String(p.title||'tenis').normalize('NFD')
    .replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').slice(0,46);
-  resolve(new File([blob],'Lumen-'+name+'-'+mode+'.jpg',{type:'image/jpeg'}));
- },'image/jpeg',.96));
+  resolve(new File([blob],'Lumen-'+name+'-'+mode+(mime==='image/png'?'.png':'.jpg'),{type:mime}));
+ },mime,.96));
 }
 function storyText(ctx,txt,y,size,maxWidth){
  ctx.save();ctx.textAlign='left';ctx.textBaseline='middle';
@@ -765,7 +797,7 @@ function storyDetails(ctx,mode,retail,available){
   }
  }else if(label){storyText(ctx,label,250,35,936)}
 }
-async function image916(p,mode){
+async function image916(p,mode,mime="image/jpeg"){
  if(mode==='clean')return cleanPhoto(p);
  const available=[...new Set((p.sizes||[]).map(n=>String(n).trim()).filter(n=>/^\d{2}(?:\/\d{1,2})?$/.test(n)))]
   .sort((a,b)=>Number(a)-Number(b)).join(' · ');
@@ -786,7 +818,7 @@ async function image916(p,mode){
   c.drawImage(photo,(photo.width-cropW)/2,(photo.height-cropH)/2,cropW,cropH,0,0,1080,1920);
   // Single high-quality 9:16 photo; top-left details, bottom fully clear.
   storyDetails(c,mode,retail,available);
-  return await saveCanvasImage(canvas,p,mode);
+  return await saveCanvasImage(canvas,p,mode,mime);
  }finally{if(typeof photo.close==='function')photo.close()}
 }
 
@@ -851,15 +883,15 @@ return new File([jpeg],'Lumen-'+String(p.title||'tenis').normalize('NFD').replac
 }finally{if(typeof photo.close==='function')photo.close()}}
 function warmClean(p){if(!p?.photo||cleanFiles.has(p.link)||cleanPending.has(p.link)||cleanFailures.has(p.link))return;
 cleanPending.add(p.link);cleanJobs.push(p);function work(){if(cleanActive>=1||!cleanJobs.length)return;
-const x=cleanJobs.shift();cleanActive++;cleanPhoto(x).then(f=>{cleanFiles.set(x.link,f);document.querySelectorAll('.ll-foot button').forEach(b=>{if(b.textContent==='Preparando foto…'&&b.closest('[data-hook="product-list-grid-item"]')?.querySelector('[data-hook="product-item-container"]')?.href===x.link)b.textContent='Compartilhar'});}).catch(e=>{cleanFailures.add(x.link);console.warn('Lumen foto limpa',e)}).finally(()=>{cleanPending.delete(x.link);cleanActive--;work()})}
+const x=cleanJobs.shift();cleanActive++;cleanPhoto(x).then(f=>{cleanFiles.set(x.link,f);document.querySelectorAll('.ll-foot button').forEach(b=>{if(b.classList.contains('ll-card-share')&&b.dataset.preparing==='1'&&b.closest('[data-hook="product-list-grid-item"]')?.querySelector('[data-hook="product-item-container"]')?.href===x.link){delete b.dataset.preparing;setCardAction(b,'share','Compartilhar produto')}});}).catch(e=>{cleanFailures.add(x.link);console.warn('Lumen foto limpa',e)}).finally(()=>{cleanPending.delete(x.link);cleanActive--;work()})}
 while(cleanActive<1&&cleanJobs.length)work()}
 function shareSingleNative(li,button){
  const p=productInfo(li);if(!p)return;
  const file=cleanFiles.get(p.link);
  if(!file){
   if(cleanFailures.has(p.link)){noteNative('A foto deste modelo está indisponível.');return}
-  warmClean(p);button.textContent='Preparando foto…';
-  noteNative('Preparando a foto limpa. Toque novamente quando o botão voltar a Compartilhar.');return;
+  warmClean(p);button.dataset.preparing='1';setCardAction(button,'busy','Preparando foto');
+  cardActionNotice('Preparando a foto. Toque novamente no ícone de compartilhar.');return;
  }
  if(typeof navigator.share!=='function'){noteNative('Abra a página no Safari para compartilhar fotos.');return}
  const caption=['✨ *'+p.title+'*','🛍️ *Valor de varejo:* '+p.price,
